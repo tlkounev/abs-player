@@ -59,3 +59,7 @@ data class Command(
 
 @Serializable
 data class ErrorResponse(val error: String)
+
+/** Server URLs typed on different devices may differ in case or a trailing slash. */
+fun sameServer(a: String?, b: String?): Boolean =
+    a != null && b != null && a.trim().trimEnd('/').equals(b.trim().trimEnd('/'), ignoreCase = true)

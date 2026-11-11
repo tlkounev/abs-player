@@ -10,6 +10,7 @@ import cz.ondra.absplayer.remote.ErrorResponse
 import cz.ondra.absplayer.remote.InfoResponse
 import cz.ondra.absplayer.remote.PairRequest
 import cz.ondra.absplayer.remote.PairResponse
+import cz.ondra.absplayer.remote.sameServer
 import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -104,7 +105,7 @@ class ReceiverServer(
         failedPairs = 0
         val secret = ByteArray(24).also { SecureRandom().nextBytes(it) }.joinToString("") { "%02x".format(it) }
         val st = app.settings
-        val sameAccount = st.isLoggedIn && st.serverUrl == req.server && st.username == req.username
+        val sameAccount = st.isLoggedIn && sameServer(st.serverUrl, req.server) && st.username == req.username
         if (req.accessToken == null && !sameAccount) {
             return error(NanoHTTPD.Response.Status.BAD_REQUEST, "Televize není přihlášená k tomuto účtu – zadej heslo")
         }

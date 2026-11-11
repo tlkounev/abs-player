@@ -283,7 +283,7 @@ class TargetManager(private val app: App) {
 
     /** Whether pairing [info]'s device needs the ABS password (to hand it its own login). */
     fun needsPassword(info: InfoResponse): Boolean =
-        info.acceptsTokens && !(info.loggedIn && info.server == app.settings.serverUrl && info.username == app.settings.username)
+        info.acceptsTokens && !(info.loggedIn && sameServer(info.server, app.settings.serverUrl) && info.username == app.settings.username)
 
     /**
      * Pairs a receiver. A TV that is not signed in to this account gets its own token pair: the
