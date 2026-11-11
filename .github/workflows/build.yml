@@ -4,13 +4,16 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -37,3 +40,14 @@ jobs:
           name: abs-player-apk
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
+
+      # Direct APK download (phone / TV) from the Releases page.
+      - name: Publish release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          TAG="v${VERSION}-build${{ github.run_number }}"
+          cp app/build/outputs/apk/release/app-release.apk "abs-player-${VERSION}.apk"
+          gh release create "$TAG" "abs-player-${VERSION}.apk" --title "ABS Player ${VERSION} (build ${{ github.run_number }})" --notes "Commit ${{ github.sha }}" --latest
