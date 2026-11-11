@@ -189,6 +189,11 @@
   .pair button:disabled { opacity: .45; }
   .pair .hint { grid-column: 1 / -1; color: var(--muted); font-size: 11px; }
   .pair .err { grid-column: 1 / -1; color: #e5534b; font-size: 11px; }
+  .pair-open { display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 12px); height: 34px; margin: 10px 6px 2px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--accent); font: 600 12px "Segoe UI Variable Text", "Segoe UI", sans-serif; -webkit-app-region: no-drag; }
+  .pair-open:hover { background: var(--hover); border-color: var(--accent); }
+  .pair-open svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
+  .pair-head { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 4px 6px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+  .pair-head .icon-btn { width: 26px; height: 24px; }
   .my-code { margin: 10px 6px 2px; color: var(--muted); font-size: 11px; }
   .my-code b { color: var(--fg); font-size: 13px; letter-spacing: .08em; }
 
@@ -223,7 +228,9 @@
     </div>
     <div class="dev-list" id="devItems">
       <div id="devRows"></div>
-      <div class="dev-sec" data-txt="pairNew"></div>
+      <button class="pair-open" id="pairOpen"><svg viewBox="0 0 16 16"><path d="M7.25 2.5h1.5v4.75h4.75v1.5H8.75v4.75h-1.5V8.75H2.5v-1.5h4.75z"/></svg><span data-txt="pairNewBtn"></span></button>
+      <div id="pairSection" class="hidden">
+      <div class="pair-head"><span data-txt="pairNew"></span><button class="icon-btn" id="pairCancel"><svg viewBox="0 0 16 16"><path d="M4.2 3.1 8 6.9l3.8-3.8 1.1 1.1L9.1 8l3.8 3.8-1.1 1.1L8 9.1l-3.8 3.8-1.1-1.1L6.9 8 3.1 4.2z"/></svg></button></div>
       <div id="devFound"></div>
       <div class="pair">
         <input id="pHost" spellcheck="false" data-ph="ipAddr">
@@ -233,6 +240,7 @@
         <div class="hint" id="pHint" data-txt="pairHint"></div>
         <div class="err hidden" id="pErr"></div>
         <button id="pBtn" data-txt="pairBtn" disabled></button>
+      </div>
       </div>
       <div class="my-code" id="myCode"></div>
     </div>
@@ -772,6 +780,7 @@ const ICON_X = '<svg viewBox="0 0 16 16"><path d="M4.2 3.1 8 6.9l3.8-3.8 1.1 1.1
 
 function closeDevPanel(keepWindow) {
   devOpen = false;
+  setPairOpen(false);
   clearInterval(devTimer);
   devTimer = null;
   $('devPanel').classList.add('hidden');
@@ -872,6 +881,27 @@ function buildDevices() {
   $('myCode').append(span, b);
 }
 
+function setPairOpen(open) {
+  $('pairSection').classList.toggle('hidden', !open);
+  $('pairOpen').classList.toggle('hidden', open);
+  if (open) {
+    $('pErr').classList.add('hidden');
+    $('pHost').focus();
+  } else {
+    $('pHost').value = '';
+    $('pCode').value = '';
+    $('pPass').value = '';
+    $('pErr').classList.add('hidden');
+    $('pHint').textContent = tr('pairHint');
+    clearTimeout(pairInfoTimer);
+    pairInfo = null;
+    updatePairBtn();
+    if (devData) buildDevices();
+  }
+}
+$('pairOpen').onclick = () => setPairOpen(true);
+$('pairCancel').onclick = () => setPairOpen(false);
+
 function updatePairBtn() {
   const needPass = pairInfo && pairInfo.needsPassword;
   $('pPass').classList.toggle('hidden', !needPass);
@@ -932,7 +962,7 @@ document.documentElement.style.setProperty('--list-h', window.abs.listHeight + '
 document.addEventListener('keydown', (e) => {
   if (e.target === $('volRange')) return;
   if (e.target instanceof HTMLInputElement && e.target.closest('#devPanel')) {
-    if (e.key === 'Escape') setDevOpen(false);
+    if (e.key === 'Escape') setPairOpen(false);
     else if (e.key === 'Enter' && !$('pBtn').disabled) $('pBtn').click();
     return;
   }

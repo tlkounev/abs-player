@@ -203,7 +203,18 @@ app.whenReady().then(async () => {
   check('offline device dimmed', await jsP("document.querySelectorAll('#devRows .dev-row.off').length") === 1);
   check('playing subtitle', (await jsP("document.querySelectorAll('#devRows .dev-row')[1].querySelector('.sb').textContent")) === 'Hraje: Duna');
   check('own pairing code', (await jsP("document.getElementById('myCode').textContent")).includes('123 456'));
+  check('pair form hidden behind button', await jsP("document.getElementById('pairSection').classList.contains('hidden') && !document.getElementById('pairOpen').classList.contains('hidden')"));
+  check('pair button label', (await jsP("document.getElementById('pairOpen').textContent")) === 'Spárovat zařízení (TV nebo PC)');
   await shot(popup, 'p-devices.png');
+  await jsP("document.getElementById('pairOpen').click()");
+  await wait(200);
+  check('pair form opens', await jsP("!document.getElementById('pairSection').classList.contains('hidden') && document.getElementById('pairOpen').classList.contains('hidden')"));
+  await jsP("document.getElementById('pairCancel').click()");
+  await wait(100);
+  check('pair form cancel', await jsP("document.getElementById('pairSection').classList.contains('hidden')"));
+  await jsP("document.getElementById('pairOpen').click()");
+  await wait(200);
+  await shot(popup, 'p-pair-open.png');
   await jsP("document.querySelector('#devFound .dev-row').click()");
   await wait(700);
   check('found device fills IP', await jsP("document.getElementById('pHost').value") === '10.0.0.7');
@@ -219,6 +230,7 @@ app.whenReady().then(async () => {
   // přepnutí z panelu zařízení na kapitoly nezmění velikost okna
   await jsP("document.querySelector('#player [data-act=devices]').click()");
   await wait(700);
+  check('pair form collapsed on reopen', await jsP("document.getElementById('pairSection').classList.contains('hidden')"));
   await jsP("document.getElementById('chBtn').click()");
   await wait(700);
   check('switch to chapters keeps window', popup.getBounds().height === 536 && await jsP("document.getElementById('devPanel').classList.contains('hidden') && !document.getElementById('chPanel').classList.contains('hidden')"));
