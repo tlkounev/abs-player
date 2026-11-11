@@ -1,7 +1,7 @@
 # ABS Player
 
 Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.0.0.
+Verze 1.1.0.
 
 ## Co umí
 
@@ -9,6 +9,11 @@ Verze 1.0.0.
 - Pokračovat (rozposlouchané ze všech zařízení), Knihovna s hledáním, Série, detail knihy s kapitolami.
 - Přehrávač: pruh aktuální kapitoly + tenký pruh celé knihy, ±30 s, předchozí/další kapitola,
   rychlost 0,5–3× (krok 0,05), časovač (minuty nebo konec kapitoly), seznam kapitol.
+- Ovládání jako v Audiobookshelf Tray: pruh kapitoly + tenký pruh celé knihy (oba se dají posouvat,
+  při tažení se popisky mění podle pozice), uplynulý a zbývající čas podle rychlosti,
+  hlasitost (klepnutí = ztlumit, podržení = posuvník), rychlost (klepnutí = další krok 0,75–2×,
+  podržení = jemně po 0,05), seznam kapitol s hledáním bez diakritiky i podle čísla.
+  Když nic nehraje, přehrávač nabídne poslední rozposlouchané tituly.
 - Minipřehrávač dole, ovládání z notifikace, sluchátek a Bluetooth.
 
 **Android Auto**
@@ -18,9 +23,14 @@ Verze 1.0.0.
 - Vlastní tlačítka: −30 s, +30 s, rychlost. Hledání hlasem/textem.
 - Tlačítko „Pokračovat“ po připojení auta obnoví poslední knihu.
 
+**Přehrávat na – TV i PC**
+- Cílem může být Google TV (toto APK) nebo PC s Audiobookshelf Tray 1.1.4+.
+- Párování: *Přehrávat na → Spárovat zařízení*, zařízení ukáže šestimístný kód.
+  Heslo k ABS je potřeba jen pro TV, která ještě není přihlášená k tvému účtu.
+
 **Google TV (stejné APK)**
 - Na TV běží přijímač na pozadí (spouští se i po zapnutí TV) a ukazuje párovací kód.
-- Telefon: *Přehrávat na → Spárovat televizi* → vybrat TV, zadat kód a heslo k ABS.
+- Telefon: *Přehrávat na → Spárovat zařízení* → vybrat TV, zadat kód (a heslo, pokud TV není přihlášená).
 - Pak *Přehrávat na → TV*: telefon pozastaví, uloží pozici na server a TV pokračuje přesně odtud.
   Telefon se stane ovladačem (stav, kapitoly, rychlost, časovač). Zpět na telefon funguje stejně.
 - TV si přehrává sama ze serveru (vlastní přihlášení, vlastní synchronizace), bez Chromecastu.
@@ -48,20 +58,23 @@ Potřeba: Android Studio (Ladybug nebo novější) nebo JDK 17+ a Android SDK 35
 gradlew assembleRelease
 ```
 APK: `app/build/outputs/apk/release/app-release.apk` (podepsané ladicím klíčem, pro sideload).
+Každý push do `main` sestaví APK na GitHubu (Actions) a vystaví ho v Releases.
 
 ## Instalace
 
 - Telefon: nainstalovat APK.
-- Android Auto: sideload aplikace se v autě zobrazí až po zapnutí neznámých zdrojů:
-  Android Auto → nastavení → 10× klepnout na *Verze* → ⋮ → *Nastavení pro vývojáře* →
-  *Neznámé zdroje*.
+- Android Auto: aplikace instalovaná mimo Obchod Play se v autě zobrazí až po zapnutí neznámých
+  zdrojů. V telefonu: Nastavení → vyhledat „Android Auto“ → sjet dolů a 10× klepnout na *Verze* →
+  potvrdit vývojářský režim → menu ⋮ → *Nastavení pro vývojáře* → *Neznámé zdroje*.
 - Google TV: `adb connect <ip-tv>` a `adb install app-release.apk` (nebo přes správce souborů).
   Aplikace se objeví v řádku aplikací.
 
 ## Omezení verze 1.0
 
 - Jen audioknihy (podcasty ne), jen čeština, bez stahování offline (streamuje s velkým bufferem).
-- Ovládání TV funguje v lokální síti (mDNS + HTTP port 8765); přes 5G zvenku zatím ne.
+- Ovládání TV/PC funguje v lokální síti (mDNS + HTTP port 8765); přes 5G zvenku zatím ne.
+- Telefon sám přijímačem není (Android nedovolí spustit přehrávání aplikaci na pozadí); po otevření
+  a stisku play ale vždy převezme nejnovější pozici z PC/TV.
   Pokud je TV v jiné VLAN, zadej při párování IP ručně.
 
 ## Struktura
