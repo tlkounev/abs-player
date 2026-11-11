@@ -15,6 +15,8 @@ data class PairedDevice(
     val secret: String,
     val host: String,
     val port: Int,
+    /** "tv" | "pc" */
+    val kind: String = "tv",
 )
 
 data class LocalProgress(val positionSec: Double, val updatedAt: Long, val synced: Boolean)
@@ -58,6 +60,10 @@ class Settings(context: Context) {
     var speed: Float
         get() = prefs.getFloat("speed", 1.0f)
         set(v) = prefs.edit().putFloat("speed", v).apply()
+
+    var volume: Float
+        get() = prefs.getFloat("volume", 1.0f)
+        set(v) = prefs.edit().putFloat("volume", v).apply()
 
     var lastLibraryId: String?
         get() = prefs.getString("lastLibrary", null)

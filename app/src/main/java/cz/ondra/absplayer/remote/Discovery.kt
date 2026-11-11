@@ -16,6 +16,7 @@ data class Discovered(
     val name: String,
     val host: String,
     val port: Int,
+    val kind: String = "tv",
 )
 
 /** Finds ABS Player receivers (TVs) on the local network via mDNS / DNS-SD. */
@@ -83,7 +84,8 @@ class Discovery(context: Context) {
                             val attrs = si.attributes
                             val id = attrs["id"]?.let { String(it, Charsets.UTF_8) }
                             val name = attrs["name"]?.let { String(it, Charsets.UTF_8) } ?: si.serviceName
-                            _found.value = _found.value + (si.serviceName to Discovered(si.serviceName, id, name, host, si.port))
+                            val kind = attrs["kind"]?.let { String(it, Charsets.UTF_8) } ?: "tv"
+                            _found.value = _found.value + (si.serviceName to Discovered(si.serviceName, id, name, host, si.port, kind))
                         }
                         resolving = false
                         resolveNext()

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -57,7 +56,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cz.ondra.absplayer.player.PlayerEngine
 import cz.ondra.absplayer.remote.DEFAULT_PORT
+import cz.ondra.absplayer.remote.InfoResponse
 import cz.ondra.absplayer.remote.PlaybackTarget
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,6 +76,7 @@ fun Sheets(vm: MainViewModel) {
             Sheet.Pair -> PairSheet(vm)
             Sheet.Sleep -> SleepSheet(vm)
             Sheet.Speed -> SpeedSheet(vm)
+            Sheet.Volume -> VolumeSheet(vm)
         }
     }
 }
@@ -84,17 +86,39 @@ private fun SheetTitle(text: String) {
     Text(text, fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 12.dp))
 }
 
+private fun norm(x: String): String =
+    java.text.Normalizer.normalize(x.lowercase(), java.text.Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
+
+/** As in the Tray: search by title (ignoring diacritics) or number, current chapter highlighted with progress. */
 @Composable
 private fun ChaptersSheet(vm: MainViewModel) {
     val s by vm.playing.collectAsStateWithLifecycle()
     val target by vm.target.collectAsStateWithLifecycle()
     val current = s.chapterIndex
+    var query by remember { mutableStateOf("") }
+    val q = norm(query.trim())
+    val shown = s.chapters.withIndex().filter { (i, c) -> q.isEmpty() || norm(c.title).contains(q) || "${i + 1}" == q }
     val list = rememberLazyListState(initialFirstVisibleItemIndex = (current - 2).coerceAtLeast(0))
-    SheetTitle("Kapitoly")
+    LaunchedEffect(q) { if (q.isNotEmpty()) list.scrollToItem(0) }
+
+    Row(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("Kapitoly", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text("  ${s.chapters.size}", color = C.Muted, fontSize = 14.sp)
+        Spacer(Modifier.weight(1f))
+        OutlinedTextField(
+            value = query, onValueChange = { query = it },
+            placeholder = { Text("Hledat") },
+            leadingIcon = { Icon(Ic.Search, null, modifier = Modifier.size(18.dp)) },
+            singleLine = true,
+            modifier = Modifier.width(190.dp),
+        )
+    }
     LazyColumn(state = list, modifier = Modifier.heightIn(max = 560.dp)) {
-        itemsIndexed(s.chapters) { i, c ->
+        if (shown.isEmpty()) item { Text("—", color = C.Muted, modifier = Modifier.fillMaxWidth().padding(24.dp)) }
+        items(shown.size) { k ->
+            val (i, c) = shown[k]
             val isCur = i == current
-            val done = c.endSec <= s.positionSec
+            val done = c.endSec <= s.positionSec && !isCur
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -103,10 +127,10 @@ private fun ChaptersSheet(vm: MainViewModel) {
                         target.chapter(i)
                         vm.sheet = null
                     }
-                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("${i + 1}", color = C.Muted, modifier = Modifier.width(36.dp))
+                Text("${i + 1}", color = if (isCur) C.Accent else C.Muted, modifier = Modifier.width(36.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
                         c.title, maxLines = 2, overflow = TextOverflow.Ellipsis,
@@ -114,18 +138,49 @@ private fun ChaptersSheet(vm: MainViewModel) {
                         fontWeight = if (isCur) FontWeight.SemiBold else FontWeight.Normal,
                     )
                     if (isCur) {
-                        Text(
-                            "${formatClock(s.positionSec - c.startSec)} / ${formatClock(c.endSec - c.startSec)}",
-                            color = C.Accent, fontSize = 13.sp,
-                        )
+                        val len = (c.endSec - c.startSec).coerceAtLeast(1.0)
+                        val frac = ((s.positionSec - c.startSec) / len).toFloat().coerceIn(0f, 1f)
+                        Box(Modifier.padding(top = 4.dp).fillMaxWidth().height(2.dp).background(C.Line)) {
+                            Box(Modifier.fillMaxWidth(frac).height(2.dp).background(C.Accent))
+                        }
                     }
                 }
-                Text(formatClock(c.endSec - c.startSec), color = C.Muted, fontSize = 13.sp)
+                Text(formatClock(c.endSec - c.startSec), color = if (isCur) C.Accent else C.Muted, fontSize = 13.sp, modifier = Modifier.padding(start = 8.dp))
                 if (done) Icon(Ic.Check, "Dohráno", tint = C.Ok, modifier = Modifier.padding(start = 8.dp).size(18.dp))
+                if (isCur) Icon(Ic.VolumeDown, "Přehrává se", tint = C.Accent, modifier = Modifier.padding(start = 8.dp).size(18.dp))
             }
         }
     }
     Spacer(Modifier.height(16.dp))
+}
+
+/** Hold on the volume chip: slider + mute, as the Tray volume popup. */
+@Composable
+private fun VolumeSheet(vm: MainViewModel) {
+    val target by vm.target.collectAsStateWithLifecycle()
+    val s by vm.playing.collectAsStateWithLifecycle()
+    var value by remember { mutableFloatStateOf(if (s.muted) 0f else s.volume) }
+    SheetTitle("Hlasitost")
+    Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = {
+            target.toggleMute()
+            value = if (value > 0f) 0f else s.volume.takeIf { it > 0f } ?: 0.5f
+        }) { Icon(if (value <= 0f) Ic.VolumeOff else Ic.VolumeUp, "Ztlumit") }
+        Slider(
+            value = value,
+            onValueChange = { value = Math.round(it * 20) / 20f },
+            onValueChangeFinished = { target.setVolume(value) },
+            valueRange = 0f..1f,
+            colors = SliderDefaults.colors(thumbColor = C.Accent, activeTrackColor = C.Accent, inactiveTrackColor = C.Line),
+            modifier = Modifier.weight(1f),
+        )
+        Text("${(value * 100).toInt()} %", modifier = Modifier.width(56.dp).padding(start = 8.dp))
+    }
+    Text(
+        "Hlasitost aplikace, nezávislá na hlasitosti systému.",
+        color = C.Muted, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+    )
+    Spacer(Modifier.height(20.dp))
 }
 
 @Composable
@@ -157,7 +212,7 @@ private fun DevicesSheet(vm: MainViewModel) {
                 true -> if (rs.itemId != null) (if (rs.isPlaying) "Hraje: " else "Pozastaveno: ") + rs.title else "Připraveno"
             }
             DeviceRow(
-                Ic.Tv, d.name, sub, selected = current.id == d.deviceId, online = online == true,
+                if (d.kind == "pc") Ic.Computer else Ic.Tv, d.name, sub, selected = current.id == d.deviceId, online = online == true,
                 onRemove = { targets.unpair(d.deviceId) },
             ) {
                 vm.switchTarget(rt)
@@ -168,7 +223,7 @@ private fun DevicesSheet(vm: MainViewModel) {
         OutlinedButton(onClick = { vm.sheet = Sheet.Pair }, modifier = Modifier.fillMaxWidth()) {
             Icon(Ic.Add, null)
             Spacer(Modifier.width(8.dp))
-            Text("Spárovat televizi")
+            Text("Spárovat zařízení (TV nebo PC)")
         }
         Text(
             "Při přepnutí se přehrávání pozastaví, pozice se uloží na server a pokračuje na vybraném zařízení.",
@@ -225,7 +280,26 @@ private fun PairSheet(vm: MainViewModel) {
     var port by remember { mutableStateOf(DEFAULT_PORT.toString()) }
     var code by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    /** null = unknown (not checked yet / unreachable) */
+    var info by remember { mutableStateOf<InfoResponse?>(null) }
+    var infoError by remember { mutableStateOf<String?>(null) }
     val unpaired = found.values.filter { f -> paired.none { it.deviceId == f.deviceId } }
+
+    // Ask the selected device what it is and whether it needs the password.
+    LaunchedEffect(host, port) {
+        info = null
+        infoError = null
+        val p = port.toIntOrNull() ?: return@LaunchedEffect
+        if (host.isBlank()) return@LaunchedEffect
+        delay(400)
+        try {
+            info = targets.info(host, p)
+        } catch (e: Exception) {
+            infoError = "Zařízení na $host:$p neodpovídá"
+        }
+    }
+    val needPassword = info?.let { targets.needsPassword(it) } ?: false
+    val isPc = info?.kind == "pc"
 
     Column(
         Modifier
@@ -234,15 +308,16 @@ private fun PairSheet(vm: MainViewModel) {
             .imePadding(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text("Spárovat televizi", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text("Spárovat zařízení", fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text(
-            "Na televizi otevři ABS Player. Zobrazí párovací kód. Televize musí být ve stejné síti.",
+            "TV: otevři ABS Player na televizi. PC: v Audiobookshelf Tray otevři „Přehrávat na → Párovací kód tohoto PC“. " +
+                "Zařízení ukáže šestimístný kód. Musí být ve stejné síti.",
             color = C.Muted, fontSize = 14.sp,
         )
         if (unpaired.isEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                Text("Hledám televize v síti…", color = C.Muted, modifier = Modifier.padding(start = 10.dp))
+                Text("Hledám zařízení v síti…", color = C.Muted, modifier = Modifier.padding(start = 10.dp))
             }
         } else {
             unpaired.forEach { f ->
@@ -259,7 +334,7 @@ private fun PairSheet(vm: MainViewModel) {
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Ic.Tv, null, tint = if (sel) C.Accent else C.Text)
+                    Icon(if (f.kind == "pc") Ic.Computer else Ic.Tv, null, tint = if (sel) C.Accent else C.Text)
                     Column(Modifier.padding(start = 12.dp)) {
                         Text(f.name, fontWeight = FontWeight.SemiBold)
                         Text("${f.host}:${f.port}", color = C.Muted, fontSize = 13.sp)
@@ -270,7 +345,7 @@ private fun PairSheet(vm: MainViewModel) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = host, onValueChange = { host = it.trim() },
-                label = { Text("IP adresa TV") }, singleLine = true,
+                label = { Text("IP adresa") }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                 modifier = Modifier.weight(2f),
             )
@@ -281,29 +356,38 @@ private fun PairSheet(vm: MainViewModel) {
                 modifier = Modifier.weight(1f),
             )
         }
+        info?.let {
+            Text(
+                (if (isPc) "PC: " else "TV: ") + it.name + if (it.loggedIn && !isPc) " · přihlášená jako ${it.username ?: "?"}" else "",
+                color = C.Ok, fontSize = 13.sp,
+            )
+        }
+        infoError?.let { Text(it, color = C.Muted, fontSize = 13.sp) }
         OutlinedTextField(
             value = code, onValueChange = { code = it.filter(Char::isDigit).take(6) },
-            label = { Text("Kód z televize") }, singleLine = true,
+            label = { Text("Kód ze zařízení") }, singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             modifier = Modifier.fillMaxWidth(),
         )
-        OutlinedTextField(
-            value = password, onValueChange = { password = it },
-            label = { Text("Heslo k ABS (${vm.app.settings.username ?: ""})") }, singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Text(
-            "Heslo se nikam neukládá. Telefon s ním získá pro televizi vlastní přihlášení k serveru.",
-            color = C.Muted, fontSize = 12.sp,
-        )
+        if (needPassword) {
+            OutlinedTextField(
+                value = password, onValueChange = { password = it },
+                label = { Text("Heslo k ABS (${vm.app.settings.username ?: ""})") }, singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                "Televize zatím není přihlášená k tvému účtu. Heslo se nikam neukládá – telefon s ním získá pro televizi vlastní přihlášení.",
+                color = C.Muted, fontSize = 12.sp,
+            )
+        }
         vm.pairError?.let { Text(it, color = C.Error) }
         Button(
             onClick = {
-                vm.pair(host, port.toIntOrNull() ?: DEFAULT_PORT, code, password) { vm.sheet = null }
+                vm.pair(host, port.toIntOrNull() ?: DEFAULT_PORT, code, password.ifEmpty { null }) { vm.sheet = null }
             },
-            enabled = !vm.pairBusy && host.isNotBlank() && code.length == 6 && password.isNotEmpty(),
+            enabled = !vm.pairBusy && info != null && code.length == 6 && (!needPassword || password.isNotEmpty()),
             modifier = Modifier.fillMaxWidth().height(52.dp),
         ) {
             if (vm.pairBusy) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp) else Text("Spárovat")
@@ -368,7 +452,7 @@ private fun SpeedSheet(vm: MainViewModel) {
             }) { Text("+", fontSize = 26.sp) }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(0.8f, 1.0f, 1.2f, 1.25f, 1.5f, 1.75f, 2.0f).forEach { sp ->
+            PlayerEngine.SPEEDS.forEach { sp ->
                 FilterChip(
                     selected = kotlin.math.abs(value - sp) < 0.01f,
                     onClick = {

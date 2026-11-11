@@ -70,11 +70,14 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
     private var sleepChapter = -1
     private var retries = 0
     private var retryJob: Job? = null
+    private var volume = app.settings.volume.coerceIn(0f, 1f)
+    private var muted = false
     private var chapterInfos: List<ChapterInfo> = emptyList()
     private var chapterInfosFor: LoadedBook? = null
 
     init {
         exo.playbackParameters = PlaybackParameters(app.settings.speed)
+        exo.volume = volume
         exo.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 if (isPlaying) {
@@ -176,6 +179,29 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
         showInfo("Rychlost ${formatSpeed(next)}")
     }
 
+    /** In-app volume 0..1 (independent of the system volume, like the Tray player). */
+    fun setVolume(v: Float) {
+        volume = v.coerceIn(0f, 1f)
+        if (volume > 0f) muted = false
+        app.settings.volume = volume
+        applyVolume()
+    }
+
+    fun toggleMute() {
+        if (muted || volume <= 0f) {
+            muted = false
+            if (volume <= 0f) volume = 0.5f
+        } else {
+            muted = true
+        }
+        applyVolume()
+    }
+
+    private fun applyVolume() {
+        exo.volume = if (muted) 0f else volume
+        publish()
+    }
+
     /** minutes > 0: timer; -1: end of chapter; 0: off. */
     fun setSleep(minutes: Int) {
         sleepAt = null
@@ -221,6 +247,8 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
             CMD_SPEED -> cycleSpeed()
             CMD_SEEK -> seekTo(args.getDouble("sec"))
             CMD_SLEEP -> setSleep(args.getInt("min"))
+            CMD_VOLUME -> setVolume(args.getFloat("v"))
+            CMD_MUTE -> toggleMute()
             CMD_PLAY_ITEM -> args.getString("itemId")?.let {
                 playItem(it, if (args.containsKey("sec")) args.getDouble("sec") else null)
             }
@@ -292,6 +320,8 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
             isBuffering = exo.playbackState == Player.STATE_BUFFERING && exo.playWhenReady,
             isLoading = player.isLoadingBook,
             speed = exo.playbackParameters.speed,
+            volume = volume,
+            muted = muted || volume <= 0f,
             sleepSec = when {
                 sleepEndOfChapter -> -1
                 sa != null -> ((sa - now) / 1000).toInt().coerceAtLeast(0)
@@ -309,9 +339,12 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
         const val CMD_SEEK = "abs.SEEK"
         const val CMD_SLEEP = "abs.SLEEP"
         const val CMD_PLAY_ITEM = "abs.PLAY_ITEM"
-        val ALL_COMMANDS = listOf(CMD_REWIND, CMD_FORWARD, CMD_SPEED, CMD_SEEK, CMD_SLEEP, CMD_PLAY_ITEM)
+        const val CMD_VOLUME = "abs.VOLUME"
+        const val CMD_MUTE = "abs.MUTE"
+        val ALL_COMMANDS = listOf(CMD_REWIND, CMD_FORWARD, CMD_SPEED, CMD_SEEK, CMD_SLEEP, CMD_PLAY_ITEM, CMD_VOLUME, CMD_MUTE)
 
-        val SPEEDS = listOf(0.8f, 1.0f, 1.1f, 1.2f, 1.25f, 1.3f, 1.4f, 1.5f, 1.75f, 2.0f)
+        /** Same steps as the Tray player: tap = next step. */
+        val SPEEDS = listOf(0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f)
 
         fun formatSpeed(s: Float): String =
             (if (s == s.toInt().toFloat()) "${s.toInt()}.0" else "%.2f".format(java.util.Locale.US, s).trimEnd('0')) + "×"

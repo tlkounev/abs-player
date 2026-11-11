@@ -1,7 +1,12 @@
 package cz.ondra.absplayer.ui
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,19 +28,23 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,13 +52,30 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import cz.ondra.absplayer.player.ChapterInfo
+import cz.ondra.absplayer.player.NowPlaying
 import cz.ondra.absplayer.player.PlayerEngine
 
+/** Chapter containing [sec] (by start time), or null for a book without chapters. */
+fun NowPlaying.chapterAtSec(sec: Double): Pair<Int, ChapterInfo>? {
+    if (chapters.size <= 1) return null
+    var i = chapters.indexOfLast { it.startSec <= sec + 0.001 }
+    if (i < 0) i = 0
+    return i to chapters[i]
+}
+
+/**
+ * Same layout and controls as the Audiobookshelf Tray mini player:
+ * chapter bar + thin book bar (both draggable), elapsed / label / remaining (at the current speed),
+ * volume (tap = mute, hold = slider), speed (tap = next step, hold = fine), chapter list.
+ */
 @Composable
 fun PlayerScreen(vm: MainViewModel) {
     val s by vm.playing.collectAsStateWithLifecycle()
     val target by vm.target.collectAsStateWithLifecycle()
     val itemId = s.itemId
+    /** Position shown while a bar is being dragged (seconds in the book). */
+    var preview by remember { mutableStateOf<Double?>(null) }
 
     Column(
         Modifier
@@ -63,27 +89,15 @@ fun PlayerScreen(vm: MainViewModel) {
         Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { vm.pop() }) { Icon(Ic.Down, "Zavřít") }
             Spacer(Modifier.weight(1f))
-            Row(
-                Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(if (target.isRemote) C.AccentDark else C.Surface2)
-                    .clickable { vm.sheet = Sheet.Devices }
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(if (target.isRemote) Ic.Tv else Ic.Phone, null, tint = if (target.isRemote) C.Accent else C.Text, modifier = Modifier.size(18.dp))
-                Text(target.name, modifier = Modifier.padding(start = 8.dp), fontSize = 14.sp, color = if (target.isRemote) C.Accent else C.Text)
-            }
+            TargetChip(vm, target.name, target.isRemote, vm.targetKind())
         }
 
         if (itemId == null) {
-            Spacer(Modifier.height(80.dp))
-            Text(if (s.isLoading) "Načítám…" else "Nic se nepřehrává", color = C.Muted)
-            s.error?.let { Text(it, color = C.Error, modifier = Modifier.padding(top = 12.dp), textAlign = TextAlign.Center) }
+            NothingPlaying(vm, s)
             return@Column
         }
 
-        Box(Modifier.padding(top = 8.dp).widthIn(max = 340.dp).fillMaxWidth().aspectRatio(1f)) {
+        Box(Modifier.padding(top = 8.dp).widthIn(max = 320.dp).fillMaxWidth().aspectRatio(1f)) {
             Cover(itemId, s.title, Modifier.fillMaxSize(), corner = 18.dp)
             if (s.isLoading || s.isBuffering) {
                 CircularProgressIndicator(Modifier.align(Alignment.Center).size(48.dp), color = C.Accent)
@@ -98,59 +112,61 @@ fun PlayerScreen(vm: MainViewModel) {
         Text(s.title, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(s.author, color = C.Muted, fontSize = 15.sp, maxLines = 1)
 
-        val ci = s.chapterIndex
-        val ch = s.chapter
+        val pos = preview ?: s.positionSec
+        val rate = s.speed.coerceAtLeast(0.1f)
+        val ch = s.chapterAtSec(pos)
+        // While dragging the book bar outside the current chapter, the chapter labels follow the position.
         if (ch != null) {
             Text(
-                "Kapitola ${ci + 1}/${s.chapters.size} · ${ch.title}",
+                ch.second.title,
                 color = C.Accent, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 10.dp).clickable { vm.sheet = Sheet.Chapters },
+                maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
 
-        // Chapter slider
-        val chStart = ch?.startSec ?: 0.0
-        val chLen = ((ch?.endSec ?: s.durationSec) - chStart).coerceAtLeast(1.0)
-        val inChapter = (s.positionSec - chStart).coerceIn(0.0, chLen)
-        var dragging by remember { mutableStateOf<Float?>(null) }
-        Slider(
-            value = dragging ?: inChapter.toFloat(),
-            onValueChange = { dragging = it },
-            onValueChangeFinished = {
-                dragging?.let { target.seekTo(chStart + it) }
-                dragging = null
-            },
-            valueRange = 0f..chLen.toFloat(),
-            colors = SliderDefaults.colors(thumbColor = C.Accent, activeTrackColor = C.Accent, inactiveTrackColor = C.Line),
-            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-        )
-        val shown = dragging?.toDouble() ?: inChapter
-        Row(Modifier.fillMaxWidth()) {
-            Text(formatClock(shown), color = C.Muted, fontSize = 13.sp)
-            Spacer(Modifier.weight(1f))
-            Text("−" + formatClock(chLen - shown), color = C.Muted, fontSize = 13.sp)
+        // --- chapter bar (big) ---
+        if (ch != null) {
+            val c = ch.second
+            val len = (c.endSec - c.startSec).coerceAtLeast(1.0)
+            val inCh = (pos - c.startSec).coerceIn(0.0, len)
+            SeekBar(
+                fraction = (inCh / len).toFloat(),
+                thin = false,
+                onPreview = { f -> preview = f?.let { c.startSec + it * len } },
+                onSeek = { f -> target.seekTo(c.startSec + f * len); preview = null },
+                modifier = Modifier.padding(top = 10.dp),
+            )
+            TimesRow(
+                formatClock(inCh),
+                "Kapitola ${ch.first + 1}/${s.chapters.size}",
+                "−" + formatClock((len - inCh) / rate),
+                onLabel = { vm.sheet = Sheet.Chapters },
+            )
         }
 
-        // Whole book
-        val bookFrac = if (s.durationSec > 0) (s.positionSec / s.durationSec).toFloat().coerceIn(0f, 1f) else 0f
-        LinearProgressIndicator(
-            progress = { bookFrac },
-            color = C.Accent.copy(alpha = 0.55f), trackColor = C.Line,
-            modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(4.dp).clip(RoundedCornerShape(2.dp)),
+        // --- book bar (thin with chapters, big without) ---
+        val dur = s.durationSec.coerceAtLeast(1.0)
+        SeekBar(
+            fraction = (pos / dur).toFloat(),
+            thin = ch != null,
+            onPreview = { f -> preview = f?.let { it * dur } },
+            onSeek = { f -> target.seekTo(f * dur); preview = null },
+            modifier = Modifier.padding(top = if (ch != null) 6.dp else 10.dp),
         )
-        Text(
-            "Celá kniha ${(bookFrac * 100).toInt()} % · zbývá ${formatLeft((s.durationSec - s.positionSec) / s.speed)}",
-            color = C.Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp),
+        TimesRow(
+            formatClock(pos),
+            "Kniha · ${((pos / dur) * 100).toInt()} %",
+            "−" + formatClock((dur - pos) / rate),
         )
 
-        // Transport
+        // --- transport ---
         Row(
-            Modifier.fillMaxWidth().padding(top = 20.dp),
+            Modifier.fillMaxWidth().padding(top = 18.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            RoundButton(Ic.Prev, "Předchozí kapitola", 56.dp) { target.prev() }
+            RoundButton(Ic.Prev, "Předchozí kapitola", 56.dp, enabled = ch != null) { target.prev() }
             SkipButton(Ic.Replay, "Zpět o 30 s") { target.skip(-30.0) }
             Box(
                 Modifier.size(84.dp).clip(CircleShape).background(C.Accent).clickable { target.toggle() },
@@ -159,19 +175,162 @@ fun PlayerScreen(vm: MainViewModel) {
                 Icon(if (s.isPlaying) Ic.Pause else Ic.Play, if (s.isPlaying) "Pozastavit" else "Přehrát", tint = C.OnAccent, modifier = Modifier.size(42.dp))
             }
             SkipButton(Ic.Forward, "Vpřed o 30 s") { target.skip(30.0) }
-            RoundButton(Ic.Next, "Další kapitola", 56.dp) { target.next() }
+            RoundButton(Ic.Next, "Další kapitola", 56.dp, enabled = ch != null) { target.next() }
         }
 
-        // Options
+        // --- volume · speed · sleep · chapters ---
         Row(
-            Modifier.fillMaxWidth().padding(top = 24.dp).navigationBarsPadding(),
+            Modifier.fillMaxWidth().padding(top = 22.dp).navigationBarsPadding(),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         ) {
-            Chip(Ic.Speed, PlayerEngine.formatSpeed(s.speed)) { vm.sheet = Sheet.Speed }
+            val vol = if (s.muted) 0f else s.volume
+            val volIcon = when {
+                vol <= 0f -> Ic.VolumeOff
+                vol <= 0.5f -> Ic.VolumeDown
+                else -> Ic.VolumeUp
+            }
+            Chip(volIcon, "${(vol * 100).toInt()} %", onLongClick = { vm.sheet = Sheet.Volume }) { target.toggleMute() }
+            Chip(Ic.Speed, PlayerEngine.formatSpeed(s.speed), onLongClick = { vm.sheet = Sheet.Speed }) {
+                val next = PlayerEngine.SPEEDS.firstOrNull { it > s.speed + 0.001f } ?: PlayerEngine.SPEEDS.first()
+                target.setSpeed(next)
+            }
             Chip(Ic.Timer, sleepLabel(s.sleepSec)) { vm.sheet = Sheet.Sleep }
-            Chip(Ic.List, "Kapitoly") { vm.sheet = Sheet.Chapters }
+            if (ch != null) Chip(Ic.List, "Kapitoly") { vm.sheet = Sheet.Chapters }
         }
+        Text(
+            "Podrž hlasitost nebo rychlost pro jemné nastavení",
+            color = C.Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp),
+        )
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+/** Like the Tray popup when nothing plays: recently listened titles. */
+@Composable
+private fun NothingPlaying(vm: MainViewModel, s: NowPlaying) {
+    Column(Modifier.fillMaxWidth().padding(top = 24.dp)) {
+        if (s.isLoading) {
+            Text("Načítám…", color = C.Muted, modifier = Modifier.align(Alignment.CenterHorizontally))
+            return@Column
+        }
+        s.error?.let { Text(it, color = C.Error, modifier = Modifier.padding(bottom = 12.dp)) }
+        Text("Pokračovat v poslechu", fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
+        val items = vm.continueItems.take(5)
+        if (items.isEmpty()) Text("Nic se nepřehrává.", color = C.Muted)
+        items.forEach { li ->
+            val p = vm.progress[li.id]
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { vm.play(li.id) }
+                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Cover(li.id, li.title, Modifier.size(56.dp), corner = 6.dp, progress = p?.progress)
+                Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                    Text(li.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(li.author, color = C.Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Box(Modifier.size(44.dp).clip(CircleShape).background(C.Accent), contentAlignment = Alignment.Center) {
+                    Icon(Ic.Play, "Přehrát", tint = C.OnAccent)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TargetChip(vm: MainViewModel, name: String, remote: Boolean, kind: String) {
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (remote) C.AccentDark else C.Surface2)
+            .clickable { vm.sheet = Sheet.Devices }
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val icon = when {
+            !remote -> Ic.Phone
+            kind == "pc" -> Ic.Computer
+            else -> Ic.Tv
+        }
+        Icon(icon, null, tint = if (remote) C.Accent else C.Text, modifier = Modifier.size(18.dp))
+        Text(name, modifier = Modifier.padding(start = 8.dp), fontSize = 14.sp, color = if (remote) C.Accent else C.Text)
+    }
+}
+
+@Composable
+private fun TimesRow(left: String, label: String, right: String, onLabel: (() -> Unit)? = null) {
+    Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(left, color = C.Muted, fontSize = 12.sp, modifier = Modifier.weight(1f))
+        Text(
+            label, color = C.Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            modifier = (if (onLabel != null) Modifier.clip(RoundedCornerShape(4.dp)).clickable(onClick = onLabel) else Modifier)
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+        )
+        Text(right, color = C.Muted, fontSize = 12.sp, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
+    }
+}
+
+/**
+ * Progress bar that can be tapped or dragged anywhere (as in the Tray). [onPreview] gets the
+ * fraction while dragging (null when done), [onSeek] the final fraction.
+ */
+@Composable
+fun SeekBar(
+    fraction: Float,
+    thin: Boolean,
+    onPreview: (Float?) -> Unit,
+    onSeek: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var width by remember { mutableIntStateOf(1) }
+    var drag by remember { mutableStateOf<Float?>(null) }
+    val preview by rememberUpdatedState(onPreview)
+    val seek by rememberUpdatedState(onSeek)
+    val shown = (drag ?: fraction).coerceIn(0f, 1f)
+    val railH = if (thin) 3.dp else 5.dp
+    val knob = if (thin) (if (drag != null) 7.dp else 5.dp) else (if (drag != null) 9.dp else 7.dp)
+
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(if (thin) 24.dp else 32.dp)
+            .onSizeChanged { width = it.width.coerceAtLeast(1) }
+            .pointerInput(Unit) {
+                detectTapGestures { o -> seek((o.x / width).coerceIn(0f, 1f)) }
+            }
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragStart = { o ->
+                        drag = (o.x / width).coerceIn(0f, 1f)
+                        preview(drag)
+                    },
+                    onDragEnd = {
+                        drag?.let { seek(it) }
+                        drag = null
+                        preview(null)
+                    },
+                    onDragCancel = {
+                        drag = null
+                        preview(null)
+                    },
+                ) { change, _ ->
+                    change.consume()
+                    drag = (change.position.x / width).coerceIn(0f, 1f)
+                    preview(drag)
+                }
+            },
+    ) {
+        Canvas(Modifier.fillMaxSize()) {
+            val cy = size.height / 2
+            val rh = railH.toPx()
+            val r = CornerRadius(rh / 2, rh / 2)
+            drawRoundRect(C.Line, Offset(0f, cy - rh / 2), Size(size.width, rh), r)
+            drawRoundRect(C.Accent, Offset(0f, cy - rh / 2), Size(size.width * shown, rh), r)
+            drawCircle(C.Accent, knob.toPx(), Offset(size.width * shown, cy))
+        }
     }
 }
 
@@ -182,8 +341,8 @@ fun sleepLabel(sec: Int?): String = when {
 }
 
 @Composable
-private fun RoundButton(icon: ImageVector, desc: String, size: Dp, onClick: () -> Unit) {
-    IconButton(onClick = onClick, modifier = Modifier.size(size)) {
+private fun RoundButton(icon: ImageVector, desc: String, size: Dp, enabled: Boolean = true, onClick: () -> Unit) {
+    IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(size)) {
         Icon(icon, desc, modifier = Modifier.size(size * 0.55f))
     }
 }
@@ -196,14 +355,15 @@ private fun SkipButton(icon: ImageVector, desc: String, onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Chip(icon: ImageVector, label: String, onClick: () -> Unit) {
+private fun Chip(icon: ImageVector, label: String, onLongClick: (() -> Unit)? = null, onClick: () -> Unit) {
     Row(
         Modifier
             .clip(RoundedCornerShape(22.dp))
             .background(C.Surface2)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(icon, null, modifier = Modifier.size(18.dp))
@@ -231,7 +391,7 @@ fun MiniPlayer(vm: MainViewModel) {
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
             Text(s.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val sub = buildString {
-                s.chapter?.let { append(it.title) }
+                s.chapterAtSec(s.positionSec)?.let { append(it.second.title) }
                 if (target.isRemote) append(" · na ${target.name}")
             }
             Text(sub, color = if (target.isRemote) C.Accent else C.Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)

@@ -93,6 +93,7 @@ class ReceiverService : Service() {
             setPort(listenPort)
             setAttribute("id", app.settings.deviceId)
             setAttribute("name", deviceName(this@ReceiverService))
+            setAttribute("kind", "tv")
         }
         val l = object : NsdManager.RegistrationListener {
             override fun onServiceRegistered(serviceInfo: NsdServiceInfo) {}

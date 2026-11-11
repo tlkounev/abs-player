@@ -34,7 +34,7 @@ sealed interface Screen {
     data object Player : Screen
 }
 
-enum class Sheet { Chapters, Devices, Pair, Sleep, Speed }
+enum class Sheet { Chapters, Devices, Pair, Sleep, Speed, Volume }
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -267,6 +267,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         target.value.playItem(itemId, startSec)
     }
 
+    /** "local", "tv" or "pc". */
+    fun targetKind(): String = (target.value as? cz.ondra.absplayer.remote.RemoteTarget)?.device?.kind ?: "local"
+
     fun switchTarget(t: PlaybackTarget) {
         viewModelScope.launch { app.targets.switchTo(t) }
     }
@@ -274,7 +277,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var pairBusy by mutableStateOf(false)
     var pairError by mutableStateOf<String?>(null)
 
-    fun pair(host: String, port: Int, code: String, password: String, onDone: () -> Unit) {
+    fun pair(host: String, port: Int, code: String, password: String?, onDone: () -> Unit) {
         viewModelScope.launch {
             pairBusy = true
             pairError = null

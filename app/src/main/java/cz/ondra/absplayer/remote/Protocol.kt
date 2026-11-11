@@ -8,13 +8,17 @@ import kotlinx.serialization.Serializable
  * out at pairing.
  *
  *   GET  /info   -> InfoResponse
- *   POST /pair   PairRequest -> PairResponse   (needs the code shown on the TV)
+ *   POST /pair   PairRequest -> PairResponse   (needs the code shown on the receiver)
  *   GET  /state  -> NowPlaying
  *   POST /cmd    Command -> NowPlaying
+ *
+ * Receivers: the Google TV app (kind "tv") and Audiobookshelf Tray on Windows (kind "pc").
+ * A TV plays on its own login, so pairing hands it a token pair unless it is already signed in
+ * to the same account. The PC uses the login of its ABS web window and needs no tokens.
  */
 const val SERVICE_TYPE = "_absplayer._tcp"
 const val DEFAULT_PORT = 8765
-const val PROTOCOL_VERSION = 1
+const val PROTOCOL_VERSION = 2
 
 @Serializable
 data class InfoResponse(
@@ -24,6 +28,10 @@ data class InfoResponse(
     val server: String? = null,
     val username: String? = null,
     val version: Int = PROTOCOL_VERSION,
+    /** "tv" | "pc" */
+    val kind: String = "tv",
+    /** Receiver plays on credentials handed over at pairing (TV), not on its own login (PC). */
+    val acceptsTokens: Boolean = true,
 )
 
 @Serializable
@@ -32,7 +40,8 @@ data class PairRequest(
     val server: String,
     val username: String,
     val userId: String? = null,
-    val accessToken: String,
+    /** Null when the receiver needs no credentials (already signed in to this account, or PC). */
+    val accessToken: String? = null,
     val refreshToken: String? = null,
     val phoneName: String = "",
 )
@@ -42,7 +51,7 @@ data class PairResponse(val secret: String, val deviceId: String, val name: Stri
 
 @Serializable
 data class Command(
-    /** play | pause | toggle | seek | skip | chapter | next | prev | speed | sleep | playItem | stop */
+    /** play | pause | toggle | seek | skip | chapter | next | prev | speed | sleep | volume | mute | playItem | stop */
     val action: String,
     val value: Double? = null,
     val itemId: String? = null,

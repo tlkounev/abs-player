@@ -52,6 +52,8 @@ interface PlaybackTarget {
     fun prev()
     fun setSpeed(speed: Float)
     fun setSleep(minutes: Int)
+    fun setVolume(volume: Float)
+    fun toggleMute()
     fun stop()
 
     /** Pauses, makes sure the server has the position, and returns it (null = nothing loaded). */
@@ -99,6 +101,8 @@ class LocalTarget(private val app: App) : PlaybackTarget {
     override fun prev() = withEngine { it.prevChapter() }
     override fun setSpeed(speed: Float) = withEngine { it.setSpeed(speed) }
     override fun setSleep(minutes: Int) = withEngine { it.setSleep(minutes) }
+    override fun setVolume(volume: Float) = withEngine { it.setVolume(volume) }
+    override fun toggleMute() = withEngine { it.toggleMute() }
     override fun stop() {
         PlaybackHub.engine?.stop()
     }
@@ -190,6 +194,11 @@ class RemoteTarget(private val app: App, device: PairedDevice) : PlaybackTarget 
     override fun prev() = send(Command("prev"))
     override fun setSpeed(speed: Float) = send(Command("speed", speed.toDouble()))
     override fun setSleep(minutes: Int) = send(Command("sleep", minutes.toDouble()))
+    override fun setVolume(volume: Float) {
+        _state.value = _state.value.copy(volume = volume, muted = volume <= 0f)
+        send(Command("volume", volume.toDouble()))
+    }
+    override fun toggleMute() = send(Command("mute"))
     override fun stop() = send(Command("stop"))
 
     override suspend fun pauseForHandoff(): Double? {
@@ -263,17 +272,35 @@ class TargetManager(private val app: App) {
         }
     }
 
+    suspend fun info(host: String, port: Int): InfoResponse = withContext(Dispatchers.IO) {
+        val r = Request.Builder().url("http://$host:$port/info").get().build()
+        RemoteHttp.client.newCall(r).execute().use { resp ->
+            val text = resp.body?.string() ?: ""
+            if (!resp.isSuccessful) throw ApiException(resp.code, "HTTP ${resp.code}")
+            RemoteHttp.json.decodeFromString(InfoResponse.serializer(), text)
+        }
+    }
+
+    /** Whether pairing [info]'s device needs the ABS password (to hand it its own login). */
+    fun needsPassword(info: InfoResponse): Boolean =
+        info.acceptsTokens && !(info.loggedIn && info.server == app.settings.serverUrl && info.username == app.settings.username)
+
     /**
-     * Pairs a receiver: logs in once more with the user's password to get a separate token pair
-     * for the TV (refresh tokens rotate, so devices must not share one), and sends it with the
-     * code shown on the TV.
+     * Pairs a receiver. A TV that is not signed in to this account gets its own token pair: the
+     * phone logs in once more with the user's password (refresh tokens rotate, so devices must not
+     * share one). A PC, or a TV already on this account, only needs the code it shows.
      */
-    suspend fun pair(host: String, port: Int, code: String, password: String): PairedDevice {
+    suspend fun pair(host: String, port: Int, code: String, password: String?): PairedDevice {
         val server = app.settings.serverUrl ?: throw IOException("Nejsi přihlášen")
         val user = app.settings.username ?: throw IOException("Nejsi přihlášen")
-        val login = app.api.login(server, user, password)
-        val token = login.user.accessToken ?: login.user.token ?: throw IOException("Server nevrátil token")
-        val req = PairRequest(code.trim(), server, user, login.user.id, token, login.user.refreshToken, Build.MODEL)
+        val info = info(host, port)
+        var req = PairRequest(code.trim(), server, user, app.settings.userId, phoneName = Build.MODEL)
+        if (needsPassword(info)) {
+            if (password.isNullOrEmpty()) throw IOException("Zadej heslo k ABS – zařízení zatím není přihlášené")
+            val login = app.api.login(server, user, password)
+            val token = login.user.accessToken ?: login.user.token ?: throw IOException("Server nevrátil token")
+            req = req.copy(userId = login.user.id, accessToken = token, refreshToken = login.user.refreshToken)
+        }
         val resp = withContext(Dispatchers.IO) {
             val r = Request.Builder()
                 .url("http://$host:$port/pair")
@@ -289,7 +316,7 @@ class TargetManager(private val app: App) {
                 RemoteHttp.json.decodeFromString(PairResponse.serializer(), text)
             }
         }
-        val d = PairedDevice(resp.deviceId, resp.name, resp.secret, host, port)
+        val d = PairedDevice(resp.deviceId, resp.name, resp.secret, host, port, info.kind)
         app.settings.upsertPaired(d)
         _paired.value = app.settings.pairedDevices
         return d

@@ -21,6 +21,9 @@ data class NowPlaying(
     val isBuffering: Boolean = false,
     val isLoading: Boolean = false,
     val speed: Float = 1f,
+    /** 0..1, the level before muting. */
+    val volume: Float = 1f,
+    val muted: Boolean = false,
     /** Seconds left on the sleep timer; -1 = end of chapter; null = off. */
     val sleepSec: Int? = null,
     /** Short status line, e.g. "Pozice převzata z: Windows". */

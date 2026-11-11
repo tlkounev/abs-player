@@ -77,6 +77,8 @@ class ReceiverServer(
         loggedIn = app.settings.isLoggedIn,
         server = app.settings.serverUrl,
         username = app.settings.username,
+        kind = "tv",
+        acceptsTokens = true,
     )
 
     private fun authorized(s: NanoHTTPD.IHTTPSession): Boolean {
@@ -101,14 +103,19 @@ class ReceiverServer(
         }
         failedPairs = 0
         val secret = ByteArray(24).also { SecureRandom().nextBytes(it) }.joinToString("") { "%02x".format(it) }
+        val st = app.settings
+        val sameAccount = st.isLoggedIn && st.serverUrl == req.server && st.username == req.username
+        if (req.accessToken == null && !sameAccount) {
+            return error(NanoHTTPD.Response.Status.BAD_REQUEST, "Televize není přihlášená k tomuto účtu – zadej heslo")
+        }
         onMain {
-            val st = app.settings
-            val sameAccount = st.serverUrl == req.server && st.username == req.username
-            st.serverUrl = req.server
-            st.username = req.username
-            st.userId = req.userId
-            st.accessToken = req.accessToken
-            st.refreshToken = req.refreshToken
+            if (req.accessToken != null) {
+                st.serverUrl = req.server
+                st.username = req.username
+                st.userId = req.userId
+                st.accessToken = req.accessToken
+                st.refreshToken = req.refreshToken
+            }
             st.receiverSecrets = (if (sameAccount) st.receiverSecrets else emptySet()) + secret
             app.onCredentialsChanged()
         }
@@ -128,6 +135,8 @@ class ReceiverServer(
             "prev" -> engine.prevChapter()
             "speed" -> if (v != null) engine.setSpeed(v.toFloat())
             "sleep" -> engine.setSleep(v?.toInt() ?: 0)
+            "volume" -> if (v != null) engine.setVolume(v.toFloat())
+            "mute" -> engine.toggleMute()
             "playItem" -> cmd.itemId?.let { engine.playItem(it, v) }
             "stop" -> engine.stop()
             else -> throw IOException("Neznámý příkaz ${cmd.action}")
