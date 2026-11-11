@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ABS Player</string>
+    <string name="rewind">Zpět o 30 s</string>
+    <string name="forward">Vpřed o 30 s</string>
+    <string name="speed">Rychlost</string>
+    <string name="receiver_channel">Přijímač přehrávání</string>
+    <string name="receiver_running">Čeká na příkazy z telefonu</string>
+</resources>
