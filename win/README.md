@@ -27,7 +27,8 @@ Webový klient Audiobookshelf jako samostatná aplikace v oznamovací oblasti Wi
 - **Přepnutí:** když něco hraje, pozastaví se, pozice se uloží na server a přehrávání pokračuje
   na vybraném zařízení přesně odtud. Minipřehrávač pak ovládá to zařízení (pruhy, kapitoly,
   rychlost, hlasitost) a pod autorem ukazuje jeho jméno. Zpět se přepne výběrem tohoto PC.
-- **Párování:** zařízení v síti se najdou samy (mDNS), jinak zadej IP. Zadej šestimístný kód,
+- **Párování:** tlačítko „+ Spárovat zařízení (TV nebo PC)“ otevře formulář (křížek / Esc ho zavře).
+  Zařízení v síti se najdou samy (mDNS), jinak zadej IP. Zadej šestimístný kód,
   který zařízení ukazuje. TV, která ještě není přihlášená k tvému účtu, chce navíc heslo k ABS
   (získá s ním vlastní přihlášení, heslo se neukládá).
 - **PC jako přijímač:** telefon s ABS Player může přehrávání poslat sem. Párovací kód tohoto
