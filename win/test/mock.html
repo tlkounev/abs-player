@@ -1,0 +1,68 @@
+<!doctype html><html><body><h1>mock ABS</h1>
+<script>
+const log = [];
+const net = [];   // síťové požadavky a vnitřní volání PlayerHandleru (testy synchronizace)
+window.__serverProgress = null;
+window.__storeProgress = null;
+const vc = { isMute: false, lastValue: 0.5, _v: 0.8,
+  get volume() { return this._v; }, set volume(v) { this._v = v; ui.volume = v; log.push('vol:' + v); },
+  toggleMute() { this.isMute = !this.isMute; if (this.isMute) { this.lastValue = this._v; this.volume = 0; } else { this.volume = this.lastValue || 0.5; } log.push('mute'); } };
+const ui = {
+  volume: 0.8,
+  $refs: { volumeControl: vc },
+  playbackRate: 1,
+  prevChapter() { log.push('prevChapter'); player.currentTime = 600; },
+  goToNext() { log.push('goToNext'); player.currentTime = 1800; },
+  playbackRateChanged(r) { log.push('rate:' + r); player.currentPlaybackRate = r; }
+};
+const player = {
+  playerHandler: {
+    jumpBackwardAmount: 10, jumpForwardAmount: 30,
+    currentSessionId: 'sess1', playerPlaying: true, player: {}, listeningTimeSinceSync: 12, lastSyncTime: 0,
+    getCurrentTime() { return player.currentTime; },
+    playPause() { this.playerPlaying = !this.playerPlaying; player.isPlaying = this.playerPlaying; },
+    play() { this.playerPlaying = true; player.isPlaying = true; },
+    seek(t, shouldSync) { net.push('phSeek:' + Math.round(t) + (shouldSync === false ? '' : ':sync')); player.currentTime = t; }
+  },
+  streamLibraryItem: { id: 'li1', updatedAt: 1, media: { coverPath: '/cover.svg' } },
+  title: 'Stopařův průvodce po Galaxii',
+  authors: [{ name: 'Douglas Adams' }],
+  podcastAuthor: null,
+  mediaMetadata: { seriesName: 'Stopař #1', authorName: 'Douglas Adams' },
+  isPlaying: true, playerLoading: false,
+  currentTime: 1234, totalDuration: 21000, currentPlaybackRate: 1.25,
+  chapters: [{ title: 'Kapitola 1: Neděste se', start: 0, end: 1500 }, { title: 'Kapitola 2', start: 1500, end: 3000 }, { title: 'Kapitola 3', start: 3000, end: 21000 }],
+  chapters41: Array.from({length: 41}, (_, i) => ({ title: ['Únik z Ceres','Tichá stanice','Výslech','Ve stínu slunce','Návrat na Salamis','Rozkaz','Bitva u Phobosu'][i % 7] + (i >= 7 ? ' ' + (Math.floor(i/7)+1) : ''), start: i * 512, end: (i + 1) * 512 })),
+  get currentChapter() { return this.chapters.find(c => c.start <= this.currentTime && this.currentTime < c.end); },
+  sleepTimerSet: true, sleepTimerRemaining: 905,
+  $refs: { audioPlayer: ui },
+  $children: [],
+  playPause() { log.push('playPause'); this.playerHandler.playPause(); },
+  closePlayer() { net.push('closePlayer'); this.streamLibraryItem = null; },
+  jumpForward() { log.push('jumpFwd'); this.currentTime += 30; },
+  jumpBackward() { log.push('jumpBack'); this.currentTime -= 10; },
+  seek(t) { log.push('seek:' + Math.round(t)); this.currentTime = t; },
+  setPlaybackRate(r) { this.currentPlaybackRate = r; }
+};
+window.$nuxt = {
+  $children: [{ $children: [{ $children: [] }, player] }],
+  $store: {
+    state: { user: { user: { id: 'u' } } },
+    getters: {
+      'user/getToken': 'tok',
+      'globals/getLibraryItemCoverSrc': (li) => '/api/items/' + li.id + '/cover?ts=' + li.updatedAt,
+      'user/getUserMediaProgress': () => window.__storeProgress
+    }
+  },
+  $axios: {
+    $get: async (url) => {
+      if (url.startsWith('/api/me/progress/')) { net.push('get:' + url); return window.__serverProgress; }
+      return { libraryItems: [] };
+    },
+    $post: async (url, body) => { net.push('post:' + url + ':' + Math.round(body.currentTime) + ':' + body.timeListened); return {}; }
+  },
+  $eventBus: { $emit: (n, p) => log.push(n + ':' + JSON.stringify(p)) }
+};
+window.__log = log;
+window.__net = net;
+</script></body></html>

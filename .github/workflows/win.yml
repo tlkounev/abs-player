@@ -1,0 +1,56 @@
+name: Windows
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "win/**"
+      - ".github/workflows/win.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: win
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: Protocol tests
+        run: node --test test/remote.test.js
+
+  build:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: win/package-lock.json
+      - run: npm ci
+      - name: Build installer + zip
+        run: npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: abs-player-win
+          path: |
+            win/dist/*.exe
+            win/dist/*.zip
+          if-no-files-found: error
+      - name: Publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="win-v${VERSION}-build${{ github.run_number }}"
+          gh release create "$TAG" dist/*.exe dist/*.zip --title "ABS Player pro Windows ${VERSION} (build ${{ github.run_number }})" --notes "Commit ${{ github.sha }}" --latest

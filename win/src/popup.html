@@ -1,0 +1,967 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+<title>Audiobookshelf</title>
+<style>
+  :root {
+    --bg: rgba(243, 243, 243, 0.98);
+    --fg: #1b1b1b;
+    --muted: #5f5f5f;
+    --line: rgba(0, 0, 0, 0.1);
+    --track: rgba(0, 0, 0, 0.14);
+    --hover: rgba(0, 0, 0, 0.06);
+    --press: rgba(0, 0, 0, 0.1);
+    --pop: #fbfbfb;
+    --accent: #c1781f;
+    --accent-fg: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: rgba(39, 39, 39, 0.98);
+      --fg: #f2f2f2;
+      --muted: #a8a8a8;
+      --line: rgba(255, 255, 255, 0.09);
+      --track: rgba(255, 255, 255, 0.18);
+      --hover: rgba(255, 255, 255, 0.07);
+      --press: rgba(255, 255, 255, 0.11);
+      --pop: #2f2f2f;
+      --accent: #e3a54d;
+      --accent-fg: #1b1b1b;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; }
+  body {
+    font: 13px/1.35 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    color: var(--fg);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  /* celé okno se dá chytit a přetáhnout; ovládací prvky ne */
+  .card {
+    position: absolute; inset: 0;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px 12px;
+    display: flex; flex-direction: column;
+    -webkit-app-region: drag;
+  }
+  /* ovládací oblasti celé bez přetahování, aby hover fungoval i v mezerách mezi tlačítky */
+  button, input, .bar, .row, .vol-wrap, .rate, .controls, .progress, .side, .win-btns { -webkit-app-region: no-drag; }
+  .hidden { display: none !important; }
+
+  /* --- hlavička --- */
+  .head { display: flex; gap: 12px; align-items: flex-start; min-height: 72px; }
+  .cover { width: 72px; height: 72px; flex: none; border-radius: 4px; object-fit: cover; background: var(--track); }
+  .cover:not([src]) { visibility: hidden; }
+  .meta { flex: 1; min-width: 0; padding-top: 1px; }
+  .title { font-weight: 600; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .chapter { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .side { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin: -4px -6px 0 0; }
+  .win-btns { display: flex; }
+  .icon-btn {
+    flex: none; width: 30px; height: 28px; border: 0; border-radius: 4px; background: transparent;
+    color: var(--fg); display: grid; place-items: center; cursor: default;
+  }
+  .icon-btn:hover { background: var(--hover); }
+  .icon-btn:active { background: var(--press); }
+  .icon-btn svg { width: 16px; height: 16px; fill: currentColor; }
+  .side-row { display: flex; align-items: center; gap: 2px; }
+  .icon-btn.on { background: var(--press); color: var(--accent); }
+  #chLabel { border-radius: 3px; cursor: default; }
+  #chLabel:hover { color: var(--fg); background: var(--hover); }
+  .sleep { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 3px; padding-right: 6px; font-variant-numeric: tabular-nums; }
+  .sleep svg { width: 12px; height: 12px; fill: currentColor; }
+
+  /* --- průběh --- */
+  .progress { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+  .bar { position: relative; height: 14px; display: flex; align-items: center; }
+  .bar .rail { position: absolute; left: 0; right: 0; height: 4px; border-radius: 2px; background: var(--track); }
+  .bar .fill { position: absolute; left: 0; height: 4px; border-radius: 2px; background: var(--accent); }
+  .bar .knob {
+    position: absolute; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 0 3px var(--bg); transition: transform .1s;
+  }
+  .bar:hover .knob, .bar.drag .knob { transform: scale(1.2); }
+  .bar.thin { height: 10px; }
+  .bar.thin .rail, .bar.thin .fill { height: 3px; }
+  .bar.thin .knob { width: 8px; height: 8px; margin-left: -4px; box-shadow: 0 0 0 2px var(--bg); opacity: 0; transition: opacity .1s, transform .1s; }
+  .bar.thin:hover .knob, .bar.thin.drag .knob { opacity: 1; }
+  .times { display: grid; grid-template-columns: 1fr auto 1fr; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; line-height: 14px; }
+  .times span:nth-child(2) { text-align: center; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .times span:last-child { text-align: right; }
+
+  /* --- ovládání --- */
+  .controls { margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 6px; position: relative; }
+  .ctl {
+    position: relative; width: 38px; height: 38px; border: 0; border-radius: 50%; background: transparent;
+    color: var(--fg); display: grid; place-items: center; cursor: default;
+  }
+  .ctl:hover { background: var(--hover); }
+  .ctl:active { background: var(--press); }
+  .ctl svg { width: 20px; height: 20px; fill: currentColor; }
+  .ctl.jump svg { width: 22px; height: 22px; }
+  .ctl.play { width: 46px; height: 46px; background: var(--accent); color: var(--accent-fg); }
+  .ctl.play:hover { filter: brightness(1.08); background: var(--accent); }
+  .ctl.play svg { width: 22px; height: 22px; }
+  .ctl:disabled { opacity: .35; }
+  .rate {
+    position: absolute; right: 0; height: 26px; min-width: 44px; padding: 0 6px;
+    border: 1px solid var(--line); border-radius: 13px; background: transparent; color: var(--fg);
+    font: 600 12px "Segoe UI Variable Text", "Segoe UI", sans-serif; font-variant-numeric: tabular-nums;
+  }
+  .rate:hover { background: var(--hover); }
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* hlasitost */
+  .vol-wrap { position: absolute; left: 0; }
+  .vol-wrap .ctl { width: 34px; height: 34px; }
+  .vol-wrap .ctl svg { width: 18px; height: 18px; }
+  .vol-pop {
+    position: absolute; left: -2px; bottom: 40px; width: 38px; padding: 8px 0 10px;
+    background: var(--pop); border: 1px solid var(--line); border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.22);
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    opacity: 0; transform: translateY(4px); pointer-events: none; transition: opacity .12s, transform .12s;
+  }
+  .vol-wrap.open .vol-pop { opacity: 1; transform: none; pointer-events: auto; }
+  .vol-pct { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  #volRange { writing-mode: vertical-lr; direction: rtl; width: 20px; height: 96px; accent-color: var(--accent); margin: 0; }
+
+  /* --- seznam kapitol --- */
+  .card { gap: 0; }
+  .ch-panel { flex: none; height: calc(var(--list-h, 300px) - 10px); /* + 10px okraj = přesně o kolik okno naroste */ display: flex; flex-direction: column; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .card.down .ch-panel { order: 2; padding: 10px 0 0; margin: 10px 0 0; border-bottom: 0; border-top: 1px solid var(--line); }
+  .ch-head { display: flex; align-items: center; gap: 8px; margin: -4px -6px 6px 0; }
+  .ch-head h1 { font-size: 14px; font-weight: 600; }
+  .ch-count { color: var(--muted); font-size: 12px; }
+  .ch-search { margin-left: auto; display: flex; align-items: center; gap: 5px; width: 150px; height: 26px; padding: 0 8px; border-radius: 4px; background: var(--hover); border: 1px solid transparent; -webkit-app-region: no-drag; }
+  .ch-search:focus-within { border-color: var(--accent); }
+  .ch-search svg { width: 12px; height: 12px; fill: var(--muted); flex: none; }
+  .ch-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--fg); font: inherit; font-size: 12px; }
+  .ch-search input::placeholder { color: var(--muted); }
+  .ch-list { flex: 1; overflow-y: auto; -webkit-app-region: no-drag; margin-right: -8px; padding-right: 4px; }
+  .ch-list::-webkit-scrollbar { width: 6px; }
+  .ch-list::-webkit-scrollbar-thumb { background: var(--track); border-radius: 3px; }
+  .ch-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 6px; align-items: center; min-height: 30px; padding: 3px 6px; border-radius: 4px; }
+  .ch-row:hover { background: var(--hover); }
+  .ch-row .n { color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; font-size: 12px; }
+  .ch-row .tt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ch-row .d { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 4px; }
+  .ch-row .d svg { width: 12px; height: 12px; fill: currentColor; display: none; }
+  .ch-row.done .tt, .ch-row.done .n { color: var(--muted); }
+  .ch-row.done .d svg.ok { display: block; }
+  .ch-row.cur { background: var(--press); box-shadow: inset 2px 0 0 var(--accent); border-radius: 0 4px 4px 0; }
+  .ch-row.cur .n, .ch-row.cur .d { color: var(--accent); }
+  .ch-row.cur .tt { font-weight: 600; }
+  .ch-row.cur .d svg.spk { display: block; }
+  .ch-row .mini { display: none; height: 2px; margin-top: 3px; border-radius: 1px; background: var(--track); position: relative; }
+  .ch-row.cur .mini { display: block; }
+  .ch-row .mini i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 1px; background: var(--accent); }
+  .ch-empty { color: var(--muted); text-align: center; padding: 20px 0; }
+
+  /* --- přehrávat na --- */
+  .target { color: var(--accent); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+  .target svg { width: 12px; height: 12px; fill: currentColor; flex: none; }
+  .dev-list { flex: 1; overflow-y: auto; -webkit-app-region: no-drag; margin-right: -8px; padding-right: 4px; }
+  .dev-list::-webkit-scrollbar { width: 6px; }
+  .dev-list::-webkit-scrollbar-thumb { background: var(--track); border-radius: 3px; }
+  .dev-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 38px; padding: 4px 6px; border-radius: 4px; }
+  .dev-row:hover { background: var(--hover); }
+  .dev-row.cur { background: var(--press); box-shadow: inset 2px 0 0 var(--accent); border-radius: 0 4px 4px 0; }
+  .dev-row.off { opacity: .55; }
+  .dev-row > svg { width: 18px; height: 18px; fill: currentColor; }
+  .dev-row.cur > svg, .dev-row.cur .nm { color: var(--accent); }
+  .dev-row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+  .dev-row .sb { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dev-row .icon-btn { width: 26px; height: 24px; }
+  .dev-sec { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; margin: 10px 6px 4px; }
+  .pair { display: grid; grid-template-columns: 1fr 64px; gap: 6px; padding: 0 6px; -webkit-app-region: no-drag; }
+  .pair input { height: 26px; padding: 0 8px; border-radius: 4px; border: 1px solid var(--line); background: var(--hover); color: var(--fg); font: inherit; font-size: 12px; outline: 0; min-width: 0; }
+  .pair input:focus { border-color: var(--accent); }
+  .pair .full { grid-column: 1 / -1; }
+  .pair button { grid-column: 1 / -1; height: 28px; border: 0; border-radius: 4px; background: var(--accent); color: var(--accent-fg); font: 600 12px "Segoe UI Variable Text", "Segoe UI", sans-serif; }
+  .pair button:disabled { opacity: .45; }
+  .pair .hint { grid-column: 1 / -1; color: var(--muted); font-size: 11px; }
+  .pair .err { grid-column: 1 / -1; color: #e5534b; font-size: 11px; }
+  .my-code { margin: 10px 6px 2px; color: var(--muted); font-size: 11px; }
+  .my-code b { color: var(--fg); font-size: 13px; letter-spacing: .08em; }
+
+  /* --- prázdný stav --- */
+  .empty { flex: 1; display: flex; flex-direction: column; }
+  .empty-head { display: flex; align-items: center; justify-content: space-between; margin: -4px -6px 6px 0; }
+  .empty-head h1 { font-size: 14px; font-weight: 600; }
+  .list { display: flex; flex-direction: column; gap: 2px; }
+  .row { display: flex; align-items: center; gap: 10px; padding: 4px; border-radius: 4px; }
+  .row:hover { background: var(--hover); }
+  .row img { width: 40px; height: 40px; border-radius: 3px; object-fit: cover; background: var(--track); flex: none; }
+  .row img:not([src]) { visibility: hidden; }
+  .row .t { flex: 1; min-width: 0; }
+  .row .t div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .t .a { color: var(--muted); font-size: 12px; }
+  .msg-wrap { flex: 1; display: flex; flex-direction: column; }
+  .msg-top { display: flex; justify-content: flex-end; margin: -4px -6px 0 0; }
+  .msg { flex: 1; display: grid; place-items: center; text-align: center; color: var(--muted); padding: 0 20px 20px; }
+  .link-btn { margin-top: 10px; border: 1px solid var(--line); background: var(--hover); color: var(--fg); border-radius: 4px; padding: 5px 12px; font: inherit; }
+  .link-btn:hover { background: var(--press); }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- přehrávat na -->
+  <div id="devPanel" class="ch-panel hidden">
+    <div class="ch-head">
+      <h1 data-txt="playOn"></h1>
+      <span style="margin-left:auto"></span>
+      <button class="icon-btn" id="devClose" data-tip="closeList"><svg viewBox="0 0 16 16" id="devCloseIcon"><path d="M8 11.3 2.9 6.2 4 5.1l4 4 4-4 1.1 1.1z"/></svg></button>
+    </div>
+    <div class="dev-list" id="devItems">
+      <div id="devRows"></div>
+      <div class="dev-sec" data-txt="pairNew"></div>
+      <div id="devFound"></div>
+      <div class="pair">
+        <input id="pHost" spellcheck="false" data-ph="ipAddr">
+        <input id="pPort" spellcheck="false" data-ph="port" value="8765">
+        <input id="pCode" class="full" spellcheck="false" inputmode="numeric" maxlength="6" data-ph="code">
+        <input id="pPass" class="full hidden" type="password" data-ph="password">
+        <div class="hint" id="pHint" data-txt="pairHint"></div>
+        <div class="err hidden" id="pErr"></div>
+        <button id="pBtn" data-txt="pairBtn" disabled></button>
+      </div>
+      <div class="my-code" id="myCode"></div>
+    </div>
+  </div>
+
+  <!-- seznam kapitol -->
+  <div id="chPanel" class="ch-panel hidden">
+    <div class="ch-head">
+      <h1 data-txt="chapters"></h1><span class="ch-count" id="chCount"></span>
+      <label class="ch-search">
+        <svg viewBox="0 0 16 16"><path d="M6.8 1.5a5.3 5.3 0 0 1 4.2 8.5l3.6 3.6-1.1 1.1-3.6-3.6A5.3 5.3 0 1 1 6.8 1.5Zm0 1.5a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"/></svg>
+        <input id="chSearch" spellcheck="false" data-ph="search">
+      </label>
+      <button class="icon-btn" id="chClose" data-tip="closeList"><svg viewBox="0 0 16 16" id="chCloseIcon"><path d="M8 11.3 2.9 6.2 4 5.1l4 4 4-4 1.1 1.1z"/></svg></button>
+    </div>
+    <div class="ch-list" id="chItems"></div>
+  </div>
+
+  <!-- přehrává se -->
+  <div id="player" class="hidden" style="display:flex;flex-direction:column;flex:1">
+    <div class="head">
+      <img id="cover" class="cover" alt="">
+      <div class="meta">
+        <div id="title" class="title"></div>
+        <div id="author" class="sub"></div>
+        <div id="chapter" class="chapter"></div>
+        <div id="target" class="target hidden"><svg viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h10a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 11H9v1.5h2V14H5v-1.5h2V11H3a1.5 1.5 0 0 1-1.5-1.5v-6ZM3 3.5v6h10v-6H3Z"/></svg><span id="targetTxt"></span></div>
+      </div>
+      <div class="side">
+        <div class="win-btns">
+          <button class="icon-btn" data-act="hide" data-tip="hide"><svg viewBox="0 0 16 16"><path d="M3 11.25h10v1.5H3z"/></svg></button>
+          <button class="icon-btn" data-act="open" data-tip="openFull"><svg viewBox="0 0 16 16"><path d="M9 2h5v5h-1.5V4.56L7.53 9.53 6.47 8.47l4.97-4.97H9V2ZM3.5 4A.5.5 0 0 0 3 4.5v8a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V9h1.5v3.5a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2H7V4H3.5Z"/></svg></button>
+        </div>
+        <div class="side-row">
+          <div class="sleep hidden" id="sleep" data-tip="sleep">
+            <svg viewBox="0 0 16 16"><path d="M6.2 1.3a.6.6 0 0 1 .1.7A5.6 5.6 0 0 0 14 9.7a.6.6 0 0 1 .8.8A6.8 6.8 0 1 1 5.5 1.2a.6.6 0 0 1 .7.1Z"/></svg>
+            <span id="sleepTxt"></span>
+          </div>
+          <button class="icon-btn dev-btn" data-act="devices" data-tip="playOn"><svg viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h10a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 11H9v1.5h2V14H5v-1.5h2V11H3a1.5 1.5 0 0 1-1.5-1.5v-6ZM3 3.5v6h10v-6H3Z"/></svg></button>
+          <button class="icon-btn" id="chBtn" data-tip="chapters"><svg viewBox="0 0 16 16"><circle cx="2.7" cy="4" r="1.35"/><circle cx="2.7" cy="8" r="1.35"/><circle cx="2.7" cy="12" r="1.35"/><path d="M5.6 3.25H14v1.5H5.6zM5.6 7.25H14v1.5H5.6zM5.6 11.25H14v1.5H5.6z"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress">
+      <div id="chBlock">
+        <div class="bar" id="chBar"><div class="rail"></div><div class="fill"></div><div class="knob"></div></div>
+        <div class="times"><span id="chElapsed"></span><span id="chLabel"></span><span id="chRemaining"></span></div>
+      </div>
+      <div id="bookBlock">
+        <div class="bar" id="bookBar"><div class="rail"></div><div class="fill"></div><div class="knob"></div></div>
+        <div class="times"><span id="bookElapsed"></span><span id="bookLabel"></span><span id="bookRemaining"></span></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="vol-wrap" id="volWrap">
+        <div class="vol-pop">
+          <span class="vol-pct" id="volPct">100</span>
+          <input type="range" id="volRange" min="0" max="100" step="1" value="100">
+        </div>
+        <button class="ctl" id="volBtn" data-tip="volume"><svg viewBox="0 0 20 20" id="volIcon"></svg></button>
+      </div>
+      <button class="ctl" id="prevCh" data-tip="prevCh">
+        <svg viewBox="0 0 20 20"><path d="M4 3h2v14H4V3Zm12.2.6a.8.8 0 0 1 .8.7v11.4a.8.8 0 0 1-1.2.7L7.5 11a1.2 1.2 0 0 1 0-2l8.3-5.3a.8.8 0 0 1 .4-.1Z"/></svg>
+      </button>
+      <button class="ctl jump" id="back">
+        <svg viewBox="0 0 24 24"><path d="M12 4.5V1.8L7.2 5.5 12 9.2V6.5a6.5 6.5 0 1 1-6.5 6.5h-2A8.5 8.5 0 1 0 12 4.5Z"/></svg>
+      </button>
+      <button class="ctl play" id="play" data-tip="menuPlayPause">
+        <svg viewBox="0 0 20 20" id="playIcon"></svg>
+      </button>
+      <button class="ctl jump" id="fwd">
+        <svg viewBox="0 0 24 24"><path d="M12 4.5V1.8l4.8 3.7L12 9.2V6.5A6.5 6.5 0 1 0 18.5 13h2A8.5 8.5 0 1 1 12 4.5Z"/></svg>
+      </button>
+      <button class="ctl" id="nextCh" data-tip="nextCh">
+        <svg viewBox="0 0 20 20"><path d="M16 3h-2v14h2V3ZM3.8 3.6a.8.8 0 0 0-.8.7v11.4a.8.8 0 0 0 1.2.7l8.3-5.4a1.2 1.2 0 0 0 0-2L4.2 3.7a.8.8 0 0 0-.4-.1Z"/></svg>
+      </button>
+      <button class="rate" id="rate" data-tip="rate">1.0×</button>
+    </div>
+  </div>
+
+  <!-- nic nehraje -->
+  <div id="empty" class="empty hidden">
+    <div class="empty-head">
+      <h1 data-txt="continue"></h1>
+      <div class="win-btns">
+        <button class="icon-btn dev-btn" data-act="devices" data-tip="playOn"><svg viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h10a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 11H9v1.5h2V14H5v-1.5h2V11H3a1.5 1.5 0 0 1-1.5-1.5v-6ZM3 3.5v6h10v-6H3Z"/></svg></button>
+        <button class="icon-btn" data-act="hide" data-tip="hide"><svg viewBox="0 0 16 16"><path d="M3 11.25h10v1.5H3z"/></svg></button>
+        <button class="icon-btn" data-act="open" data-tip="openFull"><svg viewBox="0 0 16 16"><path d="M9 2h5v5h-1.5V4.56L7.53 9.53 6.47 8.47l4.97-4.97H9V2ZM3.5 4A.5.5 0 0 0 3 4.5v8a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V9h1.5v3.5a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2H7V4H3.5Z"/></svg></button>
+      </div>
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+
+  <!-- zpráva -->
+  <div id="msg" class="msg-wrap hidden">
+    <div class="msg-top win-btns">
+      <button class="icon-btn dev-btn" data-act="devices" data-tip="playOn"><svg viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h10a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 11H9v1.5h2V14H5v-1.5h2V11H3a1.5 1.5 0 0 1-1.5-1.5v-6ZM3 3.5v6h10v-6H3Z"/></svg></button>
+      <button class="icon-btn" data-act="hide" data-tip="hide"><svg viewBox="0 0 16 16"><path d="M3 11.25h10v1.5H3z"/></svg></button>
+    </div>
+    <div class="msg">
+      <div>
+        <div id="msgTxt"></div>
+        <button class="link-btn" data-act="open" data-txt="openAbs"></button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="i18n.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const PLAY = '<path d="M6 3.7v12.6a.9.9 0 0 0 1.4.8l9.8-6.3a1 1 0 0 0 0-1.6L7.4 2.9a.9.9 0 0 0-1.4.8Z"/>';
+const PAUSE = '<path d="M5 3h3.4v14H5zM11.6 3H15v14h-3.4z"/>';
+const LOAD = '<path class="spin" style="transform-origin:10px 10px" d="M10 2a8 8 0 1 0 8 8h-2a6 6 0 1 1-6-6V2Z"/>';
+const SPK = 'M2.5 7.2h3l4.2-3.6a.6.6 0 0 1 1 .5v11.8a.6.6 0 0 1-1 .5L5.5 12.8h-3a.8.8 0 0 1-.8-.8V8a.8.8 0 0 1 .8-.8Z';
+const VOL_ICONS = {
+  mute: SPK + 'M13.2 8.4l1.1-1.1 1.6 1.6 1.6-1.6 1.1 1.1L17 10l1.6 1.6-1.1 1.1-1.6-1.6-1.6 1.6-1.1-1.1L14.8 10z',
+  low: SPK + 'M13.4 7a4 4 0 0 1 0 6l-1-1.1a2.5 2.5 0 0 0 0-3.8z',
+  high: SPK + 'M13.4 7a4 4 0 0 1 0 6l-1-1.1a2.5 2.5 0 0 0 0-3.8zM15.4 4.6a7.2 7.2 0 0 1 0 10.8l-1-1.1a5.7 5.7 0 0 0 0-8.6z'
+};
+const RATES = [0.75, 1, 1.25, 1.5, 1.75, 2];
+
+let lang = window.abs.lang();
+let st = null;
+let dragging = null;     // 'ch' | 'book' | null
+let pendingSeek = null;
+let volDragging = false;
+let lastListKey = '';
+let busy = false;
+
+const tr = (k, v) => I18N.tr(lang, k, v);
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  for (const el of document.querySelectorAll('[data-tip]')) el.title = tr(el.dataset.tip);
+  for (const el of document.querySelectorAll('[data-txt]')) el.textContent = tr(el.dataset.txt);
+  for (const el of document.querySelectorAll('[data-ph]')) el.placeholder = tr(el.dataset.ph);
+  lastListKey = '';
+  render();
+}
+
+function fmt(sec) {
+  sec = Math.max(0, Math.floor(sec || 0));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+}
+
+// měnit SVG jen při změně – přepis pod kurzorem vyvolává falešné události najetí myši
+function setIcon(el, html) {
+  if (el.dataset.icon === html) return;
+  el.dataset.icon = html;
+  el.innerHTML = html;
+}
+
+function show(which) {
+  for (const id of ['player', 'empty', 'msg']) $(id).classList.toggle('hidden', id !== which);
+}
+
+function setBar(bar, p) {
+  p = Math.min(1, Math.max(0, p || 0));
+  bar.querySelector('.fill').style.width = (p * 100) + '%';
+  bar.querySelector('.knob').style.left = (p * 100) + '%';
+}
+
+// t = pozice v celé knize (s)
+function setProgress(t) {
+  if (!st || !st.item) return;
+  const r = st.rate || 1;
+  const d = st.duration || 0;
+  const ch = chapterAt(t);
+  if (ch) {
+    const len = ch.end - ch.start;
+    const inCh = Math.min(len, Math.max(0, t - ch.start));
+    setBar($('chBar'), len > 0 ? inCh / len : 0);
+    $('chElapsed').textContent = fmt(inCh);
+    $('chRemaining').textContent = '-' + fmt((len - inCh) / r);
+    $('chLabel').textContent = tr('chapter', { n: ch.index, total: ch.total });
+  }
+  setBar($('bookBar'), d > 0 ? t / d : 0);
+  $('bookElapsed').textContent = fmt(t);
+  $('bookRemaining').textContent = '-' + fmt((d - t) / r);
+  $('bookLabel').textContent = tr('book') + ' · ' + (d > 0 ? Math.floor((t / d) * 100) : 0) + ' %';
+}
+
+// kapitola pro danou pozici – při přetahování po knize se popisky kapitoly mění s pozicí
+function chapterAt(t) {
+  if (!st || !st.chapter) return null;
+  const c = st.chapter;
+  if (t >= c.start && t < c.end) return c;
+  return dragging === 'book' ? null : c;
+}
+
+function renderVolume() {
+  if (!st || !st.item) return;
+  const v = st.muted ? 0 : st.volume;
+  const icon = v <= 0 ? 'mute' : v <= 0.5 ? 'low' : 'high';
+  setIcon($('volIcon'), '<path d="' + VOL_ICONS[icon] + '"/>');
+  if (!volDragging) {
+    $('volRange').value = Math.round(st.volume * 100);
+    $('volPct').textContent = Math.round(v * 100);
+  }
+}
+
+function render() {
+  if (listOpen && !(st && st.item && st.hasChapters)) setListOpen(false);
+  if (!st || !st.ready) {
+    show('msg');
+    $('msgTxt').textContent = !st ? tr('unavailable') : (st.loggedIn ? tr('loadingPlayer') : tr('login'));
+    return;
+  }
+  for (const b of document.querySelectorAll('.dev-btn')) b.classList.toggle('on', devOpen || !!(st.target && st.target.remote));
+  if (!st.item && st.remoteError) {
+    show('msg');
+    $('msgTxt').textContent = tr('deviceOffline', { name: st.target.name });
+    return;
+  }
+  if (!st.item) {
+    const items = st.inProgress || [];
+    if (!items.length) {
+      show('msg');
+      $('msgTxt').textContent = st.loggedIn ? tr('nothing') : tr('login');
+      return;
+    }
+    show('empty');
+    const key = items.map((i) => i.id + (i.cover ? 1 : 0)).join(',');
+    if (key !== lastListKey) {
+      lastListKey = key;
+      const list = $('list');
+      list.textContent = '';
+      for (const it of items) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        const img = document.createElement('img');
+        if (it.cover) img.src = it.cover;
+        const t = document.createElement('div');
+        t.className = 't';
+        const a = document.createElement('div'); a.textContent = it.title || '';
+        const b = document.createElement('div'); b.className = 'a'; b.textContent = it.author || '';
+        t.append(a, b);
+        const btn = document.createElement('button');
+        btn.className = 'icon-btn';
+        btn.title = tr('play');
+        btn.innerHTML = '<svg viewBox="0 0 20 20">' + PLAY + '</svg>';
+        btn.onclick = () => cmd('playItem', { id: it.id, episodeId: it.episodeId });
+        row.ondblclick = btn.onclick;
+        row.append(img, t, btn);
+        list.append(row);
+      }
+    }
+    return;
+  }
+
+  show('player');
+  const it = st.item;
+  if ($('title').textContent !== it.title) $('title').textContent = it.title || '';
+  $('title').title = it.title || '';
+  $('author').textContent = [it.author, it.series].filter(Boolean).join(' · ');
+  const notice = st.notice ? (st.notice === 'moved' ? tr('positionTaken') : st.notice) : null;
+  $('chapter').textContent = notice || (st.chapter ? st.chapter.title : '');
+  $('chapter').style.color = notice ? 'var(--accent)' : '';
+  const remoteT = st.target && st.target.remote;
+  $('target').classList.toggle('hidden', !remoteT);
+  if (remoteT) {
+    $('targetTxt').textContent = st.target.name;
+    $('target').title = tr('playingOn', { name: st.target.name });
+  }
+  if (it.cover && $('cover').src !== it.cover) $('cover').src = it.cover;
+  if (!it.cover) $('cover').removeAttribute('src');
+
+  setIcon($('playIcon'), st.loading ? LOAD : (st.isPlaying ? PAUSE : PLAY));
+  $('back').title = tr('back', { s: st.jumpBack });
+  $('fwd').title = tr('fwd', { s: st.jumpFwd });
+  $('prevCh').disabled = $('nextCh').disabled = !st.hasChapters;
+  const rs = String(Math.round(st.rate * 100) / 100);
+  $('rate').textContent = (rs.includes('.') ? rs : rs + '.0') + '×';
+
+  $('sleep').classList.toggle('hidden', st.sleepRemaining == null);
+  if (st.sleepRemaining != null) $('sleepTxt').textContent = fmt(st.sleepRemaining);
+
+  // s kapitolami: velký pruh = kapitola, tenký = kniha; bez kapitol jen velký pruh knihy
+  const hasCh = !!st.chapter;
+  $('chBlock').classList.toggle('hidden', !hasCh);
+  $('bookBar').classList.toggle('thin', hasCh);
+
+  $('chBtn').classList.toggle('hidden', !st.hasChapters);
+  $('chLabel').title = tr('chapters');
+
+  renderVolume();
+  if (!dragging) setProgress(pendingSeek != null ? pendingSeek : st.currentTime);
+  if (listOpen) updateChapterList();
+}
+
+async function poll() {
+  if (busy) return;
+  busy = true;
+  try {
+    st = await window.abs.state();
+    if (pendingSeek != null && st && Math.abs(st.currentTime - pendingSeek) < 3) pendingSeek = null;
+    render();
+  } finally {
+    busy = false;
+  }
+}
+
+async function cmd(name, arg) {
+  await window.abs.cmd(name, arg);
+  setTimeout(poll, 80);
+  setTimeout(poll, 400);
+}
+
+// --- tlačítka ---
+$('play').onclick = () => cmd('playPause');
+$('back').onclick = () => cmd('jumpBack');
+$('fwd').onclick = () => cmd('jumpFwd');
+$('prevCh').onclick = () => cmd('prevChapter');
+$('nextCh').onclick = () => cmd('nextChapter');
+for (const el of document.querySelectorAll('[data-act="open"]')) el.onclick = () => window.abs.openMain();
+for (const el of document.querySelectorAll('[data-act="hide"]')) el.onclick = () => window.abs.hide();
+
+$('rate').onclick = () => {
+  const cur = (st && st.rate) || 1;
+  const next = RATES.find((r) => r > cur + 0.001) || RATES[0];
+  cmd('rate', next);
+};
+$('rate').addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const cur = (st && st.rate) || 1;
+  const next = Math.round((cur + (e.deltaY < 0 ? 0.05 : -0.05)) * 100) / 100;
+  cmd('rate', Math.min(3, Math.max(0.5, next)));
+}, { passive: false });
+
+// --- hlasitost: klik = ztlumit, najetí / fokus = posuvník ---
+// Zavírání se neřídí událostmi myši (Windows je u přetahovatelné plochy okna nedoručuje
+// a :hover pak „zamrzne“), ale skutečnou polohou kurzoru z hlavního procesu.
+const volWrap = $('volWrap');
+const volPop = volWrap.querySelector('.vol-pop');
+let volPollTimer = null;
+let volLastActivity = 0;
+const VOL_CLOSE_DELAY = 400;
+
+function volOpen() {
+  volLastActivity = Date.now();
+  volWrap.classList.add('open');
+  if (!volPollTimer) volPollTimer = setInterval(volCheck, 150);
+}
+function volCloseNow() {
+  volWrap.classList.remove('open');
+  clearInterval(volPollTimer);
+  volPollTimer = null;
+}
+function inRect(p, r, pad) {
+  return p.x >= r.left - pad && p.x <= r.right + pad && p.y >= r.top - pad && p.y <= r.bottom + pad;
+}
+let volChecking = false;
+async function volCheck() {
+  if (volChecking) return;
+  if (document.visibilityState !== 'visible') return volCloseNow();
+  if (volDragging) { volLastActivity = Date.now(); return; }
+  const kbFocus = volWrap.contains(document.activeElement) && document.activeElement.matches(':focus-visible');
+  if (kbFocus) { volLastActivity = Date.now(); return; }
+  volChecking = true;
+  try {
+    const c = await window.abs.cursor();
+    const over = c && (inRect(c, $('volBtn').getBoundingClientRect(), 2) || inRect(c, volPop.getBoundingClientRect(), 6));
+    if (over) volLastActivity = Date.now();
+    else if (Date.now() - volLastActivity > VOL_CLOSE_DELAY) volCloseNow();
+  } finally {
+    volChecking = false;
+  }
+}
+$('volBtn').addEventListener('pointerenter', () => { if (!volWrap.classList.contains('open')) volOpen(); });
+$('volBtn').addEventListener('mousedown', (e) => e.preventDefault()); // klik nebere fokus
+volWrap.addEventListener('focusin', () => { if (document.activeElement.matches(':focus-visible')) volOpen(); });
+$('volBtn').onclick = () => { volOpen(); cmd('mute'); };
+$('volRange').addEventListener('pointerdown', () => { volDragging = true; });
+window.addEventListener('pointerup', () => {
+  if (!volDragging) return;
+  volDragging = false;
+  volLastActivity = Date.now();
+  $('volRange').blur();
+});
+window.addEventListener('blur', () => { volDragging = false; });
+$('volRange').addEventListener('input', (e) => {
+  const v = Number(e.target.value) / 100;
+  $('volPct').textContent = Math.round(v * 100);
+  window.abs.cmd('volume', v);
+});
+volWrap.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  volOpen();
+  const cur = st ? (st.muted ? 0 : st.volume) : 1;
+  const v = Math.round(Math.min(1, Math.max(0, cur + (e.deltaY < 0 ? 0.05 : -0.05))) * 100) / 100;
+  if (st) { st.volume = v; st.muted = v <= 0; renderVolume(); }
+  cmd('volume', v);
+}, { passive: false });
+
+// --- posuv: pruh kapitoly a pruh knihy ---
+function attachSeek(bar, kind) {
+  function timeAt(clientX) {
+    const r = bar.getBoundingClientRect();
+    const p = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+    if (kind === 'ch' && st.chapter) return st.chapter.start + p * (st.chapter.end - st.chapter.start);
+    return p * (st.duration || 0);
+  }
+  bar.addEventListener('pointerdown', (e) => {
+    if (!st || !st.duration) return;
+    dragging = kind;
+    bar.classList.add('drag');
+    bar.setPointerCapture(e.pointerId);
+    setProgress(timeAt(e.clientX));
+  });
+  bar.addEventListener('pointermove', (e) => { if (dragging === kind) setProgress(timeAt(e.clientX)); });
+  bar.addEventListener('pointerup', (e) => {
+    if (dragging !== kind) return;
+    const t = timeAt(e.clientX);
+    dragging = null;
+    bar.classList.remove('drag');
+    pendingSeek = t;
+    setProgress(t);
+    cmd('seek', t);
+  });
+}
+attachSeek($('chBar'), 'ch');
+attachSeek($('bookBar'), 'book');
+
+// --- seznam kapitol ---
+let listOpen = false;
+let chapters = [];
+let chaptersKey = '';
+let lastCurN = 0;
+let lastUserScroll = 0;
+const CHECK = '<svg class="ok" viewBox="0 0 12 12"><path d="M4.5 9.3 1.2 6l.9-.9 2.4 2.4 5.4-5.4.9.9z"/></svg>';
+const SPK_SM = '<svg class="spk" viewBox="0 0 20 20"><path d="' + VOL_ICONS.low + '"/></svg>';
+
+function norm(x) { return String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+
+async function loadChapters() {
+  const list = await window.abs.cmd('chapters');
+  chapters = Array.isArray(list) ? list : [];
+  chaptersKey = st ? st.chaptersKey : '';
+  buildChapterRows();
+}
+
+function buildChapterRows() {
+  const box = $('chItems');
+  const q = norm($('chSearch').value.trim());
+  box.textContent = '';
+  const shown = q ? chapters.filter((c) => norm(c.title).includes(q) || String(c.n) === q) : chapters;
+  $('chCount').textContent = chapters.length;
+  if (!shown.length) {
+    const e = document.createElement('div');
+    e.className = 'ch-empty';
+    e.textContent = '—';
+    box.append(e);
+    return;
+  }
+  for (const c of shown) {
+    const row = document.createElement('div');
+    row.className = 'ch-row';
+    row.dataset.n = c.n;
+    row.innerHTML = '<span class="n"></span><div style="min-width:0"><div class="tt"></div><div class="mini"><i></i></div></div><span class="d">' + CHECK + SPK_SM + '<span></span></span>';
+    row.querySelector('.n').textContent = c.n;
+    row.querySelector('.tt').textContent = c.title;
+    row.querySelector('.tt').title = c.title;
+    row.querySelector('.d span').textContent = fmt(c.end - c.start);
+    row.onclick = () => { pendingSeek = c.start; cmd('seek', c.start); };
+    box.append(row);
+  }
+  lastCurN = 0;
+  updateChapterList();
+}
+
+function updateChapterList() {
+  if (!st || !st.item) return;
+  if (st.chaptersKey !== chaptersKey) { loadChapters(); return; }
+  const t = pendingSeek != null ? pendingSeek : st.currentTime;
+  const cur = chapters.find((c) => t >= c.start && t < c.end) || (st.chapter && chapters[st.chapter.index - 1]);
+  const curN = cur ? cur.n : 0;
+  for (const row of $('chItems').children) {
+    const n = Number(row.dataset.n);
+    if (!n) continue;
+    const c = chapters[n - 1];
+    row.classList.toggle('cur', n === curN);
+    row.classList.toggle('done', !!c && c.end <= t && n !== curN);
+    if (n === curN) {
+      const len = c.end - c.start;
+      row.querySelector('.mini i').style.width = (len > 0 ? Math.min(100, ((t - c.start) / len) * 100) : 0) + '%';
+    }
+  }
+  // při změně kapitoly posunout seznam, pokud uživatel zrovna neroluje a nehledá
+  if (curN !== lastCurN) {
+    const first = lastCurN === 0;
+    lastCurN = curN;
+    if (first || (Date.now() - lastUserScroll > 4000 && !$('chSearch').value)) scrollToCurrent(first);
+  }
+}
+
+function scrollToCurrent(center) {
+  const row = $('chItems').querySelector('.ch-row.cur');
+  if (row) row.scrollIntoView({ block: center ? 'center' : 'nearest' });
+}
+
+async function setListOpen(open) {
+  if (open === listOpen) return;
+  if (open && !(st && st.hasChapters)) return;
+  listOpen = open;
+  $('chBtn').classList.toggle('on', open);
+  if (open) {
+    if (devOpen) closeDevPanel(true);
+    const dir = await window.abs.list(true);
+    document.querySelector('.card').classList.toggle('down', dir === 'down');
+    $('chCloseIcon').style.transform = dir === 'down' ? 'rotate(180deg)' : '';
+    $('chPanel').classList.remove('hidden');
+    $('chSearch').value = '';
+    lastCurN = 0;
+    await loadChapters();
+  } else {
+    $('chPanel').classList.add('hidden');
+    if (devOpen) return;
+    document.querySelector('.card').classList.remove('down');
+    await window.abs.list(false);
+  }
+}
+
+// --- přehrávat na (zařízení) ---
+let devOpen = false;
+let devTimer = null;
+let devData = null;
+let pairInfo = null;
+let pairInfoTimer = null;
+const ICON_PC = '<svg viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h10a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 11H9v1.5h2V14H5v-1.5h2V11H3a1.5 1.5 0 0 1-1.5-1.5v-6ZM3 3.5v6h10v-6H3Z"/></svg>';
+const ICON_TV = '<svg viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h10a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 13 12H3a1.5 1.5 0 0 1-1.5-1.5v-7ZM3 3.5v7h10v-7H3ZM5 13h6v1.5H5z"/></svg>';
+const ICON_X = '<svg viewBox="0 0 16 16"><path d="M4.2 3.1 8 6.9l3.8-3.8 1.1 1.1L9.1 8l3.8 3.8-1.1 1.1L8 9.1l-3.8 3.8-1.1-1.1L6.9 8 3.1 4.2z"/></svg>';
+
+function closeDevPanel(keepWindow) {
+  devOpen = false;
+  clearInterval(devTimer);
+  devTimer = null;
+  $('devPanel').classList.add('hidden');
+  if (!keepWindow) {
+    document.querySelector('.card').classList.remove('down');
+    window.abs.list(false);
+  }
+  render();
+}
+
+async function setDevOpen(open) {
+  if (open === devOpen) return;
+  if (!open) return closeDevPanel(listOpen);
+  if (listOpen) {
+    listOpen = false;
+    $('chBtn').classList.remove('on');
+    $('chPanel').classList.add('hidden');
+  }
+  devOpen = true;
+  const dir = await window.abs.list(true);
+  document.querySelector('.card').classList.toggle('down', dir === 'down');
+  $('devCloseIcon').style.transform = dir === 'down' ? 'rotate(180deg)' : '';
+  $('devPanel').classList.remove('hidden');
+  $('pErr').classList.add('hidden');
+  render();
+  await loadDevices();
+  devTimer = setInterval(loadDevices, 4000);
+}
+
+async function loadDevices() {
+  devData = await window.abs.devices();
+  buildDevices();
+}
+
+function devRow(icon, name, sub, cur, off, onClick, onRemove) {
+  const row = document.createElement('div');
+  row.className = 'dev-row' + (cur ? ' cur' : '') + (off ? ' off' : '');
+  row.innerHTML = icon + '<div style="min-width:0"><div class="nm"></div><div class="sb"></div></div>';
+  row.querySelector('.nm').textContent = name;
+  row.querySelector('.sb').textContent = sub;
+  if (onRemove) {
+    const x = document.createElement('button');
+    x.className = 'icon-btn';
+    x.title = tr('unpair');
+    x.innerHTML = ICON_X;
+    x.onclick = (e) => { e.stopPropagation(); onRemove(); };
+    row.append(x);
+  } else {
+    row.append(document.createElement('span'));
+  }
+  if (onClick) row.onclick = onClick;
+  return row;
+}
+
+async function selectDevice(id) {
+  await window.abs.selectDevice(id);
+  closeDevPanel(false);
+  setTimeout(poll, 300);
+  setTimeout(poll, 1500);
+}
+
+function buildDevices() {
+  if (!devData) return;
+  const rows = $('devRows');
+  rows.textContent = '';
+  rows.append(devRow(ICON_PC, devData.local.name, tr('thisDevice'), devData.current === 'local', false, () => selectDevice('local')));
+  for (const d of devData.paired) {
+    const sub = !d.online ? tr('offline') + ' (' + d.host + ')' : d.title ? tr(d.isPlaying ? 'playingT' : 'pausedT', { t: d.title }) : tr('ready');
+    rows.append(devRow(d.kind === 'pc' ? ICON_PC : ICON_TV, d.name, sub, devData.current === d.id, !d.online,
+      d.online || devData.current === d.id ? () => selectDevice(d.id) : null,
+      async () => { await window.abs.unpair(d.id); loadDevices(); }));
+  }
+  const found = $('devFound');
+  found.textContent = '';
+  if (!devData.discovered.length) {
+    const e = document.createElement('div');
+    e.className = 'dev-sec';
+    e.style.textTransform = 'none';
+    e.textContent = tr('searching');
+    found.append(e);
+  }
+  for (const f of devData.discovered) {
+    const sel = $('pHost').value === f.host && $('pPort').value === String(f.port);
+    found.append(devRow(f.kind === 'pc' ? ICON_PC : ICON_TV, f.name, f.host + ':' + f.port, sel, false, () => {
+      $('pHost').value = f.host;
+      $('pPort').value = String(f.port);
+      checkPairTarget();
+      buildDevices();
+      $('pCode').focus();
+    }));
+  }
+  const code = String(devData.code || '');
+  $('myCode').innerHTML = '';
+  const span = document.createElement('span');
+  span.textContent = tr('pairCodeThis', { code: '' });
+  const b = document.createElement('b');
+  b.textContent = code.slice(0, 3) + ' ' + code.slice(3);
+  $('myCode').append(span, b);
+}
+
+function updatePairBtn() {
+  const needPass = pairInfo && pairInfo.needsPassword;
+  $('pPass').classList.toggle('hidden', !needPass);
+  $('pBtn').disabled = !(pairInfo && pairInfo.ok && $('pCode').value.trim().length === 6 && (!needPass || $('pPass').value));
+}
+
+function checkPairTarget() {
+  clearTimeout(pairInfoTimer);
+  pairInfo = null;
+  updatePairBtn();
+  const host = $('pHost').value.trim();
+  const port = Number($('pPort').value) || 8765;
+  if (!host) { $('pHint').textContent = tr('pairHint'); return; }
+  pairInfoTimer = setTimeout(async () => {
+    const info = await window.abs.deviceInfo(host, port);
+    if ($('pHost').value.trim() !== host) return;
+    pairInfo = info;
+    $('pHint').textContent = info.ok ? info.name + (info.needsPassword ? ' · ' + tr('needPass') : '') : tr('noResponse');
+    updatePairBtn();
+  }, 400);
+}
+
+$('pHost').addEventListener('input', checkPairTarget);
+$('pPort').addEventListener('input', checkPairTarget);
+$('pCode').addEventListener('input', () => { $('pCode').value = $('pCode').value.replace(/\D/g, '').slice(0, 6); updatePairBtn(); });
+$('pPass').addEventListener('input', updatePairBtn);
+$('pBtn').onclick = async () => {
+  $('pBtn').disabled = true;
+  $('pErr').classList.add('hidden');
+  const res = await window.abs.pair({ host: $('pHost').value.trim(), port: Number($('pPort').value) || 8765, code: $('pCode').value.trim(), password: $('pPass').value });
+  if (res && res.ok) {
+    $('pCode').value = '';
+    $('pPass').value = '';
+    $('pHost').value = '';
+    pairInfo = null;
+    $('pHint').textContent = tr('pairHint');
+    await selectDevice(res.id);
+    return;
+  }
+  const err = res && res.error;
+  if (err === 'needPassword') { pairInfo = Object.assign({}, pairInfo, { needsPassword: true }); }
+  $('pErr').textContent = err === 'needPassword' ? tr('needPass') : err === 'badPassword' ? tr('badPassword') : err === 'login' ? tr('login') : (err || tr('noResponse'));
+  $('pErr').classList.remove('hidden');
+  updatePairBtn();
+};
+for (const el of document.querySelectorAll('[data-act="devices"]')) el.onclick = () => setDevOpen(!devOpen);
+$('devClose').onclick = () => setDevOpen(false);
+
+$('chBtn').onclick = () => setListOpen(!listOpen);
+$('chClose').onclick = () => setListOpen(false);
+$('chLabel').onclick = () => setListOpen(!listOpen);
+$('chSearch').addEventListener('input', buildChapterRows);
+$('chItems').addEventListener('wheel', () => { lastUserScroll = Date.now(); }, { passive: true });
+$('chItems').addEventListener('pointerdown', () => { lastUserScroll = Date.now(); });
+document.documentElement.style.setProperty('--list-h', window.abs.listHeight + 'px');
+
+// --- klávesy ---
+document.addEventListener('keydown', (e) => {
+  if (e.target === $('volRange')) return;
+  if (e.target instanceof HTMLInputElement && e.target.closest('#devPanel')) {
+    if (e.key === 'Escape') setDevOpen(false);
+    else if (e.key === 'Enter' && !$('pBtn').disabled) $('pBtn').click();
+    return;
+  }
+  if (e.target === $('chSearch')) {
+    if (e.key === 'Escape') { if ($('chSearch').value) { $('chSearch').value = ''; buildChapterRows(); } else setListOpen(false); }
+    else if (e.key === 'Enter') { const r = $('chItems').querySelector('.ch-row'); if (r) r.click(); }
+    return;
+  }
+  if (e.key === 'Escape') { if (devOpen) setDevOpen(false); else if (listOpen) setListOpen(false); else window.abs.hide(); }
+  else if (e.key === ' ' || e.key === 'MediaPlayPause') { e.preventDefault(); cmd('playPause'); }
+  else if (e.key === 'ArrowLeft') cmd('jumpBack');
+  else if (e.key === 'ArrowRight') cmd('jumpFwd');
+  else if (e.key === 'm' || e.key === 'M') cmd('mute');
+  else if (e.key === 'Enter' && !(e.target instanceof HTMLButtonElement)) window.abs.openMain();
+});
+
+window.abs.onShown(() => {
+  // okno se vždy ukazuje sbalené
+  if (devOpen) { devOpen = false; clearInterval(devTimer); devTimer = null; $('devPanel').classList.add('hidden'); }
+  listOpen = false;
+  $('chBtn').classList.remove('on');
+  $('chPanel').classList.add('hidden');
+  document.querySelector('.card').classList.remove('down');
+  poll();
+});
+window.abs.onLang((code) => { lang = code; applyLang(); });
+setInterval(() => { if (document.visibilityState === 'visible') poll(); }, 500);
+applyLang();
+poll();
+</script>
+</body>
+</html>

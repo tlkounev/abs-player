@@ -1,8 +1,15 @@
+# Android
 .gradle/
 build/
 local.properties
 .idea/
 *.iml
-.DS_Store
-captures/
 .kotlin/
+captures/
+.DS_Store
+
+# Windows (Electron)
+node_modules/
+dist/
+win/test/out/
+*.log
