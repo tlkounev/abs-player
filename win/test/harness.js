@@ -81,6 +81,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('devices:pair', (_e, p) => { devCalls.push('pair:' + p.host + ':' + p.port + ':' + p.code); return { ok: true, id: 'pc2' }; });
   ipcMain.handle('devices:select', (_e, id) => { devCalls.push('select:' + id); return true; });
   ipcMain.handle('devices:unpair', (_e, id) => { devCalls.push('unpair:' + id); return true; });
+  ipcMain.handle('devices:playHere', () => { devCalls.push('playHere'); return true; });
   ipcMain.handle('abs:cmd', (_e, n, a) => exec(`window.__absPlayer.cmd(${JSON.stringify(n)}, ${JSON.stringify(a ?? null)})`));
   ipcMain.on('popup:open-main', () => {});
   ipcMain.on('popup:hide', () => results.push('hide clicked'));
@@ -310,6 +311,18 @@ app.whenReady().then(async () => {
     await wait(700);
     await shot(popup, 'p-' + l + '.png');
   }
+
+  // vypnutá TV: tlačítko Přehrát na tomto zařízení
+  await jsP("busy = true; st = { ready: true, loggedIn: true, item: null, remoteError: true, waking: null, lastTitle: 'V Krvavém pásu', target: { name: 'Obývák TV', remote: true } }; render();");
+  await wait(300);
+  check('offline TV: play here button', await jsP("!document.getElementById('playHere').classList.contains('hidden') && document.getElementById('playHere').textContent === " + JSON.stringify(I18N.tr(lang, 'playHere'))));
+  await shot(popup, 'p-offline.png');
+  await jsP("document.getElementById('playHere').click()");
+  await wait(300);
+  check('offline TV: play here called', devCalls.includes('playHere'));
+  await jsP("st = { ready: true, loggedIn: true, item: null, remoteError: true, waking: 23, target: { name: 'Obývák TV', remote: true } }; render();");
+  check('waking text', (await jsP("document.getElementById('msgTxt').textContent")) === I18N.tr(lang, 'waking', { name: 'Obývák TV', s: 23 }) && await jsP("document.getElementById('playHere').classList.contains('hidden')"));
+  await jsP("busy = false;");
 
   // prázdný stav
   await exec(`(() => { const p = ${P}; p.streamLibraryItem = null;

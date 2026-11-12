@@ -215,7 +215,11 @@
   .msg-wrap { flex: 1; display: flex; flex-direction: column; }
   .msg-top { display: flex; justify-content: flex-end; margin: -4px -6px 0 0; }
   .msg { flex: 1; display: grid; place-items: center; text-align: center; color: var(--muted); padding: 0 20px 20px; }
-  .link-btn { margin-top: 10px; border: 1px solid var(--line); background: var(--hover); color: var(--fg); border-radius: 4px; padding: 5px 12px; font: inherit; }
+  .play-here { display: flex; align-items: center; gap: 8px; margin: 12px auto 0; height: 32px; padding: 0 16px; border: 0; border-radius: 16px; background: var(--accent); color: var(--accent-fg); font: 600 13px "Segoe UI Variable Text", "Segoe UI", sans-serif; }
+  .play-here svg { width: 13px; height: 13px; fill: currentColor; }
+  .play-here.hidden { display: none; }
+  .msg-sub { font-size: 12px; margin-top: 2px; }
+  .link-btn { display: block; margin: 10px auto 0; border: 1px solid var(--line); background: var(--hover); color: var(--fg); border-radius: 4px; padding: 5px 12px; font: inherit; }
   .link-btn:hover { background: var(--press); }
 </style>
 </head>
@@ -349,6 +353,7 @@
     <div class="msg">
       <div>
         <div id="msgTxt"></div>
+        <button class="play-here hidden" id="playHere"><svg viewBox="0 0 20 20"><path d="M6 3.7v12.6a.9.9 0 0 0 1.4.8l9.8-6.3a1 1 0 0 0 0-1.6L7.4 2.9a.9.9 0 0 0-1.4.8Z"/></svg><span data-txt="playHere"></span></button>
         <button class="link-btn" data-act="open" data-txt="openAbs"></button>
       </div>
     </div>
@@ -452,6 +457,7 @@ function renderVolume() {
 }
 
 function render() {
+  $('playHere').classList.add('hidden');
   if (listOpen && !(st && st.item && st.hasChapters)) setListOpen(false);
   if (homeOpen && !(st && st.item)) homeOpen = false;
   if (!st || !st.ready) {
@@ -462,7 +468,11 @@ function render() {
   for (const b of document.querySelectorAll('.dev-btn')) b.classList.toggle('on', devOpen || !!(st.target && st.target.remote));
   if (!st.item && st.remoteError) {
     show('msg');
-    $('msgTxt').textContent = tr('deviceOffline', { name: st.target.name });
+    // probouzení TV (Wake-on-LAN) – jinak „nedostupná“ s tlačítkem Přehrát na tomto zařízení
+    $('msgTxt').textContent = st.waking != null ? tr('waking', { name: st.target.name, s: st.waking })
+      : tr('deviceOffline', { name: st.target.name }) + (st.lastTitle ? '\n' + st.lastTitle : '');
+    $('msgTxt').style.whiteSpace = 'pre-line';
+    $('playHere').classList.toggle('hidden', st.waking != null);
     return;
   }
   if (!st.item) {
@@ -1011,6 +1021,7 @@ $('devClose').onclick = () => setDevOpen(false);
 
 $('chBtn').onclick = () => setListOpen(!listOpen);
 $('homeBtn').onclick = () => setHomeOpen(true);
+$('playHere').onclick = async () => { await window.abs.playHere(); poll(); };
 $('chClose').onclick = () => setListOpen(false);
 $('chLabel').onclick = () => setListOpen(!listOpen);
 $('chSearch').addEventListener('input', buildChapterRows);

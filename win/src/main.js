@@ -343,7 +343,10 @@ async function getState() {
     const d = pairedDevice(target.id);
     try {
       const np = await remote.remoteState(d);
+      learnMac(d);
+      if (waking && waking.id === d.deviceId) wakeSucceeded(d);
       if (np && np.itemId) {
+        lastRemoteItem = { id: np.itemId, title: np.title, deviceId: d.deviceId };
         st = remote.nowPlayingToPopup(np, { target, cover: await coverFor(np.itemId) });
         lastRemoteChapters = st.chaptersList || [];
       } else {
@@ -352,7 +355,11 @@ async function getState() {
       }
     } catch (e) {
       const loc = await localState();
-      st = { ready: true, loggedIn: true, item: null, inProgress: (loc && loc.inProgress) || [], target, remoteError: true };
+      st = {
+        ready: true, loggedIn: true, item: null, inProgress: (loc && loc.inProgress) || [], target, remoteError: true,
+        waking: waking && waking.id === d.deviceId ? Math.max(0, Math.ceil((waking.until - Date.now()) / 1000)) : null,
+        lastTitle: lastRemoteItem && lastRemoteItem.deviceId === d.deviceId ? lastRemoteItem.title : null
+      };
     }
   }
   lastState = st;
@@ -389,23 +396,116 @@ async function selectTarget(id) {
   if (!from.remote) {
     const st = await localState();
     if (st && st.item && st.isPlaying) hand = await localCmd('handoff');
-  } else {
+  } else if (!(lastState && lastState.remoteError)) { // vypnuté zařízení nezdržovat
     try {
       const d = pairedDevice(from.id);
-      const np = await remote.remoteState(d);
+      const np = await withTimeout(remote.remoteState(d), 1500);
       if (np && np.itemId && np.isPlaying) {
-        const after = await remote.remoteCmd(d, { action: 'pause' });
+        const after = await withTimeout(remote.remoteCmd(d, { action: 'pause' }), 3000);
         hand = { id: np.itemId, time: (after && after.positionSec) || np.positionSec };
       }
     } catch (e) { /* zdroj nedostupný – jen přepnout */ }
   }
+  cancelWaking();
   currentTarget = id;
-  if (hand && hand.id) {
-    if (id === 'local') await localCmd('playItem', { id: hand.id, startTime: hand.time });
-    else await remote.remoteCmd(pairedDevice(id), { action: 'playItem', itemId: hand.id, value: hand.time }).catch(() => {});
+  if (id === 'local') {
+    if (hand && hand.id) await localCmd('playItem', { id: hand.id, startTime: hand.time });
+    return true;
+  }
+  const d = pairedDevice(id);
+  const online = await withTimeout(remote.remoteState(d), 1500).then(() => true, () => false);
+  if (online) {
+    if (hand && hand.id) await remote.remoteCmd(d, { action: 'playItem', itemId: hand.id, value: hand.time }).catch(() => {});
+  } else {
+    startWaking(d, hand, from.id);
   }
   return true;
 }
+
+function withTimeout(p, ms) {
+  return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+}
+
+// ---------- vypnutá TV: probuzení (Wake-on-LAN) a návrat sem, když se nezapne ----------
+const WAKE_MS = 30000;
+let waking = null; // { id, until, hand, back, timer }
+let lastRemoteItem = null;
+
+function startWaking(d, hand, backId) {
+  sendWakeOnLan(d);
+  waking = { id: d.deviceId, until: Date.now() + WAKE_MS, hand, back: backId || 'local' };
+  waking.timer = setInterval(async () => {
+    if (!waking) return;
+    try {
+      await withTimeout(remote.remoteState(d), 1500);
+      wakeSucceeded(d);
+    } catch (e) {
+      if (Date.now() < waking.until) { if ((waking.until - Date.now()) % 10000 < 2000) sendWakeOnLan(d); return; }
+      const w = waking;
+      cancelWaking();
+      if (currentTarget !== w.id) return;
+      currentTarget = 'local';
+      if (w.hand && w.hand.id) await localCmd('playItem', { id: w.hand.id, startTime: w.hand.time });
+      notice(APP_NAME, t('wakeFailed', { name: d.name }));
+    }
+  }, 2000);
+}
+
+function wakeSucceeded(d) {
+  const w = waking;
+  cancelWaking();
+  if (w && w.hand && w.hand.id && currentTarget === d.deviceId) {
+    remote.remoteCmd(d, { action: 'playItem', itemId: w.hand.id, value: w.hand.time }).catch(() => {});
+  }
+}
+
+function cancelWaking() {
+  if (waking && waking.timer) clearInterval(waking.timer);
+  waking = null;
+}
+
+/** Magic packet na MAC adresu zařízení (zjištěnou z ARP, když bylo zapnuté). */
+function sendWakeOnLan(d) {
+  if (!d || !d.mac) return;
+  try {
+    const mac = Buffer.from(d.mac.replace(/[^0-9a-f]/gi, ''), 'hex');
+    if (mac.length !== 6) return;
+    const pkt = Buffer.alloc(102, 0xff);
+    for (let i = 0; i < 16; i++) mac.copy(pkt, 6 + i * 6);
+    const sock = require('dgram').createSocket('udp4');
+    sock.bind(() => {
+      sock.setBroadcast(true);
+      const targets = ['255.255.255.255'];
+      if (/^\d+\.\d+\.\d+\.\d+$/.test(d.host)) targets.push(d.host.replace(/\.\d+$/, '.255'));
+      let left = targets.length * 2;
+      const done = () => { if (--left <= 0) sock.close(); };
+      for (const h of targets) for (const port of [9, 7]) sock.send(pkt, port, h, done);
+    });
+  } catch (e) { /* bez probuzení */ }
+}
+
+/** MAC adresa z ARP tabulky Windows – jen jednou za běh pro každé zařízení. */
+const macTried = new Set();
+function learnMac(d) {
+  if (!d || process.platform !== 'win32' || macTried.has(d.deviceId)) return;
+  macTried.add(d.deviceId);
+  require('child_process').execFile('arp', ['-a', d.host], { windowsHide: true }, (err, out) => {
+    if (err || !out) return;
+    const m = String(out).match(/([0-9a-f]{2}[-:]){5}[0-9a-f]{2}/i);
+    if (!m) return;
+    const mac = m[0].toLowerCase().replace(/-/g, ':');
+    const p = pairedDevice(d.deviceId);
+    if (p && p.mac !== mac) { p.mac = mac; saveConfig(config); }
+  });
+}
+
+ipcMain.handle('devices:playHere', async () => {
+  cancelWaking();
+  const it = lastRemoteItem;
+  currentTarget = 'local';
+  if (it && it.id) await localCmd('playItem', { id: it.id }); // pozice ze serveru
+  return true;
+});
 
 ipcMain.handle('abs:state', () => getState());
 ipcMain.handle('abs:cmd', (_e, name, arg) => routedCmd(name, arg));
@@ -621,26 +721,21 @@ function checkUpdates(manual) {
   autoUpdater.checkForUpdates().catch(() => { /* hlásí se přes 'error' */ });
 }
 
+// Oznámení Windows musí zůstat v paměti, dokud nezmizí – jinak se klik na něj ztratí.
+const liveNotices = new Set();
 function notice(title, body, onClick) {
   if (!Notification.isSupported()) return;
   const n = new Notification({ title, body, icon: path.join(ASSETS, 'app.ico') });
-  if (onClick) n.on('click', onClick);
+  liveNotices.add(n);
+  const done = () => liveNotices.delete(n);
+  n.on('close', done);
+  n.on('click', () => { done(); if (onClick) onClick(); });
   n.show();
 }
 
-// Okno (ne oznámení Windows): klik na oznámení Windows nedoručí spolehlivě, okno ano.
 function offerUpdate() {
   upd.offered = upd.version;
-  dialog.showMessageBox({
-    type: 'info',
-    title: APP_NAME,
-    message: t('updAvailable', { v: upd.version }),
-    detail: t('updDialogBody'),
-    buttons: [t('updInstallBtn'), t('updLater')],
-    defaultId: 0,
-    cancelId: 1,
-    noLink: true
-  }).then((r) => { if (r.response === 0) downloadAndInstall(); });
+  notice(t('updAvailable', { v: upd.version }), t('updClickInstall'), downloadAndInstall);
 }
 
 /** Po souhlasu: stáhnout, nainstalovat (tiše) a aplikaci znovu spustit. */
@@ -654,7 +749,7 @@ function reportManual() {
   if (!manualCheck) return;
   manualCheck = false;
   if (upd.status === 'none') notice(APP_NAME, t('updNone', { v: app.getVersion() }));
-  else if (upd.status === 'error') dialog.showMessageBox({ type: 'error', title: APP_NAME, message: t('updError', { t: upd.error }), noLink: true });
+  else if (upd.status === 'error') notice(APP_NAME, t('updError', { t: upd.error }));
 }
 
 function installUpdate() {

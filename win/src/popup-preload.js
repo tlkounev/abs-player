@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('abs', {
   onLang: (cb) => ipcRenderer.on('i18n:changed', (_e, code) => cb(code)),
   devices: () => ipcRenderer.invoke('devices:get'),
   selectDevice: (id) => ipcRenderer.invoke('devices:select', id),
+  playHere: () => ipcRenderer.invoke('devices:playHere'),
   deviceInfo: (host, port) => ipcRenderer.invoke('devices:info', host, port),
   pair: (p) => ipcRenderer.invoke('devices:pair', p),
   unpair: (id) => ipcRenderer.invoke('devices:unpair', id)

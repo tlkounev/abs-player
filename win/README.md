@@ -53,10 +53,16 @@ Týká se aplikace, jazyk samotného webu ABS se nastavuje v ABS.
 ### Aktualizace
 - Menu ikony v liště (pravý klik) ukazuje nahoře verzi a *Zkontrolovat aktualizace*.
 - Aplikace se při spuštění a pak každých 6 hodin podívá, jestli je novější verze; nic sama nestahuje.
-- Když je, zeptá se oknem *Je k dispozici verze …* → *Aktualizovat a restartovat* / *Později*.
-  Aktualizovat = stáhnout, tiše nainstalovat a aplikaci znovu spustit. Totéž nabízí menu ikony
-  (*Stáhnout a nainstalovat verzi …*).
-- *Zkontrolovat aktualizace* ukáže buď to okno, nebo oznámení *Máš nejnovější verzi*.
+- Když je, ukáže oznámení Windows *Je k dispozici verze …*: klik = stáhnout, tiše nainstalovat a
+  aplikaci znovu spustit. Totéž nabízí menu ikony (*Stáhnout a nainstalovat verzi …*).
+- *Zkontrolovat aktualizace* ukáže buď to oznámení, nebo *Máš nejnovější verzi*.
+
+### Vypnutá TV
+- Když je vybraná TV nedostupná, minipřehrávač nabídne *Přehrát na tomto zařízení* (pustí knihu
+  tady od pozice uložené na serveru).
+- Výběr vypnuté TV v *Přehrávat na*: aplikace pošle Wake-on-LAN (MAC adresu TV si zjistí z ARP,
+  když je TV zapnutá; na TV musí být zapnuté probouzení přes síť / Wi‑Fi) a 30 s čeká
+  (*Probouzím …*). Když TV naběhne, kniha se na ní spustí; když ne, hraje se dál tady.
 - Zdroj: vydání `win-latest` na GitHubu (`latest.yml` + instalátor), ten po každém sestavení
   přepíše GitHub Actions. Funguje jen s veřejným repozitářem.
 
