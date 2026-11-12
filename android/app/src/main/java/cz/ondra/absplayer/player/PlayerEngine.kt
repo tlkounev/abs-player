@@ -267,11 +267,6 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
             .setIconResId(R.drawable.ic_forward)
             .setSessionCommand(SessionCommand(CMD_FORWARD, Bundle.EMPTY))
             .build(),
-        CommandButton.Builder()
-            .setDisplayName(tr("speed"))
-            .setIconResId(R.drawable.ic_speed)
-            .setSessionCommand(SessionCommand(CMD_SPEED, Bundle.EMPTY))
-            .build(),
     )
 
     // ------------------------------------------------------------------ state
