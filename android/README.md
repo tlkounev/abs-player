@@ -1,12 +1,16 @@
 # ABS Player pro Android
 
 Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.4.1.
+Verze 1.5.0.
 
 ## Co umí
 
 **Telefon**
-- Pokračovat (rozposlouchané ze všech zařízení), Knihovna s hledáním, Série, detail knihy s kapitolami.
+- Záložky Pokračovat (rozposlouchané ze všech zařízení) | Přidané | Knihovna | Série | Autoři:
+  - *Přidané* = Nedávno přidané knihy a Nedávné série (stejné police jako na Homu Audiobookshelfu);
+  - Knihovna, Série i Autoři mají hledání;
+  - v mřížkách je pod názvem série s pořadím (např. „Duna #2“).
+- Detail knihy a přehrávač: autor a série jsou odkazy. Autor otevře své knihy, série své knihy v pořadí.
 - Přehrávač je rozložený jako minipřehrávač ABS Player pro Windows (varianta B):
   - nahoře velký obal;
   - pod ním název, autor · série a kapitola; vpravo časovač, *Přehrávat na* a seznam kapitol;
@@ -20,7 +24,9 @@ Verze 1.4.1.
 - Detail knihy: kapitoly jsou sbalené, otevře je řádek *Kapitoly (n)*.
 - Ovládání dálkovým ovladačem (TV): vybraná položka má oranžový rámeček, tlačítko Play bílý a je
   větší. Detail knihy začíná na *Pokračovat*, přehrávač na Play. V přehrávači ↑/↓ přechází mezi
-  řádky a ←/→ na pruhu kapitoly posouvá o 10 s, na pruhu knihy o 1 minutu. Na TV a na šířku je
+  řádky a ←/→ na pruhu kapitoly posouvá o 10 s, na pruhu knihy o 1 minutu. Vybraný pruh nemá rámeček,
+  jeho kolečko pulzuje. Šipka dolů ze záložek nebo z hledání jde na první viditelnou položku vlevo.
+  V detailu knihy jde z pruhu přehrávání šipka nahoru vždy na *Pokračovat*. Na TV a na šířku je
   obal vlevo a ovládání vpravo.
 - Seznam kapitol s hledáním bez diakritiky i podle čísla, časovač (minuty nebo konec kapitoly).
 - Jazyk aplikace se mění vlajkou na hlavní stránce. Je to stejných 15 jazyků jako ve Windows:
@@ -42,13 +48,17 @@ Verze 1.4.1.
 
 **Přehrávat na – TV i PC**
 - Cílem může být Google TV (toto APK) nebo PC s ABS Player pro Windows 1.1.4+.
+- Seznam zařízení vypadá jako ve Windows: toto zařízení první (oranžový proužek, „toto zařízení“),
+  spárovaná s ×, každé jde přejmenovat tužkou. Nový název tohoto zařízení uvidí i ostatní
+  (při dalším hledání / párování), název spárovaného zařízení platí jen tady.
 - Párování: *Přehrávat na → Spárovat zařízení*, zařízení ukáže šestimístný kód.
   Heslo k ABS je potřeba jen pro TV, která ještě není přihlášená k tvému účtu.
 
 **Google TV (stejné APK)**
 - Na TV je stejná obrazovka jako na telefonu. Běží tam přijímač na pozadí (spouští se i po zapnutí TV);
   párovací kód TV a její adresa jsou v *Přehrávat na* dole.
-- Když na TV pošleš přehrávání, aplikace se sama otevře s přehrávačem – jen s povolením
+- Když na TV pošleš přehrávání, aplikace se sama otevře s přehrávačem (i když byla jen schovaná
+  pod Homem) – jen s povolením
   „Zobrazení přes jiné aplikace“ (tlačítko *Povolit* v *Přehrávat na*; když TV to nastavení nemá:
   `adb shell appops set cz.ondra.absplayer SYSTEM_ALERT_WINDOW allow`).
 - Odchod z aplikace na TV (domů, jiná aplikace) přehrávání pozastaví a uloží pozici. Během
