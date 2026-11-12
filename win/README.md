@@ -20,9 +20,9 @@ Webový klient Audiobookshelf jako samostatná aplikace v oznamovací oblasti Wi
   Okno naroste nahoru (u horního okraje obrazovky dolů), seznam sjede na aktuální kapitolu,
   dohrané mají háček, klik skočí na začátek kapitoly, pole Hledat filtruje podle názvu (bez ohledu
   na diakritiku) nebo čísla. Esc vymaže hledání / zavře seznam.
-- Když nic nehraje, nabídne poslední rozposlouchané tituly. Při přehrávání je otevře tlačítko se
-  třemi knihami vpravo nahoře (okno naroste, právě hrající kniha je zvýrazněná, klik na jinou ji
-  pustí od jejího místa, šipka zpět nebo Esc vrátí přehrávač).
+- Když nic nehraje, nabídne poslední rozposlouchané tituly. Při přehrávání se na tuto úvodní
+  stránku vrátíš šipkou ← vpravo nahoře: právě hrající kniha je první a zvýrazněná (klik na ni
+  nebo Esc = zpět do přehrávače), klik na jinou ji pustí od jejího místa.
 
 ### Přehrávat na (TV, jiné PC) a z telefonu sem
 - Tlačítko s monitorem v minipřehrávači (nebo menu ikony → *Přehrávat na*) otevře seznam zařízení.
@@ -52,7 +52,9 @@ Týká se aplikace, jazyk samotného webu ABS se nastavuje v ABS.
 
 ### Aktualizace
 - Menu ikony v liště (pravý klik) ukazuje nahoře verzi a *Zkontrolovat aktualizace*.
-- Aplikace kontroluje novou verzi při spuštění a každých 6 hodin a stáhne ji na pozadí. Pak ukáže
+- *Zkontrolovat aktualizace* ukáže oznámení: buď *Máš nejnovější verzi*, nebo *Je k dispozici verze …* –
+  klik na něj novou verzi stáhne, nainstaluje a aplikaci restartuje.
+- Aplikace kontroluje novou verzi i sama při spuštění a každých 6 hodin a stáhne ji na pozadí. Pak ukáže
   oznámení *Verze … je připravená*: klik = restart s novou verzí, jinak se nainstaluje při ukončení.
   Do menu přibude *Restartovat a aktualizovat na …*.
 - Zdroj: vydání `win-latest` na GitHubu (`latest.yml` + instalátor), ten po každém sestavení

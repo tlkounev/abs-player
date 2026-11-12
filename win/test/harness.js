@@ -116,17 +116,17 @@ app.whenReady().then(async () => {
   await exec(`(() => { const orig = window.$nuxt.$axios.$get; window.$nuxt.$axios.$get = async (url) => url.includes('items-in-progress') ? ({ libraryItems: [
       { id: 'li1', updatedAt: 1, media: { coverPath: '/c', metadata: { title: 'Stopařův průvodce po Galaxii', authorName: 'Douglas Adams' } } },
       { id: 'li3', updatedAt: 1, media: { coverPath: null, metadata: { title: 'Saturnin', authorName: 'Zdeněk Jirotka' } } } ] }) : orig(url); })()`);
-  check('recent button visible', await jsP("getComputedStyle(document.getElementById('recBtn')).display !== 'none' && document.getElementById('recBtn').title === 'Pokračovat v poslechu'"));
-  await jsP("document.getElementById('recBtn').click()");
+  check('home button visible', await jsP("getComputedStyle(document.getElementById('homeBtn')).display !== 'none' && document.getElementById('homeBtn').title === 'Pokračovat v poslechu'"));
+  await jsP("document.getElementById('homeBtn').click()");
   await wait(900);
-  check('recent opens', await jsP("document.querySelector('.card').classList.contains('rec') && !document.getElementById('recPanel').classList.contains('hidden') && getComputedStyle(document.getElementById('player')).display === 'none'"));
-  check('recent rows', await jsP("document.querySelectorAll('#recItems .row').length") === 2);
-  check('recent current', await jsP("document.querySelector('#recItems .row.cur .a').textContent") === 'Přehrává se');
-  await shot(popup, 'p-recent.png');
-  await jsP("document.getElementById('recBack').click()");
+  check('home page shown', await jsP("!document.getElementById('empty').classList.contains('hidden') && document.getElementById('player').classList.contains('hidden')"));
+  check('home rows', await jsP("document.querySelectorAll('#list .row').length") === 2);
+  check('home current first', await jsP("document.querySelector('#list .row').classList.contains('cur') && document.querySelector('#list .row.cur .a').textContent === 'Přehrává se'"));
+  check('home window size', popup.getBounds().height === 236);
+  await shot(popup, 'p-home.png');
+  await jsP("document.querySelector('#list .row.cur .t').click()");
   await wait(700);
-  check('recent closes', await jsP("!document.querySelector('.card').classList.contains('rec') && getComputedStyle(document.getElementById('player')).display !== 'none'"));
-  check('recent window size', popup.getBounds().height === 236);
+  check('home back to player', await jsP("document.getElementById('empty').classList.contains('hidden') && !document.getElementById('player').classList.contains('hidden')"));
 
   // hlasitost: najetí → posuvník; zavření podle polohy kurzoru (bez DOM událostí)
   const r = await jsP("JSON.stringify(document.getElementById('volBtn').getBoundingClientRect())").then(JSON.parse);

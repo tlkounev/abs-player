@@ -582,6 +582,7 @@ const UPDATE_EVERY = 6 * 60 * 60 * 1000;
 const upd = { status: 'idle', version: null, error: null }; // idle | checking | none | downloading | ready | error
 let autoUpdater = null;
 let manualCheck = false;
+let installWhenReady = false; // klik na oznámení „je novější verze“ – nainstalovat hned po stažení
 
 function setupUpdater() {
   if (!app.isPackaged) return; // spuštění z vývojového prostředí
@@ -590,11 +591,24 @@ function setupUpdater() {
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.on('checking-for-update', () => { upd.status = 'checking'; });
   autoUpdater.on('update-not-available', () => { upd.status = 'none'; reportManual(); });
-  autoUpdater.on('update-available', (info) => { upd.status = 'downloading'; upd.version = info.version; });
+  autoUpdater.on('update-available', (info) => {
+    upd.status = 'downloading';
+    upd.version = info.version;
+    if (manualCheck) {
+      // ruční kontrola: hned okno „je novější verze“, klik = stáhnout, nainstalovat a restartovat
+      manualCheck = false;
+      upd.announced = true;
+      notice(t('updAvailable', { v: info.version }), t('updClickInstall'), () => {
+        installWhenReady = true;
+        if (upd.status === 'ready') installUpdate();
+      });
+    }
+  });
   autoUpdater.on('update-downloaded', (info) => {
     upd.status = 'ready';
     upd.version = info.version;
-    notifyReady();
+    if (installWhenReady) installUpdate();
+    else if (!upd.announced) notifyReady();
   });
   autoUpdater.on('error', (e) => {
     upd.status = 'error';
@@ -608,8 +622,13 @@ function setupUpdater() {
 function checkUpdates(manual) {
   if (!autoUpdater) return;
   if (upd.status === 'ready') { if (manual) notifyReady(); return; }
-  if (upd.status === 'checking' || upd.status === 'downloading') return;
+  if (upd.status === 'downloading') {
+    if (manual) notice(t('updAvailable', { v: upd.version }), t('updClickInstall'), () => { installWhenReady = true; });
+    return;
+  }
+  if (upd.status === 'checking') return;
   manualCheck = manual;
+  upd.announced = false;
   autoUpdater.checkForUpdates().catch(() => { /* hlásí se přes 'error' */ });
 }
 
@@ -628,6 +647,7 @@ function reportManual() {
 }
 
 function notifyReady() {
+  upd.announced = true;
   notice(t('updReady', { v: upd.version }), t('updReadyBody'), installUpdate);
 }
 
