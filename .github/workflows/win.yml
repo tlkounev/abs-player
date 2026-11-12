@@ -54,3 +54,18 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           TAG="win-v${VERSION}-build${{ github.run_number }}"
           gh release create "$TAG" dist/*.exe dist/*.zip --title "ABS Player pro Windows ${VERSION} (build ${{ github.run_number }})" --notes "Commit ${{ github.sha }}" --latest
+
+      # Fixed release "win-latest" = update feed for electron-updater (latest.yml + installer + blockmap).
+      - name: Update feed (win-latest)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view win-latest >/dev/null 2>&1 || \
+            gh release create win-latest --title "ABS Player pro Windows – zdroj automatických aktualizací" \
+              --notes "Používá ho aplikace pro automatické aktualizace. Instalátor ke stažení je v nejnovějším vydání win-v…" --latest=false
+          NEW=$(ls dist/*.exe dist/*.exe.blockmap dist/latest.yml | xargs -n1 basename)
+          gh release upload win-latest dist/*.exe dist/*.exe.blockmap dist/latest.yml --clobber
+          for a in $(gh release view win-latest --json assets -q '.assets[].name'); do
+            echo "$NEW" | grep -qxF "$a" || gh release delete-asset win-latest "$a" -y
+          done

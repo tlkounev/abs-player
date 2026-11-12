@@ -48,6 +48,14 @@ portugalština, nizozemština, maďarština, ukrajinština, ruština, čínštin
 Výchozí podle jazyka Windows; mění se vlajkou v okně s adresou serveru nebo v menu ikony (Jazyk).
 Týká se aplikace, jazyk samotného webu ABS se nastavuje v ABS.
 
+### Aktualizace
+- Menu ikony v liště (pravý klik) ukazuje nahoře verzi a *Zkontrolovat aktualizace*.
+- Aplikace kontroluje novou verzi při spuštění a každých 6 hodin a stáhne ji na pozadí. Pak ukáže
+  oznámení *Verze … je připravená*: klik = restart s novou verzí, jinak se nainstaluje při ukončení.
+  Do menu přibude *Restartovat a aktualizovat na …*.
+- Zdroj: vydání `win-latest` na GitHubu (`latest.yml` + instalátor), ten po každém sestavení
+  přepíše GitHub Actions. Funguje jen s veřejným repozitářem.
+
 ## Jak to funguje
 Hlavní okno je Chromium (Electron) s webem ABS v perzistentní relaci (přihlášení zůstává).
 Minipřehrávač volá přímo metody Vue komponent přehrávače webového klienta

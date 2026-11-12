@@ -13,3 +13,4 @@ node_modules/
 dist/
 win/test/out/
 *.log
+__pycache__/

@@ -28,8 +28,24 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # Fixed signing key from the repository secrets (see android/README.md). Without it the APK is
+      # signed with a throw-away debug key, which cannot update an installed app, so no release is published.
+      - name: Signing key
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "ABS_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "SIGNED=1" >> "$GITHUB_ENV"
+          else
+            echo "::warning::ANDROID_KEYSTORE_B64 secret missing – APK signed with a debug key, release not published"
+          fi
+
       # The runner image ships the Android SDK; AGP installs missing platform packages itself.
       - name: Build release APK
+        env:
+          ABS_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           chmod +x gradlew
           set -o pipefail
@@ -50,6 +66,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publish release
+        if: env.SIGNED == '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

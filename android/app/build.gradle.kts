@@ -13,15 +13,29 @@ android {
         applicationId = "cz.ondra.absplayer"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.2.2"
+        versionCode = 7
+        versionName = "1.3.0"
+    }
+
+    // One fixed release key (GitHub secret, decoded by CI into ABS_KEYSTORE), so every new APK
+    // installs over the previous one and the in-app updater works. Without it: debug key (local builds).
+    val releaseKeystore = System.getenv("ABS_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storeType = "pkcs12"
+                storePassword = System.getenv("ABS_KEYSTORE_PASSWORD")
+                keyAlias = "absplayer"
+                keyPassword = System.getenv("ABS_KEYSTORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Sideload build: signed with the local debug key so it installs without extra setup.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (releaseKeystore != null) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
         }
     }
 

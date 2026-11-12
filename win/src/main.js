@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, screen, shell, nativeImage, session } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, screen, shell, nativeImage, session, Notification } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -573,10 +573,89 @@ function flagIcon(code) {
   return img.isEmpty() ? undefined : img;
 }
 
+// ---------- aktualizace ----------
+// electron-updater čte latest.yml z vydání „win-latest“ na GitHubu (adresa je v app-update.yml,
+// který vytvoří electron-builder z build.publish). Stáhne novou verzi na pozadí a nainstaluje ji
+// při ukončení aplikace, nebo hned po kliknutí na oznámení / položku v menu.
+const UPDATE_EVERY = 6 * 60 * 60 * 1000;
+const upd = { status: 'idle', version: null, error: null }; // idle | checking | none | downloading | ready | error
+let autoUpdater = null;
+let manualCheck = false;
+
+function setupUpdater() {
+  if (!app.isPackaged) return; // spuštění z vývojového prostředí
+  try { ({ autoUpdater } = require('electron-updater')); } catch (e) { return; }
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.on('checking-for-update', () => { upd.status = 'checking'; });
+  autoUpdater.on('update-not-available', () => { upd.status = 'none'; reportManual(); });
+  autoUpdater.on('update-available', (info) => { upd.status = 'downloading'; upd.version = info.version; });
+  autoUpdater.on('update-downloaded', (info) => {
+    upd.status = 'ready';
+    upd.version = info.version;
+    notifyReady();
+  });
+  autoUpdater.on('error', (e) => {
+    upd.status = 'error';
+    upd.error = String((e && e.message) || e).split('\n')[0].slice(0, 160);
+    reportManual();
+  });
+  checkUpdates(false);
+  setInterval(() => checkUpdates(false), UPDATE_EVERY);
+}
+
+function checkUpdates(manual) {
+  if (!autoUpdater) return;
+  if (upd.status === 'ready') { if (manual) notifyReady(); return; }
+  if (upd.status === 'checking' || upd.status === 'downloading') return;
+  manualCheck = manual;
+  autoUpdater.checkForUpdates().catch(() => { /* hlásí se přes 'error' */ });
+}
+
+function notice(title, body, onClick) {
+  if (!Notification.isSupported()) return;
+  const n = new Notification({ title, body, icon: path.join(ASSETS, 'app.ico') });
+  if (onClick) n.on('click', onClick);
+  n.show();
+}
+
+function reportManual() {
+  if (!manualCheck) return;
+  manualCheck = false;
+  if (upd.status === 'none') notice(APP_NAME, t('updNone', { v: app.getVersion() }));
+  else if (upd.status === 'error') notice(APP_NAME, t('updError', { t: upd.error }));
+}
+
+function notifyReady() {
+  notice(t('updReady', { v: upd.version }), t('updReadyBody'), installUpdate);
+}
+
+function installUpdate() {
+  if (!autoUpdater || upd.status !== 'ready') return;
+  app.isQuitting = true;
+  autoUpdater.quitAndInstall(true, true); // tiše a po instalaci znovu spustit
+}
+
+function updateMenuItems() {
+  const items = [{ label: APP_NAME + ' ' + app.getVersion(), enabled: false }];
+  if (upd.status === 'ready') items.push({ label: t('updRestart', { v: upd.version }), click: installUpdate });
+  const busy = upd.status === 'checking' || upd.status === 'downloading';
+  items.push({
+    label: upd.status === 'checking' ? t('updChecking')
+      : upd.status === 'downloading' ? t('updDownloading', { v: upd.version })
+      : t('updCheck'),
+    enabled: !busy && !!autoUpdater,
+    click: () => checkUpdates(true)
+  });
+  items.push({ type: 'separator' });
+  return items;
+}
+
 function buildMenu() {
   const login = app.getLoginItemSettings({ args: ['--hidden'] });
   const cur = lang();
   return Menu.buildFromTemplate([
+    ...updateMenuItems(),
     { label: t('menuOpen'), click: () => showMain() },
     { label: t('menuPlayPause'), click: () => routedCmd('playPause') },
     {
@@ -646,6 +725,8 @@ app.whenReady().then(() => {
 
   // tooltip ikony s aktuální knihou
   setInterval(() => { if (!(popupWin && popupWin.isVisible())) getState(); }, 5000);
+
+  setupUpdater();
 });
 
 app.on('window-all-closed', () => { /* zůstat v liště */ });

@@ -1,6 +1,7 @@
 package cz.ondra.absplayer.ui
 
 import cz.ondra.absplayer.tr
+import cz.ondra.absplayer.data.Updater
 import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -86,6 +87,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             loggedIn.collect { if (it) refreshAll() }
         }
+        viewModelScope.launch { Updater.check(app, manual = false) }
         viewModelScope.launch {
             app.socket.progressEvents.collect { ev ->
                 val old = progress[ev.libraryItemId]
@@ -249,6 +251,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 loginBusy = false
             }
         }
+    }
+
+    fun checkUpdates() {
+        viewModelScope.launch { Updater.check(app, manual = true) }
     }
 
     fun logout() {

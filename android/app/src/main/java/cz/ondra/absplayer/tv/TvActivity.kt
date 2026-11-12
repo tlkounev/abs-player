@@ -1,5 +1,11 @@
 package cz.ondra.absplayer.tv
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
+import cz.ondra.absplayer.data.Updater
+import cz.ondra.absplayer.ui.UpdateBanner
+import cz.ondra.absplayer.ui.updateStatus
 import cz.ondra.absplayer.tr
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -100,6 +106,7 @@ private fun TvRoot(app: App) {
     val port by ReceiverService.port.collectAsStateWithLifecycle()
     val s by PlaybackHub.state.collectAsStateWithLifecycle()
     var manualLogin by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { Updater.check(app, manual = false) }
     when {
         loggedIn -> TvHome(app, s, port)
         manualLogin -> TvLogin(app) { manualLogin = false }
@@ -180,7 +187,8 @@ private fun TvHome(app: App, s: NowPlaying, port: Int) {
         runCatching { if (s.itemId != null) playFocus.requestFocus() else if (items.isNotEmpty()) firstFocus.requestFocus() }
     }
 
-    Column(Modifier.fillMaxSize().padding(horizontal = 56.dp, vertical = 32.dp)) {
+    val scope = rememberCoroutineScope()
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 56.dp, vertical = 32.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("ABS Player", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = C.Accent)
             Spacer(Modifier.weight(1f))
@@ -190,6 +198,10 @@ private fun TvHome(app: App, s: NowPlaying, port: Int) {
             )
         }
         Spacer(Modifier.height(24.dp))
+        UpdateBanner(
+            Modifier.padding(bottom = 20.dp),
+            tvButton = { onClick -> TvButton(onClick = onClick) { Text(tr("updateBtn"), fontSize = 20.sp) } },
+        )
 
         val itemId = s.itemId
         if (itemId != null) {
@@ -272,6 +284,19 @@ private fun TvHome(app: App, s: NowPlaying, port: Int) {
             items(items, key = { it.id }) { li ->
                 val m = if (li.id == items.firstOrNull()?.id) Modifier.focusRequester(firstFocus) else Modifier
                 TvCard(li, m) { engine { it.playItem(li.id) } }
+            }
+        }
+
+        // Version + manual update check
+        Spacer(Modifier.height(24.dp))
+        HorizontalDivider(color = C.Line)
+        Row(Modifier.fillMaxWidth().padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(tr("appVersion", "v" to Updater.currentVersion), fontSize = 16.sp, color = C.Muted)
+                updateStatus()?.let { (t, c) -> Text(t, fontSize = 14.sp, color = c) }
+            }
+            TvButton(onClick = { scope.launch { Updater.check(app, manual = true) } }) {
+                Text(tr("checkUpdates"), fontSize = 16.sp)
             }
         }
     }

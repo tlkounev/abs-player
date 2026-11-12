@@ -1,7 +1,7 @@
 # ABS Player pro Android
 
 Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.2.2.
+Verze 1.3.0.
 
 ## Co umí
 
@@ -69,8 +69,23 @@ Potřeba: Android Studio (Ladybug nebo novější) nebo JDK 17+ a Android SDK 35
 ```
 gradlew assembleRelease
 ```
-APK: `app/build/outputs/apk/release/app-release.apk` (podepsané ladicím klíčem, pro sideload).
-Každý push do `main`, který mění složku `android/`, sestaví APK na GitHubu (Actions) a vystaví ho v Releases (tag `android-v…`).
+Lokálně sestavené APK je podepsané ladicím klíčem. Každý push do `main`, který mění složku `android/`,
+sestaví APK na GitHubu (Actions) a podepíše ho pevným klíčem z tajných proměnných repozitáře:
+
+- `ANDROID_KEYSTORE_B64` – keystore (PKCS12, alias `absplayer`) v base64,
+- `ANDROID_KEYSTORE_PASSWORD` – heslo ke keystoru i klíči.
+
+Bez nich se APK podepíše ladicím klíčem a vydání (tag `android-v…`) se nevytvoří, protože takové APK
+nejde nainstalovat přes předchozí verzi.
+
+## Aktualizace
+
+- Verze je v menu ⋮ na hlavní stránce (na TV dole), tamtéž *Zkontrolovat aktualizace*.
+- Aplikace se při spuštění (nejvýš jednou denně) podívá do vydání na GitHubu (`android-v…`).
+  Je-li novější verze, ukáže nahoře pruh *K dispozici je verze …*; ✕ ho skryje do další verze.
+- *Aktualizovat* stáhne APK a předá ho instalátoru Androidu, ten se zeptá na potvrzení.
+  Poprvé Android chce povolit „instalaci neznámých aplikací“ pro ABS Player.
+- Funguje jen s veřejným repozitářem (stahuje se bez přihlášení) a s APK podepsanými stejným klíčem.
 
 ## Instalace
 

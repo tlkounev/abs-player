@@ -9,6 +9,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import cz.ondra.absplayer.L
+import cz.ondra.absplayer.data.Updater
 import cz.ondra.absplayer.R
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -91,9 +92,19 @@ fun HomeScreen(vm: MainViewModel) {
                                 onClick = { menu = false; vm.refreshAll() },
                             )
                             DropdownMenuItem(
+                                text = { Text(tr("checkUpdates")) },
+                                leadingIcon = { Icon(Ic.Download, null) },
+                                onClick = { vm.checkUpdates() },
+                            )
+                            DropdownMenuItem(
                                 text = { Text(tr("logout", "u" to (vm.app.settings.username ?: ""))) },
                                 onClick = { menu = false; vm.logout() },
                             )
+                            HorizontalDivider(color = C.Line, modifier = Modifier.padding(vertical = 4.dp))
+                            Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(tr("appVersion", "v" to Updater.currentVersion), fontSize = 13.sp, color = C.Muted)
+                                updateStatus()?.let { (t, c) -> Text(t, fontSize = 12.sp, color = c) }
+                            }
                         }
                     }
                 },
@@ -102,6 +113,7 @@ fun HomeScreen(vm: MainViewModel) {
         bottomBar = { MiniPlayer(vm) },
     ) { pad ->
         Column(Modifier.padding(pad).fillMaxSize()) {
+            UpdateBanner(Modifier.padding(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 10.dp))
             TabRow(
                 selectedTabIndex = vm.tab, containerColor = C.Bg, contentColor = C.Accent,
                 divider = { HorizontalDivider(color = C.Line) },
