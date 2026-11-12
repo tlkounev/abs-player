@@ -35,11 +35,11 @@ class PlaybackService : MediaLibraryService() {
                 PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
             )
             .build()
-        session.setCustomLayout(engine.customLayout(this))
+        session.setMediaButtonPreferences(engine.mediaButtons())
         // Speed button shows the current speed: refresh it whenever the speed changes.
         engine.exo.addListener(object : Player.Listener {
             override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
-                session.setCustomLayout(engine.customLayout(this@PlaybackService))
+                session.setMediaButtonPreferences(engine.mediaButtons())
             }
         })
         PlaybackHub.attach(engine)

@@ -28,7 +28,9 @@ Verze 1.2.2.
 - Záložky Pokračovat | Knihovna | Série | Nové, obaly v mřížce, průběh u každé knihy.
 - Kniha se v autě tváří jako seznam kapitol: pruh ukazuje kapitolu (ne 12h knihu),
   ⏮/⏭ skáče po kapitolách, fronta = kapitoly.
-- Vlastní tlačítka: −10 s, +10 s a rychlost (ikona ukazuje aktuální rychlost, třeba 1.25x; klepnutí = další krok 0,75–2×). Hledání hlasem/textem.
+- Tlačítka jako v oficiální aplikaci: ⏯ ↺10 ↻10 | rychlost ⏮ ⏭. Rychlost ukazuje aktuální hodnotu
+  (třeba 1.25x), klepnutí = další krok 0,75–2×. ⏮ ⏭ skáčou po kapitolách. Hledání hlasem/textem.
+- Fronta začíná kapitolou před právě přehrávanou (Android Auto ji vždy otevře nahoře).
 - Obrazovku přehrávání (barvy podle obalu, vlnitý pruh, rozložení) kreslí samo Android Auto, aplikace
   dodává jen data, obal a tlačítka. Proto vypadá stejně jako u ostatních přehrávačů.
 - Tlačítko „Pokračovat“ po připojení auta obnoví poslední knihu.

@@ -13,7 +13,7 @@ android {
         applicationId = "cz.ondra.absplayer"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
+        versionCode = 6
         versionName = "1.2.2"
     }
 
@@ -51,7 +51,7 @@ android {
 }
 
 dependencies {
-    val media3 = "1.5.1"
+    val media3 = "1.6.1"
     val coroutines = "1.9.0"
 
     implementation("androidx.core:core-ktx:1.15.0")

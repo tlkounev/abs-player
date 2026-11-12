@@ -46,6 +46,12 @@ class ChapterPlayer(
         private set
 
     private var playlist: List<SimpleBasePlayer.MediaItemData> = emptyList()
+    /**
+     * Android Auto's queue ("Fronta") always opens at its first item, so the playlist the session
+     * sees starts at the chapter BEFORE the current one. Indices from controllers are relative to it.
+     */
+    private var windowStart = 0
+    private var pendingSeekDiscontinuity = false
     private var chStart = LongArray(0)
     private var chEnd = LongArray(0)
     private var trackStart = LongArray(0)
@@ -176,8 +182,12 @@ class ChapterPlayer(
     fun seekToBook(ms: Long) {
         if (book == null) return
         val target = ms.coerceIn(0, maxOf(0, durationMs() - 500))
-        val c = chapterAt(target)
-        seekTo(c, target - chStart[c])
+        val (ti, off) = locate(target)
+        exo.seekTo(ti, off)
+        lastChapter = chapterAt(target)
+        pendingSeekDiscontinuity = true
+        invalidateState()
+        host.onUserSeek()
     }
 
     fun skipBy(deltaMs: Long) = seekToBook(globalMs() + deltaMs)
@@ -226,13 +236,19 @@ class ChapterPlayer(
         lastChapter = c
         val start = chStart[c]
         val len = chEnd[c] - start
+        val first = (c - 1).coerceAtLeast(0)
+        windowStart = first
         builder
-            .setPlaylist(playlist)
-            .setCurrentMediaItemIndex(c)
+            .setPlaylist(playlist.subList(first, playlist.size))
+            .setCurrentMediaItemIndex(c - first)
             .setContentPositionMs(SimpleBasePlayer.PositionSupplier { (globalMs() - start).coerceIn(0, len) })
             .setContentBufferedPositionMs(SimpleBasePlayer.PositionSupplier { (bufferedGlobalMs() - start).coerceIn(0, len) })
             .setTotalBufferedDurationMs(SimpleBasePlayer.PositionSupplier { exo.totalBufferedDuration })
-        if (pendingAutoTransition) {
+        if (pendingSeekDiscontinuity) {
+            pendingSeekDiscontinuity = false
+            pendingAutoTransition = false
+            builder.setPositionDiscontinuity(Player.DISCONTINUITY_REASON_SEEK, (globalMs() - start).coerceIn(0, len))
+        } else if (pendingAutoTransition) {
             pendingAutoTransition = false
             builder.setPositionDiscontinuity(Player.DISCONTINUITY_REASON_AUTO_TRANSITION, (globalMs() - start).coerceIn(0, len))
         }
@@ -310,7 +326,8 @@ class ChapterPlayer(
 
     override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int): ListenableFuture<*> {
         if (book == null || chStart.isEmpty()) return Futures.immediateVoidFuture()
-        val idx = if (mediaItemIndex in chStart.indices) mediaItemIndex else chapterAt(globalMs())
+        val abs = if (mediaItemIndex == C.INDEX_UNSET) -1 else mediaItemIndex + windowStart
+        val idx = if (abs in chStart.indices) abs else chapterAt(globalMs())
         val within = if (positionMs == C.TIME_UNSET) 0 else positionMs
         val target = (chStart[idx] + within).coerceIn(0, maxOf(0, durationMs() - 500))
         val (ti, off) = locate(target)

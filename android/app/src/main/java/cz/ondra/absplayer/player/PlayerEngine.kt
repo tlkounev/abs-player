@@ -168,7 +168,7 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
     fun toggle() = if (player.playWhenReady) player.pause() else player.play()
     fun seekTo(sec: Double) = player.seekToBook((sec * 1000).toLong())
     fun skip(deltaSec: Double) = player.skipBy((deltaSec * 1000).toLong())
-    fun chapter(index: Int) = player.seekTo(index, 0)
+    fun chapter(index: Int) = player.seekToBook(player.chapterStartMs(index))
     fun nextChapter() = player.seekToNextMediaItem()
     fun prevChapter() = player.seekToPrevious()
     fun setSpeed(speed: Float) = player.setPlaybackSpeed(speed.coerceIn(0.5f, 3.0f))
@@ -246,6 +246,8 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
             CMD_REWIND -> skip(-SKIP_SEC)
             CMD_FORWARD -> skip(SKIP_SEC)
             CMD_SPEED -> cycleSpeed()
+            CMD_PREV_CHAPTER -> prevChapter()
+            CMD_NEXT_CHAPTER -> nextChapter()
             CMD_SEEK -> seekTo(args.getDouble("sec"))
             CMD_SLEEP -> setSleep(args.getInt("min"))
             CMD_VOLUME -> setVolume(args.getFloat("v"))
@@ -256,24 +258,42 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
         }
     }
 
-    fun customLayout(context: Context): List<CommandButton> = listOf(
-        CommandButton.Builder()
-            .setDisplayName(tr("back", "s" to SKIP_SEC.toInt()))
-            .setIconResId(R.drawable.ic_replay)
-            .setSessionCommand(SessionCommand(CMD_REWIND, Bundle.EMPTY))
-            .build(),
-        CommandButton.Builder()
-            .setDisplayName(tr("fwd", "s" to SKIP_SEC.toInt()))
-            .setIconResId(R.drawable.ic_forward)
-            .setSessionCommand(SessionCommand(CMD_FORWARD, Bundle.EMPTY))
-            .build(),
-        // The icon is the current speed as text (like the official app); tap = next step 0.75–2×.
-        CommandButton.Builder()
-            .setDisplayName(tr("speedT", "t" to formatSpeed(exo.playbackParameters.speed)))
-            .setIconResId(SpeedIcons.forSpeed(exo.playbackParameters.speed))
-            .setSessionCommand(SessionCommand(CMD_SPEED, Bundle.EMPTY))
-            .build(),
-    )
+    /**
+     * Buttons for Android Auto and the notification, ordered like the official app:
+     * ⏯ ↺10 ↻10 | speed (current value as text) ⏮ ⏭. ↺/↻ take the slots next to play,
+     * chapter ⏮/⏭ go to the right; steering-wheel / headset ⏮⏭ still skip chapters.
+     */
+    fun mediaButtons(): List<CommandButton> {
+        val speed = exo.playbackParameters.speed
+        return listOf(
+            CommandButton.Builder(CommandButton.ICON_SKIP_BACK_10)
+                .setDisplayName(tr("back", "s" to SKIP_SEC.toInt()))
+                .setSessionCommand(SessionCommand(CMD_REWIND, Bundle.EMPTY))
+                .setSlots(CommandButton.SLOT_BACK)
+                .build(),
+            CommandButton.Builder(CommandButton.ICON_SKIP_FORWARD_10)
+                .setDisplayName(tr("fwd", "s" to SKIP_SEC.toInt()))
+                .setSessionCommand(SessionCommand(CMD_FORWARD, Bundle.EMPTY))
+                .setSlots(CommandButton.SLOT_FORWARD)
+                .build(),
+            CommandButton.Builder(CommandButton.ICON_UNDEFINED)
+                .setCustomIconResId(SpeedIcons.forSpeed(speed))
+                .setDisplayName(tr("speedT", "t" to formatSpeed(speed)))
+                .setSessionCommand(SessionCommand(CMD_SPEED, Bundle.EMPTY))
+                .setSlots(CommandButton.SLOT_OVERFLOW)
+                .build(),
+            CommandButton.Builder(CommandButton.ICON_PREVIOUS)
+                .setDisplayName(tr("prevCh"))
+                .setSessionCommand(SessionCommand(CMD_PREV_CHAPTER, Bundle.EMPTY))
+                .setSlots(CommandButton.SLOT_OVERFLOW)
+                .build(),
+            CommandButton.Builder(CommandButton.ICON_NEXT)
+                .setDisplayName(tr("nextCh"))
+                .setSessionCommand(SessionCommand(CMD_NEXT_CHAPTER, Bundle.EMPTY))
+                .setSlots(CommandButton.SLOT_OVERFLOW)
+                .build(),
+        )
+    }
 
     // ------------------------------------------------------------------ state
 
@@ -289,7 +309,7 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
             if (c != sleepChapter) {
                 sleepEndOfChapter = false
                 player.pause()
-                player.seekTo(c, 0)
+                player.seekToBook(player.chapterStartMs(c))
                 showInfo(tr("chapterEndPaused"))
             }
         }
@@ -341,12 +361,14 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
         const val CMD_REWIND = "abs.REWIND"
         const val CMD_FORWARD = "abs.FORWARD"
         const val CMD_SPEED = "abs.SPEED"
+        const val CMD_PREV_CHAPTER = "abs.PREV_CHAPTER"
+        const val CMD_NEXT_CHAPTER = "abs.NEXT_CHAPTER"
         const val CMD_SEEK = "abs.SEEK"
         const val CMD_SLEEP = "abs.SLEEP"
         const val CMD_PLAY_ITEM = "abs.PLAY_ITEM"
         const val CMD_VOLUME = "abs.VOLUME"
         const val CMD_MUTE = "abs.MUTE"
-        val ALL_COMMANDS = listOf(CMD_REWIND, CMD_FORWARD, CMD_SPEED, CMD_SEEK, CMD_SLEEP, CMD_PLAY_ITEM, CMD_VOLUME, CMD_MUTE)
+        val ALL_COMMANDS = listOf(CMD_REWIND, CMD_FORWARD, CMD_SPEED, CMD_PREV_CHAPTER, CMD_NEXT_CHAPTER, CMD_SEEK, CMD_SLEEP, CMD_PLAY_ITEM, CMD_VOLUME, CMD_MUTE)
 
         /** Same steps as the Windows app: tap = next step. */
         val SPEEDS = listOf(0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f)
