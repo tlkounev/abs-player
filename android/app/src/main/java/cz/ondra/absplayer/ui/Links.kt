@@ -40,7 +40,6 @@ fun MetaLinks(
     FlowRow(
         horizontalArrangement = if (center) Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally) else Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
-        itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         if (authors.isNotEmpty()) {
             authors.forEachIndexed { i, a ->
