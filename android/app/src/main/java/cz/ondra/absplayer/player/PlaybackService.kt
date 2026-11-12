@@ -5,6 +5,8 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Player
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
@@ -34,6 +36,12 @@ class PlaybackService : MediaLibraryService() {
             )
             .build()
         session.setCustomLayout(engine.customLayout(this))
+        // Speed button shows the current speed: refresh it whenever the speed changes.
+        engine.exo.addListener(object : Player.Listener {
+            override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
+                session.setCustomLayout(engine.customLayout(this@PlaybackService))
+            }
+        })
         PlaybackHub.attach(engine)
     }
 

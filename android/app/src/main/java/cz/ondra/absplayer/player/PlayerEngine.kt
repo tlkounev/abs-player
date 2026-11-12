@@ -267,6 +267,12 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
             .setIconResId(R.drawable.ic_forward)
             .setSessionCommand(SessionCommand(CMD_FORWARD, Bundle.EMPTY))
             .build(),
+        // The icon is the current speed as text (like the official app); tap = next step 0.75–2×.
+        CommandButton.Builder()
+            .setDisplayName(tr("speedT", "t" to formatSpeed(exo.playbackParameters.speed)))
+            .setIconResId(SpeedIcons.forSpeed(exo.playbackParameters.speed))
+            .setSessionCommand(SessionCommand(CMD_SPEED, Bundle.EMPTY))
+            .build(),
     )
 
     // ------------------------------------------------------------------ state
