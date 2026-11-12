@@ -1,26 +1,34 @@
 # ABS Player pro Android
 
 Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.1.0.
+Verze 1.2.0.
 
 ## Co umí
 
 **Telefon**
 - Pokračovat (rozposlouchané ze všech zařízení), Knihovna s hledáním, Série, detail knihy s kapitolami.
-- Přehrávač: pruh aktuální kapitoly + tenký pruh celé knihy, ±30 s, předchozí/další kapitola,
-  rychlost 0,5–3× (krok 0,05), časovač (minuty nebo konec kapitoly), seznam kapitol.
-- Ovládání jako v ABS Player pro Windows: pruh kapitoly + tenký pruh celé knihy (oba se dají posouvat,
-  při tažení se popisky mění podle pozice), uplynulý a zbývající čas podle rychlosti,
-  hlasitost (klepnutí = ztlumit, podržení = posuvník), rychlost (klepnutí = další krok 0,75–2×,
-  podržení = jemně po 0,05), seznam kapitol s hledáním bez diakritiky i podle čísla.
-  Když nic nehraje, přehrávač nabídne poslední rozposlouchané tituly.
-- Minipřehrávač dole, ovládání z notifikace, sluchátek a Bluetooth.
+- Přehrávač je rozložený jako minipřehrávač ABS Player pro Windows (varianta B):
+  - nahoře velký obal;
+  - pod ním název, autor · série a kapitola; vpravo časovač, *Přehrávat na* a seznam kapitol;
+  - pruh kapitoly a tenký pruh celé knihy. Oba se dají posouvat a při tažení se popisky mění podle pozice.
+    Časy jsou uplynulý a zbývající podle rychlosti;
+  - ovládání: hlasitost | ⏮ | ↺10 | ▶ | ↻10 | ⏭ | rychlost.
+- Hlasitost: klepnutí = ztlumit, podržení = svislý posuvník.
+- Rychlost: klepnutí = další krok 0,75–2×, podržení = − / + po 0,05.
+- Stažením dolů (kdekoli na obrazovce) nebo šipkou se přehrávač zavře na hlavní stránku.
+- Když nic nehraje, přehrávač nabídne poslední rozposlouchané tituly.
+- Seznam kapitol s hledáním bez diakritiky i podle čísla, časovač (minuty nebo konec kapitoly).
+- Jazyk aplikace se mění vlajkou na hlavní stránce. Je to stejných 15 jazyků jako ve Windows:
+  čeština, slovenština, angličtina, němčina, polština, francouzština, španělština, italština,
+  portugalština, nizozemština, maďarština, ukrajinština, ruština, čínština a japonština.
+  Výchozí je jazyk systému. Texty jsou v `i18n/strings.py`, `python3 i18n/gen.py` z nich generuje `I18nData.kt`.
+- Minipřehrávač dole (↺10, ▶), ovládání z notifikace, sluchátek a Bluetooth.
 
 **Android Auto**
 - Záložky Pokračovat | Knihovna | Série | Nové, obaly v mřížce, průběh u každé knihy.
 - Kniha se v autě tváří jako seznam kapitol: pruh ukazuje kapitolu (ne 12h knihu),
   ⏮/⏭ skáče po kapitolách, fronta = kapitoly.
-- Vlastní tlačítka: −30 s, +30 s, rychlost. Hledání hlasem/textem.
+- Vlastní tlačítka: −10 s, +10 s, rychlost. Hledání hlasem/textem.
 - Tlačítko „Pokračovat“ po připojení auta obnoví poslední knihu.
 
 **Přehrávat na – TV i PC**
@@ -69,9 +77,9 @@ Každý push do `main`, který mění složku `android/`, sestaví APK na GitHub
 - Google TV: `adb connect <ip-tv>` a `adb install app-release.apk` (nebo přes správce souborů).
   Aplikace se objeví v řádku aplikací.
 
-## Omezení verze 1.0
+## Omezení
 
-- Jen audioknihy (podcasty ne), jen čeština, bez stahování offline (streamuje s velkým bufferem).
+- Jen audioknihy (podcasty ne), bez stahování offline (streamuje s velkým bufferem).
 - Ovládání TV/PC funguje v lokální síti (mDNS + HTTP port 8765); přes 5G zvenku zatím ne.
 - Telefon sám přijímačem není (Android nedovolí spustit přehrávání aplikaci na pozadí); po otevření
   a stisku play ale vždy převezme nejnovější pozici z PC/TV.
