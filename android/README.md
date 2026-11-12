@@ -1,7 +1,7 @@
 # ABS Player pro Android
 
 Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.5.0.
+Verze 1.5.2.
 
 ## Co umí
 
@@ -19,6 +19,8 @@ Verze 1.5.0.
   - ovládání: hlasitost | ⏮ | ↺10 | ▶ | ↻10 | ⏭ | rychlost.
 - Hlasitost: klepnutí = ztlumit, podržení = svislý posuvník.
 - Rychlost: klepnutí = další krok 0,75–2×, podržení = − / + po 0,05.
+- Záložky se dají přepínat i přejetím prstem doleva / doprava.
+- Aplikace hledá novou verzi při každém spuštění a návratu do ní.
 - Stažením dolů (kdekoli na obrazovce) nebo šipkou se přehrávač zavře na hlavní stránku.
 - Když nic nehraje, přehrávač nabídne poslední rozposlouchané tituly.
 - Detail knihy: kapitoly jsou sbalené, otevře je řádek *Kapitoly (n)*.
@@ -26,7 +28,9 @@ Verze 1.5.0.
   větší. Detail knihy začíná na *Pokračovat*, přehrávač na Play. V přehrávači ↑/↓ přechází mezi
   řádky a ←/→ na pruhu kapitoly posouvá o 10 s, na pruhu knihy o 1 minutu. Vybraný pruh nemá rámeček,
   jeho kolečko pulzuje. Šipka dolů ze záložek nebo z hledání jde na první viditelnou položku vlevo.
-  V detailu knihy jde z pruhu přehrávání šipka nahoru vždy na *Pokračovat*. Na TV a na šířku je
+  Přejetí po záložkách rovnou přepne obsah, návrat nahoru vede na otevřenou záložku. V textových
+  polích se klávesnice otevře až po OK. V detailu knihy jde z pruhu přehrávání šipka nahoru na řádek
+  *Kapitoly*. Na TV a na šířku je
   obal vlevo a ovládání vpravo.
 - Seznam kapitol s hledáním bez diakritiky i podle čísla, časovač (minuty nebo konec kapitoly).
 - Jazyk aplikace se mění vlajkou na hlavní stránce. Je to stejných 15 jazyků jako ve Windows:
@@ -51,7 +55,9 @@ Verze 1.5.0.
 - Seznam zařízení vypadá jako ve Windows: toto zařízení první (oranžový proužek, „toto zařízení“),
   spárovaná s ×, každé jde přejmenovat tužkou. Nový název tohoto zařízení uvidí i ostatní
   (při dalším hledání / párování), název spárovaného zařízení platí jen tady.
-- Párování: *Přehrávat na → Spárovat zařízení*, zařízení ukáže šestimístný kód.
+- Párování: *+ Spárovat zařízení* otevře formulář přímo v seznamu (jako ve Windows), zařízení ukáže šestimístný kód.
+  Zařízení se hledají přes mDNS a navíc dotazem na všechny adresy domácí sítě (porty 8765–8768),
+  takže se najdou i tam, kde mDNS nefunguje. Po zadání IP si aplikace port najde sama.
   Heslo k ABS je potřeba jen pro TV, která ještě není přihlášená k tvému účtu.
 
 **Google TV (stejné APK)**
