@@ -69,10 +69,17 @@ class MainActivity : ComponentActivity() {
          * from the background only with "Display over other apps"; without it nothing happens.
          */
         fun bringToFront(ctx: android.content.Context) {
+            // The app's task already exists when it was only sent to the background (Home): move that
+            // task to the front first. FLAG_ACTIVITY_REORDER_TO_FRONT started from a service only
+            // reorders inside the task and leaves it behind the launcher, so it is not used.
+            runCatching {
+                val am = ctx.getSystemService(android.app.ActivityManager::class.java)
+                am?.appTasks?.firstOrNull()?.moveToFront()
+            }
             runCatching {
                 ctx.startActivity(
                     Intent(ctx, MainActivity::class.java)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                         .putExtra(EXTRA_OPEN_PLAYER, true)
                 )
             }
@@ -101,8 +108,13 @@ fun AppRoot(vm: MainViewModel) {
         val top = vm.stack.last()
         val overlay = top == Screen.Player && vm.stack.size > 1
         // The screen below stays composed (keeps its scroll position) and visible while the player is dragged down.
-        ScreenFor(vm, if (overlay) vm.stack[vm.stack.size - 2] else top)
-        if (overlay) PlayerScreen(vm)
+        // On the TV the screen below is not composed: the remote's D-pad would otherwise walk through
+        // its (hidden) buttons behind the player.
+        if (overlay && vm.app.isTv) PlayerScreen(vm)
+        else {
+            ScreenFor(vm, if (overlay) vm.stack[vm.stack.size - 2] else top)
+            if (overlay) PlayerScreen(vm)
+        }
         Sheets(vm)
     }
 }

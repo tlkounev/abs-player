@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -82,7 +83,7 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = C.Bg),
             )
         },
-        bottomBar = { MiniPlayer(vm) },
+        bottomBar = { MiniPlayer(vm, up = playFocus) },
     ) { pad ->
         LazyColumn(Modifier.padding(pad).fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
             item {
@@ -126,7 +127,7 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                PlayPill(label, Modifier.focusRequester(playFocus), onPlay)
+                                PlayPill(label, Modifier.focusRequester(playFocus).focusProperties { left = FocusRequester.Cancel }, onPlay)
                                 OutlinePill(tr("playOn") + ": " + target.name) { vm.sheet = Sheet.Devices }
                                 if (b != null) {
                                     OutlinePill(if (p?.isFinished == true) tr("markUnfinished") else tr("markFinished")) {

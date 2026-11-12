@@ -15,6 +15,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -259,7 +260,6 @@ fun PlayerScreen(vm: MainViewModel) {
                         tr("chapterN", "n" to ch.first + 1, "total" to s.chapters.size),
                         "−" + formatClock((len - inCh) / rate),
                         labelColor = C.Text,
-                        onLabel = { vm.sheet = Sheet.Chapters },
                     )
                     SeekBar(
                         fraction = (pos / dur).toFloat(),
@@ -462,6 +462,8 @@ private fun SpeedButton(s: NowPlaying, target: cz.ondra.absplayer.remote.Playbac
                 .background(if (open) C.Press else Color.Transparent)
                 .border(1.dp, if (open) C.Accent else C.Outline, shape)
                 .combinedClickable(
+                    interactionSource = null,
+                    indication = FocusRing(C.Accent, 17.dp),
                     onClickLabel = tr("speedHint"),
                     onClick = {
                         val next = PlayerEngine.SPEEDS.firstOrNull { it > s.speed + 0.001f } ?: PlayerEngine.SPEEDS.first()
@@ -685,7 +687,7 @@ private fun IconBtn(
 }
 
 @Composable
-fun MiniPlayer(vm: MainViewModel) {
+fun MiniPlayer(vm: MainViewModel, up: FocusRequester? = null) {
     val s by vm.playing.collectAsStateWithLifecycle()
     val target by vm.target.collectAsStateWithLifecycle()
     val itemId = s.itemId ?: return
@@ -696,6 +698,8 @@ fun MiniPlayer(vm: MainViewModel) {
             .padding(start = 10.dp, end = 10.dp, bottom = 14.dp, top = 4.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(C.Surface)
+            // remote: Up from the bar goes to the screen's main button, not to whatever is nearest
+            .then(if (up != null) Modifier.focusProperties { this.up = up } else Modifier)
             .clickable { vm.push(Screen.Player) }
             .padding(8.dp)
             .heightIn(min = 52.dp),
