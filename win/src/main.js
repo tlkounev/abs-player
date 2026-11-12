@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, screen, shell, nativeImage, session, Notification } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, screen, shell, nativeImage, session, Notification, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -628,9 +628,19 @@ function notice(title, body, onClick) {
   n.show();
 }
 
+// Okno (ne oznámení Windows): klik na oznámení Windows nedoručí spolehlivě, okno ano.
 function offerUpdate() {
   upd.offered = upd.version;
-  notice(t('updAvailable', { v: upd.version }), t('updClickInstall'), downloadAndInstall);
+  dialog.showMessageBox({
+    type: 'info',
+    title: APP_NAME,
+    message: t('updAvailable', { v: upd.version }),
+    detail: t('updDialogBody'),
+    buttons: [t('updInstallBtn'), t('updLater')],
+    defaultId: 0,
+    cancelId: 1,
+    noLink: true
+  }).then((r) => { if (r.response === 0) downloadAndInstall(); });
 }
 
 /** Po souhlasu: stáhnout, nainstalovat (tiše) a aplikaci znovu spustit. */
@@ -644,7 +654,7 @@ function reportManual() {
   if (!manualCheck) return;
   manualCheck = false;
   if (upd.status === 'none') notice(APP_NAME, t('updNone', { v: app.getVersion() }));
-  else if (upd.status === 'error') notice(APP_NAME, t('updError', { t: upd.error }));
+  else if (upd.status === 'error') dialog.showMessageBox({ type: 'error', title: APP_NAME, message: t('updError', { t: upd.error }), noLink: true });
 }
 
 function installUpdate() {

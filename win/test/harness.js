@@ -319,6 +319,9 @@ app.whenReady().then(async () => {
   lang = 'cs'; popup.webContents.send('i18n:changed', 'cs');
   await wait(1200);
   await shot(popup, 'p-empty.png');
+  await jsP("document.querySelector('#list .row .t').click()");
+  await wait(500);
+  check('start page: click on title plays', String(await exec('window.__log[window.__log.length - 1]')).startsWith('play-item:{"libraryItemId":"li1"'));
 
   // setup okno
   const setup = new BrowserWindow({ width: 500, height: 340, show: true, backgroundColor: '#232323',

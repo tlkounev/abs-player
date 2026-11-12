@@ -238,6 +238,7 @@ private fun DevicesSheet(vm: MainViewModel) {
                     " · " + (cz.ondra.absplayer.tv.ReceiverService.lanAddress() ?: "?") + ":" + (if (port > 0) port else "…"),
                 color = C.Text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             )
+            OverlayPermission()
         }
         Spacer(Modifier.height(16.dp))
     }
@@ -473,5 +474,36 @@ private fun SpeedSheet(vm: MainViewModel) {
             }
         }
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+/**
+ * TV: to open the app by itself when playback is sent here, Android needs "Display over other apps".
+ * Some TVs have no settings screen for it – then the adb command is shown.
+ */
+@Composable
+private fun OverlayPermission() {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    var granted by remember { mutableStateOf(android.provider.Settings.canDrawOverlays(ctx)) }
+    var noScreen by remember { mutableStateOf(false) }
+    androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+        granted = android.provider.Settings.canDrawOverlays(ctx)
+        onPauseOrDispose { }
+    }
+    if (granted) return
+    Column(Modifier.padding(horizontal = 8.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(tr("overlayHint"), color = C.Muted, fontSize = 13.sp)
+        if (noScreen) {
+            Text(tr("overlayAdb"), color = C.Muted, fontSize = 13.sp)
+            Text("adb shell appops set ${ctx.packageName} SYSTEM_ALERT_WINDOW allow", color = C.Text, fontSize = 13.sp)
+        } else {
+            OutlinedButton(onClick = {
+                val i = android.content.Intent(
+                    android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    android.net.Uri.parse("package:" + ctx.packageName),
+                ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                noScreen = runCatching { ctx.startActivity(i) }.isFailure
+            }) { Text(tr("overlayAllow")) }
+        }
     }
 }

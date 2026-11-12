@@ -22,7 +22,7 @@ Webový klient Audiobookshelf jako samostatná aplikace v oznamovací oblasti Wi
   na diakritiku) nebo čísla. Esc vymaže hledání / zavře seznam.
 - Když nic nehraje, nabídne poslední rozposlouchané tituly. Při přehrávání se na tuto úvodní
   stránku vrátíš šipkou ← vpravo nahoře: právě hrající kniha je první a zvýrazněná (klik na ni
-  nebo Esc = zpět do přehrávače), klik na jinou ji pustí od jejího místa.
+  nebo Esc = zpět do přehrávače), klik na jinou ji pustí od jejího místa. Aktivní je celý řádek knihy.
 
 ### Přehrávat na (TV, jiné PC) a z telefonu sem
 - Tlačítko s monitorem v minipřehrávači (nebo menu ikony → *Přehrávat na*) otevře seznam zařízení.
@@ -53,9 +53,10 @@ Týká se aplikace, jazyk samotného webu ABS se nastavuje v ABS.
 ### Aktualizace
 - Menu ikony v liště (pravý klik) ukazuje nahoře verzi a *Zkontrolovat aktualizace*.
 - Aplikace se při spuštění a pak každých 6 hodin podívá, jestli je novější verze; nic sama nestahuje.
-- Když je, ukáže oznámení *Je k dispozici verze …*: klik ji stáhne, tiše nainstaluje a aplikaci
-  znovu spustí. Totéž nabízí menu ikony (*Stáhnout a nainstalovat verzi …*).
-- *Zkontrolovat aktualizace* ukáže buď to oznámení, nebo *Máš nejnovější verzi*.
+- Když je, zeptá se oknem *Je k dispozici verze …* → *Aktualizovat a restartovat* / *Později*.
+  Aktualizovat = stáhnout, tiše nainstalovat a aplikaci znovu spustit. Totéž nabízí menu ikony
+  (*Stáhnout a nainstalovat verzi …*).
+- *Zkontrolovat aktualizace* ukáže buď to okno, nebo oznámení *Máš nejnovější verzi*.
 - Zdroj: vydání `win-latest` na GitHubu (`latest.yml` + instalátor), ten po každém sestavení
   přepíše GitHub Actions. Funguje jen s veřejným repozitářem.
 

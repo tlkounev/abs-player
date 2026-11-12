@@ -554,8 +554,7 @@ function buildItemRows(list, items, curId) {
     btn.title = isCur ? tr('backToPlayer') : tr('play');
     btn.innerHTML = '<svg viewBox="0 0 20 20">' + PLAY + '</svg>';
     btn.onclick = isCur ? () => setHomeOpen(false) : () => playFromRecent(it);
-    row.ondblclick = btn.onclick;
-    if (curId) row.onclick = (e) => { if (!(e.target instanceof HTMLButtonElement)) btn.onclick(); };
+    row.onclick = (e) => { if (!(e.target instanceof HTMLButtonElement)) btn.onclick(); }; // celá plocha knihy
     row.append(img, t, btn);
     list.append(row);
   }

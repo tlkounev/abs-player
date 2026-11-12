@@ -1,7 +1,7 @@
 # ABS Player pro Android
 
 Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.3.2.
+Verze 1.3.3.
 
 ## Co umí
 
@@ -43,6 +43,11 @@ Verze 1.3.2.
 **Google TV (stejné APK)**
 - Na TV je stejná obrazovka jako na telefonu. Běží tam přijímač na pozadí (spouští se i po zapnutí TV);
   párovací kód TV a její adresa jsou v *Přehrávat na* dole.
+- Když na TV pošleš přehrávání, aplikace se sama otevře s přehrávačem – jen s povolením
+  „Zobrazení přes jiné aplikace“ (tlačítko *Povolit* v *Přehrávat na*; když TV to nastavení nemá:
+  `adb shell appops set cz.ondra.absplayer SYSTEM_ALERT_WINDOW allow`).
+- Odchod z aplikace na TV (domů, jiná aplikace) přehrávání pozastaví a uloží pozici. Během
+  přehrávání se nespouští spořič obrazovky.
 - Telefon: *Přehrávat na → Spárovat zařízení* → vybrat TV, zadat kód (a heslo, pokud TV není přihlášená).
 - Pak *Přehrávat na → TV*: telefon pozastaví, uloží pozici na server a TV pokračuje přesně odtud.
   Telefon se stane ovladačem (stav, kapitoly, rychlost, časovač). Zpět na telefon funguje stejně.

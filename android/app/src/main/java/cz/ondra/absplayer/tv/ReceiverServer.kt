@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.tv
 
+import cz.ondra.absplayer.ui.MainActivity
 import cz.ondra.absplayer.tr
 import android.os.SystemClock
 import cz.ondra.absplayer.App
@@ -127,7 +128,7 @@ class ReceiverServer(
     private fun command(cmd: Command): NowPlaying = onMain {
         val v = cmd.value
         when (cmd.action) {
-            "play" -> engine.play()
+            "play" -> { engine.play(); MainActivity.bringToFront(app) }
             "pause" -> engine.pauseAndSync()
             "toggle" -> engine.toggle()
             "seek" -> if (v != null) engine.seekTo(v)
@@ -139,7 +140,7 @@ class ReceiverServer(
             "sleep" -> engine.setSleep(v?.toInt() ?: 0)
             "volume" -> if (v != null) engine.setVolume(v.toFloat())
             "mute" -> engine.toggleMute()
-            "playItem" -> cmd.itemId?.let { engine.playItem(it, v) }
+            "playItem" -> cmd.itemId?.let { engine.playItem(it, v); MainActivity.bringToFront(app) }
             "stop" -> engine.stop()
             else -> throw IOException(tr("unknownCmd", "t" to cmd.action))
         }

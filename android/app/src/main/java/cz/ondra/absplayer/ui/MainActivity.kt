@@ -14,6 +14,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cz.ondra.absplayer.App
+import cz.ondra.absplayer.player.PlaybackHub
+import android.content.Intent
 
 class MainActivity : ComponentActivity() {
     private val vm: MainViewModel by viewModels()
@@ -29,6 +31,19 @@ class MainActivity : ComponentActivity() {
                 AppRoot(vm)
             }
         }
+        handleOpenPlayer(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleOpenPlayer(intent)
+    }
+
+    /** "Přehrávat na" from a phone / PC brought the app to the front on the TV: show the player. */
+    private fun handleOpenPlayer(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_OPEN_PLAYER, false) == true && vm.stack.lastOrNull() != Screen.Player) {
+            vm.push(Screen.Player)
+        }
     }
 
     override fun onStart() {
@@ -37,9 +52,30 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        val t = (application as App).targets.current.value
+        val app = application as App
+        val t = app.targets.current.value
         if (t.isRemote) t.deactivate()
+        // On the TV, leaving the app (home button, another app) stops the book; the position is synced on pause.
+        if (app.isTv && !isChangingConfigurations) PlaybackHub.engine?.let { if (it.player.isPlaying) it.pause() }
         super.onStop()
+    }
+
+    companion object {
+        const val EXTRA_OPEN_PLAYER = "openPlayer"
+
+        /**
+         * Brings the app to the front on the TV (playback sent from a phone / PC). Android allows this
+         * from the background only with "Display over other apps"; without it nothing happens.
+         */
+        fun bringToFront(ctx: android.content.Context) {
+            runCatching {
+                ctx.startActivity(
+                    Intent(ctx, MainActivity::class.java)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        .putExtra(EXTRA_OPEN_PLAYER, true)
+                )
+            }
+        }
     }
 }
 
@@ -52,6 +88,15 @@ fun AppRoot(vm: MainViewModel) {
             return@Box
         }
         BackHandler(enabled = vm.stack.size > 1) { vm.pop() }
+        if (vm.app.isTv) {
+            // TV: no screensaver while a book plays (it would stop the app and with it the book)
+            val s by vm.playing.collectAsStateWithLifecycle()
+            val view = androidx.compose.ui.platform.LocalView.current
+            androidx.compose.runtime.DisposableEffect(s.isPlaying) {
+                view.keepScreenOn = s.isPlaying
+                onDispose { view.keepScreenOn = false }
+            }
+        }
         val top = vm.stack.last()
         val overlay = top == Screen.Player && vm.stack.size > 1
         // The screen below stays composed (keeps its scroll position) and visible while the player is dragged down.
