@@ -62,11 +62,14 @@ object Updater {
     fun skip(ctx: Context, version: String) = prefs(ctx).edit().putString("updSkip", version).apply()
 
     /** Automatic check at most once a day; [manual] always checks. */
+    /** Automatic check at every app start / return to the app; at most once per 5 minutes (GitHub limits). */
+    private const val AUTO_MS = 5 * 60_000L
+
     suspend fun check(ctx: Context, manual: Boolean) {
         val s = _state.value
         if (s is State.Checking || s is State.Downloading || s is State.Installing) return
         val last = prefs(ctx).getLong("updLast", 0)
-        if (!manual && System.currentTimeMillis() - last < DAY_MS) {
+        if (!manual && System.currentTimeMillis() - last < AUTO_MS) {
             // Re-use the last result so the banner stays visible after a restart.
             prefs(ctx).getString("updAvail", null)?.let { cached ->
                 val p = cached.split('|')

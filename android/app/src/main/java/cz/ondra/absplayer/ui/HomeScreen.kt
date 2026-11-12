@@ -56,7 +56,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.TabRow
+import androidx.compose.foundation.focusGroup
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.DisposableEffect
@@ -82,7 +87,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cz.ondra.absplayer.data.LibraryItem
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun HomeScreen(vm: MainViewModel) {
     val target by vm.target.collectAsStateWithLifecycle()
@@ -135,16 +140,26 @@ fun HomeScreen(vm: MainViewModel) {
     ) { pad ->
         Column(Modifier.padding(pad).fillMaxSize()) {
             UpdateBanner(Modifier.padding(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 10.dp))
-            ScrollableTabRow(
+            // remote: coming up from the list lands on the open tab; moving over the tabs switches the content
+            val tabFocus = remember { List(5) { FocusRequester() } }
+            TabRow(
                 selectedTabIndex = vm.tab, containerColor = C.Bg, contentColor = C.Accent,
-                edgePadding = 8.dp,
                 divider = { HorizontalDivider(color = C.Line) },
+                modifier = Modifier.onFocusChanged { vm.tabsFocused = it.hasFocus }.focusProperties { enter = { tabFocus[vm.tab] } }.focusGroup(),
             ) {
                 listOf(tr("tabContinue"), tr("tabAdded"), tr("tabLibrary"), tr("tabSeries"), tr("tabAuthors")).forEachIndexed { i, t ->
                     Tab(selected = vm.tab == i, onClick = { vm.onTab(i) },
-                        text = { Text(t, fontSize = 15.sp, fontWeight = if (vm.tab == i) FontWeight.SemiBold else FontWeight.Medium) },
+                        text = {
+                            Text(
+                                t, fontSize = if (vm.app.isTv) 15.sp else 14.sp, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
+                                fontWeight = if (vm.tab == i) FontWeight.SemiBold else FontWeight.Medium,
+                            )
+                        },
                         selectedContentColor = C.Accent, unselectedContentColor = C.Muted,
-                        modifier = Modifier.downToList(vm))
+                        modifier = Modifier
+                            .focusRequester(tabFocus[i])
+                            .onFocusChanged { if (it.isFocused && vm.app.isTv && vm.tab != i) vm.onTab(i) }
+                            .downToList(vm))
                 }
             }
             vm.error?.let {
@@ -153,14 +168,31 @@ fun HomeScreen(vm: MainViewModel) {
                     modifier = Modifier.fillMaxWidth().clickable { vm.error = null }.padding(12.dp, 8.dp),
                 )
             }
-            when (vm.tab) {
-                MainViewModel.TAB_CONTINUE -> ContinueTab(vm)
-                MainViewModel.TAB_ADDED -> AddedTab(vm)
-                MainViewModel.TAB_LIBRARY -> LibraryTab(vm)
-                MainViewModel.TAB_SERIES -> SeriesTab(vm)
-                else -> AuthorsTab(vm)
+            if (vm.app.isTv) {
+                TabContent(vm, vm.tab)
+            } else {
+                // phone: swipe left / right switches the tabs
+                val pager = rememberPagerState(initialPage = vm.tab) { 5 }
+                LaunchedEffect(vm.tab) { if (pager.currentPage != vm.tab) pager.animateScrollToPage(vm.tab) }
+                LaunchedEffect(pager) {
+                    snapshotFlow { pager.settledPage }.collect { if (it != vm.tab) vm.onTab(it) }
+                }
+                HorizontalPager(pager, Modifier.fillMaxSize(), key = { it }) { page ->
+                    Box(Modifier.fillMaxSize()) { TabContent(vm, page) }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun TabContent(vm: MainViewModel, tab: Int) {
+    when (tab) {
+        MainViewModel.TAB_CONTINUE -> ContinueTab(vm)
+        MainViewModel.TAB_ADDED -> AddedTab(vm)
+        MainViewModel.TAB_LIBRARY -> LibraryTab(vm)
+        MainViewModel.TAB_SERIES -> SeriesTab(vm)
+        else -> AuthorsTab(vm)
     }
 }
 
@@ -245,7 +277,7 @@ private fun AddedTab(vm: MainViewModel) {
     }
     if (vm.app.isTv) {
         LaunchedEffect(r, onTop) {
-            if (!onTop) return@LaunchedEffect
+            if (!onTop || vm.tabsFocused) return@LaunchedEffect
             val want = vm.lastOpenedBook?.takeIf { id -> r.books.any { it.id == id } }
             val idx = want?.let { id -> r.books.indexOfFirst { it.id == id } } ?: 0
             if (want != null) runCatching { bookRow.scrollToItem(idx) }
@@ -504,7 +536,8 @@ fun BookGrid(
     if (entry) ListEntry(vm) { items.getOrNull(state.firstVisibleItemIndex)?.let { requesters[it.id]?.requestFocus() } != null }
     if (vm.app.isTv) {
         LaunchedEffect(items.firstOrNull()?.id, onTop) {
-            if (!onTop || items.isEmpty()) return@LaunchedEffect
+            // not while the remote walks over the tabs (the content changes under it)
+            if (!onTop || items.isEmpty() || vm.tabsFocused) return@LaunchedEffect
             val id = vm.lastOpenedBook?.takeIf { want -> items.any { it.id == want } } ?: items.first().id
             val idx = items.indexOfFirst { it.id == id }
             runCatching { state.scrollToItem(idx) }
@@ -594,7 +627,7 @@ private fun LanguageButton() {
     Box {
         IconButton(
             onClick = { open = true },
-            modifier = Modifier.padding(horizontal = 2.dp).size(44.dp).clip(RoundedCornerShape(8.dp)).background(C.Press),
+            modifier = Modifier.padding(horizontal = 2.dp).size(44.dp),
         ) {
             Image(
                 painterResource(flagRes(L.lang)), tr("language") + ": " + L.names[L.codes.indexOf(L.lang)],

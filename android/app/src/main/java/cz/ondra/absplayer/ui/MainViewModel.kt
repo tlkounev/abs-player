@@ -86,6 +86,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * below (set by that list), not to the item nearest the middle.
      */
     var listEntry: (() -> Boolean)? = null
+
+    /** The remote is on the home tabs (lists then don't pull the focus to themselves). */
+    var tabsFocused = false
     var refreshing by mutableStateOf(false)
     var error by mutableStateOf<String?>(null)
 
@@ -102,7 +105,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             loggedIn.collect { if (it) refreshAll() }
         }
-        viewModelScope.launch { Updater.check(app, manual = false) }
         viewModelScope.launch {
             app.socket.progressEvents.collect { ev ->
                 val old = progress[ev.libraryItemId]
@@ -349,6 +351,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 loginBusy = false
             }
         }
+    }
+
+    fun autoCheckUpdates() {
+        viewModelScope.launch { Updater.check(app, manual = false) }
     }
 
     fun checkUpdates() {

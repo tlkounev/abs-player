@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -65,6 +66,10 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
     val wide = LocalConfiguration.current.let { it.screenWidthDp >= 600 && it.screenWidthDp > it.screenHeightDp }
     // remote control: start on Play / Continue
     val playFocus = remember { FocusRequester() }
+    // remote, Up from the playing bar at the bottom: the item right above it (chapters row), not the middle
+    val chRowFocus = remember { FocusRequester() }
+    var playShown by remember { mutableStateOf(false) }
+    var chRowShown by remember { mutableStateOf(false) }
     // also when coming back from the player (this screen is on top again)
     val onTop = vm.stack.lastOrNull() == screen
     LaunchedEffect(screen.id, b != null, onTop) {
@@ -83,7 +88,16 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = C.Bg),
             )
         },
-        bottomBar = { MiniPlayer(vm, up = playFocus) },
+        bottomBar = {
+            MiniPlayer(vm, up = {
+                val hasDesc = !vm.books[screen.id]?.media?.metadata?.description.isNullOrBlank()
+                when {
+                    chRowShown && !chOpen -> chRowFocus
+                    !chRowShown && !hasDesc && playShown -> playFocus
+                    else -> FocusRequester.Default
+                }
+            })
+        },
     ) { pad ->
         LazyColumn(Modifier.padding(pad).fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
             item {
@@ -128,6 +142,7 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 PlayPill(label, Modifier.focusRequester(playFocus).focusProperties { left = FocusRequester.Cancel }, onPlay)
+                                DisposableEffect(Unit) { playShown = true; onDispose { playShown = false } }
                                 OutlinePill(tr("playOn") + ": " + target.name) { vm.sheet = Sheet.Devices }
                                 if (b != null) {
                                     OutlinePill(if (p?.isFinished == true) tr("markUnfinished") else tr("markFinished")) {
@@ -144,6 +159,7 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                         info(Alignment.CenterHorizontally)
                         Spacer(Modifier.height(14.dp))
                         PlayPill(label, Modifier.fillMaxWidth().focusRequester(playFocus), onPlay)
+                        DisposableEffect(Unit) { playShown = true; onDispose { playShown = false } }
                         Text(
                             tr("playOn") + ": " + target.name, color = C.Muted, fontSize = 13.sp,
                             modifier = Modifier.padding(top = 6.dp).clip(RoundedCornerShape(6.dp)).clickable { vm.sheet = Sheet.Devices }.padding(4.dp),
@@ -172,10 +188,12 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                 item {
                     // collapsed by default; one row opens / closes the list
                     val cur = if (p != null && p.currentTime > 0) chapters.indexOfLast { it.start <= p.currentTime } + 1 else 0
+                    DisposableEffect(Unit) { chRowShown = true; onDispose { chRowShown = false } }
                     Row(
                         Modifier
                             .padding(top = 8.dp, bottom = 8.dp)
                             .fillMaxWidth()
+                            .focusRequester(chRowFocus)
                             .clip(RoundedCornerShape(10.dp))
                             .background(C.Surface)
                             .clickable { chOpen = !chOpen }

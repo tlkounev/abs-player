@@ -711,7 +711,7 @@ private fun IconBtn(
 }
 
 @Composable
-fun MiniPlayer(vm: MainViewModel, up: FocusRequester? = null) {
+fun MiniPlayer(vm: MainViewModel, up: (() -> FocusRequester)? = null) {
     val s by vm.playing.collectAsStateWithLifecycle()
     val target by vm.target.collectAsStateWithLifecycle()
     val itemId = s.itemId ?: return
@@ -723,7 +723,7 @@ fun MiniPlayer(vm: MainViewModel, up: FocusRequester? = null) {
             .clip(RoundedCornerShape(12.dp))
             .background(C.Surface)
             // remote: Up from the bar goes to the screen's main button, not to whatever is nearest
-            .then(if (up != null) Modifier.focusProperties { this.up = up } else Modifier)
+            .then(if (up != null) Modifier.focusProperties { this.up = up() } else Modifier)
             .clickable { vm.push(Screen.Player) }
             .padding(8.dp)
             .heightIn(min = 52.dp),

@@ -13,6 +13,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.focus.onFocusChanged
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -76,7 +78,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun Sheets(vm: MainViewModel) {
     val sheet = vm.sheet ?: return
-    val state = rememberModalBottomSheetState(skipPartiallyExpanded = sheet == Sheet.Chapters || sheet == Sheet.Pair)
+    // always fully open: on the TV a half-open sheet cut off the bottom (pairing code)
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
         onDismissRequest = { vm.sheet = null },
         sheetState = state,
@@ -85,7 +88,7 @@ fun Sheets(vm: MainViewModel) {
         when (sheet) {
             Sheet.Chapters -> ChaptersSheet(vm)
             Sheet.Devices -> DevicesSheet(vm)
-            Sheet.Pair -> PairSheet(vm)
+            Sheet.Pair -> DevicesSheet(vm, pairInitially = true)
             Sheet.Sleep -> SleepSheet(vm)
             Sheet.Speed -> SpeedSheet(vm)
             Sheet.Volume -> VolumeSheet(vm)
@@ -196,7 +199,7 @@ private fun VolumeSheet(vm: MainViewModel) {
 }
 
 @Composable
-private fun DevicesSheet(vm: MainViewModel) {
+private fun DevicesSheet(vm: MainViewModel, pairInitially: Boolean = false) {
     val targets = vm.app.targets
     val current by vm.target.collectAsStateWithLifecycle()
     val paired by targets.paired.collectAsStateWithLifecycle()
@@ -208,10 +211,19 @@ private fun DevicesSheet(vm: MainViewModel) {
         paired.forEach { targets.remote(it).refresh() }
     }
 
-    SheetTitle(tr("playOn"))
-    // same as the Windows panel: this device first ("toto zařízení"), paired ones with ×, renaming with the pencil
+    // same as the Windows panel: this device first ("toto zařízení"), paired ones with ×, renaming with the
+    // pencil, "+ Spárovat zařízení" opens the pairing form right here, this device's pairing code at the bottom
     var renaming by remember { mutableStateOf<String?>(null) }
-    Column(Modifier.padding(horizontal = 12.dp)) {
+    var pairOpen by remember { mutableStateOf(pairInitially) }
+    val scroll = rememberScrollState()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    Column(
+        Modifier
+            .padding(horizontal = 12.dp)
+            .verticalScroll(scroll)
+            .imePadding(),
+    ) {
+        Text(tr("playOn"), fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 8.dp, bottom = 10.dp))
         DeviceRow(
             if (vm.app.isTv) Ic.Tv else Ic.Phone, targets.local.name, tr("thisDevice").lowercase(),
             selected = current.id == targets.local.id, online = true,
@@ -243,14 +255,21 @@ private fun DevicesSheet(vm: MainViewModel) {
             }
         }
         Spacer(Modifier.height(10.dp))
-        OutlinedButton(
-            onClick = { vm.sheet = Sheet.Pair }, modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp), border = BorderStroke(1.dp, C.Outline),
-        ) {
-            Text("+ " + tr("pairNewBtn"), color = C.Accent, fontWeight = FontWeight.SemiBold)
+        if (pairOpen) {
+            PairSection(vm, onCancel = { pairOpen = false })
+        } else {
+            OutlinedButton(
+                onClick = { pairOpen = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    // TV: the texts under the button cannot take focus – show them when the button gets it
+                    .onFocusChanged { if (it.isFocused) scope.launch { scroll.animateScrollTo(scroll.maxValue) } },
+                shape = RoundedCornerShape(10.dp), border = BorderStroke(1.dp, C.Outline),
+            ) {
+                Text("+ " + tr("pairNewBtn"), color = C.Accent, fontWeight = FontWeight.SemiBold)
+            }
         }
         if (vm.app.isTv) {
-            // like the Windows app: this device's own pairing code for phones / PCs
             val port by cz.ondra.absplayer.tv.ReceiverService.port.collectAsStateWithLifecycle()
             Text(
                 buildAnnotatedString {
@@ -260,12 +279,11 @@ private fun DevicesSheet(vm: MainViewModel) {
                     }
                     append(" · " + (cz.ondra.absplayer.tv.ReceiverService.lanAddress() ?: "?") + ":" + (if (port > 0) port else "…"))
                 },
-                color = C.Muted, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+                color = C.Muted, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
             )
             OverlayPermission()
         }
-        Text(tr("switchNote"), color = C.Muted, fontSize = 12.sp, modifier = Modifier.padding(8.dp))
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(20.dp))
     }
 }
 
@@ -325,15 +343,12 @@ private fun DeviceRow(
     }
 }
 
+/** Pairing form inside "Přehrávat na" (as in Windows): devices found in the network, IP, port, code. */
 @Composable
-private fun PairSheet(vm: MainViewModel) {
+private fun PairSection(vm: MainViewModel, onCancel: () -> Unit) {
     val targets = vm.app.targets
     val found by targets.discovery.found.collectAsStateWithLifecycle()
     val paired by targets.paired.collectAsStateWithLifecycle()
-    DisposableEffect(Unit) {
-        targets.discovery.start()
-        onDispose { targets.discovery.stop() }
-    }
     var host by remember { mutableStateOf("") }
     var port by remember { mutableStateOf(DEFAULT_PORT.toString()) }
     var code by remember { mutableStateOf("") }
@@ -342,6 +357,7 @@ private fun PairSheet(vm: MainViewModel) {
     var info by remember { mutableStateOf<InfoResponse?>(null) }
     var infoError by remember { mutableStateOf<String?>(null) }
     val unpaired = found.values.filter { f -> paired.none { it.deviceId == f.deviceId } }
+    val codeFocus = remember { FocusRequester() }
 
     // Ask the selected device what it is and whether it needs the password.
     LaunchedEffect(host, port) {
@@ -359,47 +375,24 @@ private fun PairSheet(vm: MainViewModel) {
     val needPassword = info?.let { targets.needsPassword(it) } ?: false
     val isPc = info?.kind == "pc"
 
-    Column(
-        Modifier
-            .padding(horizontal = 20.dp)
-            .verticalScroll(rememberScrollState())
-            .imePadding(),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Text(tr("pairTitle"), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text(
-            tr("pairHelp"),
-            color = C.Muted, fontSize = 14.sp,
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.padding(start = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(tr("pairTitle"), fontWeight = FontWeight.SemiBold, fontSize = 15.sp, modifier = Modifier.weight(1f))
+            IconButton(onClick = { vm.pairError = null; onCancel() }) { Icon(Ic.Close, tr("close"), tint = C.Muted, modifier = Modifier.size(20.dp)) }
+        }
         if (unpaired.isEmpty()) {
             var long by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) { kotlinx.coroutines.delay(10_000); long = true }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                Text(tr("searchingNet"), color = C.Muted, modifier = Modifier.padding(start = 10.dp))
-            }
+            LaunchedEffect(Unit) { delay(10_000); long = true }
+            Text(tr("searchingNet"), color = C.Muted, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 8.dp))
             // nothing found after 10 s: the TV shows its address at the bottom of "Přehrávat na"
-            if (long) Text(tr("notFoundHint"), color = C.Muted, fontSize = 13.sp)
+            if (long) Text(tr("notFoundHint"), color = C.Muted, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 8.dp))
         } else {
             unpaired.forEach { f ->
                 val sel = host == f.host && port == f.port.toString()
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (sel) C.AccentDark else C.Surface2)
-                        .clickable {
-                            host = f.host
-                            port = f.port.toString()
-                        }
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(if (f.kind == "pc") Ic.Computer else Ic.Tv, null, tint = if (sel) C.Accent else C.Text)
-                    Column(Modifier.padding(start = 12.dp)) {
-                        Text(f.name, fontWeight = FontWeight.SemiBold)
-                        Text("${f.host}:${f.port}", color = C.Muted, fontSize = 13.sp)
-                    }
+                DeviceRow(if (f.kind == "pc") Ic.Computer else Ic.Tv, f.name, "${f.host}:${f.port}", selected = sel, online = true) {
+                    host = f.host
+                    port = f.port.toString()
+                    runCatching { codeFocus.requestFocus() }
                 }
             }
         }
@@ -417,18 +410,11 @@ private fun PairSheet(vm: MainViewModel) {
                 modifier = Modifier.weight(1f),
             )
         }
-        info?.let {
-            Text(
-                (if (isPc) "PC: " else "TV: ") + it.name + if (it.loggedIn && !isPc) " · " + tr("loggedInAs", "u" to (it.username ?: "?")) else "",
-                color = C.Ok, fontSize = 13.sp,
-            )
-        }
-        infoError?.let { Text(it, color = C.Muted, fontSize = 13.sp) }
         OutlinedTextField(
             value = code, onValueChange = { code = it.filter(Char::isDigit).take(6) },
             label = { Text(tr("codeFromDevice")) }, singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().focusRequester(codeFocus),
         )
         if (needPassword) {
             OutlinedTextField(
@@ -438,22 +424,26 @@ private fun PairSheet(vm: MainViewModel) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.fillMaxWidth(),
             )
-            Text(
-                tr("tvNotLoggedIn"),
-                color = C.Muted, fontSize = 12.sp,
-            )
         }
-        vm.pairError?.let { Text(it, color = C.Error) }
+        val hint = when {
+            info != null -> (if (isPc) "PC: " else "TV: ") + info!!.name +
+                (if (info!!.loggedIn && !isPc) " · " + tr("loggedInAs", "u" to (info!!.username ?: "?")) else "") +
+                (if (needPassword) " · " + tr("tvNotLoggedIn") else "")
+            infoError != null -> infoError!!
+            else -> tr("pairHelp")
+        }
+        Text(hint, color = if (info != null) C.Ok else C.Muted, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 4.dp))
+        vm.pairError?.let { Text(it, color = C.Error, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 4.dp)) }
         Button(
             onClick = {
                 vm.pair(host, port.toIntOrNull() ?: DEFAULT_PORT, code, password.ifEmpty { null }) { vm.sheet = null }
             },
             enabled = !vm.pairBusy && info != null && code.length == 6 && (!needPassword || password.isNotEmpty()),
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier.fillMaxWidth().height(46.dp),
         ) {
-            if (vm.pairBusy) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp) else Text(tr("pairBtn"))
+            if (vm.pairBusy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) else Text(tr("pairBtn"))
         }
-        Spacer(Modifier.height(20.dp))
     }
 }
 

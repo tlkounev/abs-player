@@ -49,6 +49,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         if (vm.error != null) vm.refreshAll()
+        vm.autoCheckUpdates()
         (application as App).targets.current.value.activate()
     }
 
