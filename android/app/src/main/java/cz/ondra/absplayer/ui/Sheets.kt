@@ -325,10 +325,14 @@ private fun PairSheet(vm: MainViewModel) {
             color = C.Muted, fontSize = 14.sp,
         )
         if (unpaired.isEmpty()) {
+            var long by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { kotlinx.coroutines.delay(10_000); long = true }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                 Text(tr("searchingNet"), color = C.Muted, modifier = Modifier.padding(start = 10.dp))
             }
+            // nothing found after 10 s: the TV shows its address at the bottom of "Přehrávat na"
+            if (long) Text(tr("notFoundHint"), color = C.Muted, fontSize = 13.sp)
         } else {
             unpaired.forEach { f ->
                 val sel = host == f.host && port == f.port.toString()

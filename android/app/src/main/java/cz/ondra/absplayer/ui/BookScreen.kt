@@ -64,8 +64,10 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
     val wide = LocalConfiguration.current.let { it.screenWidthDp >= 600 && it.screenWidthDp > it.screenHeightDp }
     // remote control: start on Play / Continue
     val playFocus = remember { FocusRequester() }
-    LaunchedEffect(screen.id, b != null) {
-        if (vm.app.isTv && b != null) {
+    // also when coming back from the player (this screen is on top again)
+    val onTop = vm.stack.lastOrNull() == screen
+    LaunchedEffect(screen.id, b != null, onTop) {
+        if (vm.app.isTv && b != null && onTop) {
             delay(150)
             runCatching { playFocus.requestFocus() }
         }
@@ -247,7 +249,7 @@ fun PlayPill(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) 
             .height(48.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(C.Accent)
-            .clickable(interactionSource = src, indication = FocusRing(Color.White), onClick = onClick)
+            .clickable(interactionSource = src, indication = FocusRing(Color.White, 24.dp), onClick = onClick)
             .padding(horizontal = 28.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
@@ -265,7 +267,7 @@ private fun OutlinePill(label: String, onClick: () -> Unit) {
             .height(44.dp)
             .clip(RoundedCornerShape(22.dp))
             .border(1.dp, C.Outline, RoundedCornerShape(22.dp))
-            .clickable(onClick = onClick)
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = FocusRing(C.Accent, 22.dp), onClick = onClick)
             .padding(horizontal = 18.dp),
         contentAlignment = Alignment.Center,
     ) { Text(label, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }

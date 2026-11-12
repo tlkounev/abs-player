@@ -270,6 +270,40 @@ class TargetManager(private val app: App) {
         if (itemId != null && pos != null && wasPlaying) {
             target.playItem(itemId, pos)
             if (cur is LocalTarget) cur.stop()
+            if (target is RemoteTarget) watchHandoff(target, cur, itemId, pos)
+        }
+    }
+
+    private var handoffJob: kotlinx.coroutines.Job? = null
+
+    /**
+     * The TV may be off or still waking up: keep sending the book while it comes up. If it does not
+     * play it within 30 s, go back to the device it came from and continue there.
+     */
+    private fun watchHandoff(target: RemoteTarget, from: PlaybackTarget, itemId: String, pos: Double) {
+        handoffJob?.cancel()
+        handoffJob = scope.launch {
+            val started = kotlinx.coroutines.withTimeoutOrNull(30_000) {
+                var lastSend = System.currentTimeMillis()
+                while (true) {
+                    kotlinx.coroutines.delay(2_000)
+                    if (_current.value.id != target.id) return@withTimeoutOrNull true // user chose something else
+                    target.refresh()
+                    val st = target.state.value
+                    if (target.online.value == true && st.itemId == itemId) return@withTimeoutOrNull true
+                    if (target.online.value == true && System.currentTimeMillis() - lastSend > 6_000) {
+                        target.playItem(itemId, pos)
+                        lastSend = System.currentTimeMillis()
+                    }
+                }
+                true
+            }
+            if (started == null && _current.value.id == target.id) {
+                target.deactivate()
+                _current.value = from
+                from.activate()
+                from.playItem(itemId, pos)
+            }
         }
     }
 

@@ -129,13 +129,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     loadLibrary(reset = true)
                     series = emptyList()
                 }
+                retries = 0
             } catch (e: Exception) {
                 error = message(e)
+                // e.g. right after an update the network is not up yet: try again by itself
+                if (retries < 6) {
+                    retries++
+                    viewModelScope.launch {
+                        kotlinx.coroutines.delay(2_000L * retries)
+                        if (error != null) refreshAll()
+                    }
+                }
             } finally {
                 refreshing = false
             }
         }
     }
+    private var retries = 0
 
     fun selectLibrary(id: String) {
         if (id == libraryId) return
@@ -198,7 +208,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Last opened book – the TV home screen puts the remote's focus back on it. */
+    var lastOpenedBook: String? = null
+        private set
+
     fun openBook(id: String, title: String) {
+        lastOpenedBook = id
         push(Screen.Book(id, title))
         book = null
         viewModelScope.launch {

@@ -1,5 +1,19 @@
 package cz.ondra.absplayer.ui
 
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import kotlinx.coroutines.delay
 import cz.ondra.absplayer.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
@@ -73,7 +87,7 @@ fun HomeScreen(vm: MainViewModel) {
         containerColor = C.Bg,
         topBar = {
             TopAppBar(
-                title = { Text("ABS Player", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
+                title = { Image(painterResource(R.drawable.logo_small), "ABS Player", modifier = Modifier.size(28.dp)) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = C.Bg),
                 actions = {
                     LanguageButton()
@@ -84,6 +98,8 @@ fun HomeScreen(vm: MainViewModel) {
                         )
                     }
                     Box {
+                        val upd by Updater.state.collectAsStateWithLifecycle()
+                        LaunchedEffect(upd) { if (upd is Updater.State.Available) menu = false }
                         IconButton(onClick = { menu = true }) { Icon(Ic.More, tr("menu")) }
                         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, containerColor = C.Surface) {
                             DropdownMenuItem(
@@ -167,16 +183,34 @@ private fun LibraryTab(vm: MainViewModel) {
                 }
             }
         }
+        // TV: moving onto the field must not open the keyboard – only OK does
+        var editing by remember { mutableStateOf(!vm.app.isTv) }
+        val keyboard = LocalSoftwareKeyboardController.current
         OutlinedTextField(
             value = vm.query,
             onValueChange = { vm.onQuery(it) },
+            readOnly = !editing,
             placeholder = { Text(tr("searchLibrary")) },
             leadingIcon = { Icon(Ic.Search, null) },
             trailingIcon = {
                 if (vm.query.isNotEmpty()) IconButton(onClick = { vm.onQuery("") }) { Icon(Ic.Close, tr("clear")) }
             },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+                .onFocusChanged { if (!it.isFocused && vm.app.isTv) editing = false }
+                .onPreviewKeyEvent { e ->
+                    if (vm.app.isTv && !editing && e.type == KeyEventType.KeyUp &&
+                        (e.key == Key.DirectionCenter || e.key == Key.Enter || e.key == Key.NumPadEnter)
+                    ) {
+                        editing = true
+                        keyboard?.show()
+                        true
+                    } else {
+                        false
+                    }
+                },
         )
         val results = vm.searchResults
         if (results != null) {
@@ -235,6 +269,19 @@ fun BookGrid(
         }
         LaunchedEffect(near) { if (near) onNearEnd() }
     }
+    // TV: start on the first book; after coming back from a book, on that book again
+    val requesters = remember { mutableMapOf<String, FocusRequester>() }
+    val onTop = vm.stack.lastOrNull() == Screen.Home
+    if (vm.app.isTv) {
+        LaunchedEffect(items.firstOrNull()?.id, onTop) {
+            if (!onTop || items.isEmpty()) return@LaunchedEffect
+            val id = vm.lastOpenedBook?.takeIf { want -> items.any { it.id == want } } ?: items.first().id
+            val idx = items.indexOfFirst { it.id == id }
+            runCatching { state.scrollToItem(idx) }
+            delay(120)
+            runCatching { requesters[id]?.requestFocus() }
+        }
+    }
     LazyVerticalGrid(
         columns = GridCells.Adaptive(150.dp),
         state = state,
@@ -243,7 +290,9 @@ fun BookGrid(
         verticalArrangement = Arrangement.spacedBy(14.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
-        items(items, key = { it.id }) { li -> BookCard(vm, li, showPlay) }
+        items(items, key = { it.id }) { li ->
+            BookCard(vm, li, showPlay, if (vm.app.isTv) requesters.getOrPut(li.id) { FocusRequester() } else null)
+        }
         if (onNearEnd != null && vm.libLoading) {
             item(span = { GridItemSpan(maxLineSpan) }) { Empty(tr("loading")) }
         }
@@ -251,12 +300,23 @@ fun BookGrid(
 }
 
 @Composable
-private fun BookCard(vm: MainViewModel, li: LibraryItem, showPlay: Boolean) {
+private fun BookCard(vm: MainViewModel, li: LibraryItem, showPlay: Boolean, focus: FocusRequester? = null) {
     val p = vm.progress[li.id]
-    Column(Modifier.clickable { vm.openBook(li.id, li.title) }) {
-        Box {
+    val src = remember { MutableInteractionSource() }
+    val focused by src.collectIsFocusedAsState()
+    Column(
+        Modifier
+            .then(if (focus != null) Modifier.focusRequester(focus) else Modifier)
+            .clickable(interactionSource = src, indication = null) { vm.openBook(li.id, li.title) },
+    ) {
+        // remote control: ring (same rounding as the cover) only around the cover, title stays readable
+        Box(
+            Modifier
+                .graphicsLayer { val k = if (focused) 1.04f else 1f; scaleX = k; scaleY = k }
+                .indication(src, FocusRing(C.Accent, 6.dp)),
+        ) {
             Cover(li.id, li.title, Modifier.fillMaxWidth().aspectRatio(1f), corner = 6.dp, progress = p?.progress)
-            if (showPlay) {
+            if (showPlay && !vm.app.isTv) {
                 IconButton(
                     onClick = { vm.play(li.id) },
                     modifier = Modifier

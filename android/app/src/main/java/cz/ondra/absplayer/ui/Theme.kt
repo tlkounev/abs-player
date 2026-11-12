@@ -67,6 +67,7 @@ fun AbsTheme(tv: Boolean = false, content: @Composable () -> Unit) {
             // Remote control (D-pad): a clear ring on the focused element instead of a faint tint
             CompositionLocalProvider(
                 LocalIndication provides FocusRing(C.Accent),
+                androidx.compose.material3.LocalContentColor provides C.Text,
                 LocalRippleConfiguration provides RippleConfiguration(
                     color = C.Accent,
                     rippleAlpha = RippleAlpha(draggedAlpha = 0.16f, focusedAlpha = 0.38f, hoveredAlpha = 0.08f, pressedAlpha = 0.20f),

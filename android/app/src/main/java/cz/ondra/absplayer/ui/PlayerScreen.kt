@@ -31,6 +31,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -148,15 +149,18 @@ fun PlayerScreen(vm: MainViewModel) {
     ) {
         // --- handle + close ---
         Box(Modifier.fillMaxWidth().height(52.dp)) {
-            Box(
-                Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 8.dp)
-                    .size(40.dp, 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(Color(0x59FFFFFF)),
-            )
-            IconBtn(Ic.WDown, tr("close"), Modifier.align(Alignment.CenterStart).padding(start = 8.dp), size = 44.dp, iconSize = 22.dp) { vm.pop() }
+            if (!vm.app.isTv) {
+                // drag handle + close (touch only; on the TV the Back button closes the player)
+                Box(
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 8.dp)
+                        .size(40.dp, 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0x59FFFFFF)),
+                )
+                IconBtn(Ic.WDown, tr("close"), Modifier.align(Alignment.CenterStart).padding(start = 8.dp), size = 44.dp, iconSize = 22.dp) { vm.pop() }
+            }
             val status = s.error ?: s.info
             if (status != null) {
                 Text(
@@ -318,16 +322,20 @@ fun PlayerScreen(vm: MainViewModel) {
 
         if (wide) {
             // TV / landscape: cover left, everything else right (reachable with the remote's arrows)
-            Row(
-                Modifier.weight(1f).fillMaxWidth().padding(start = 40.dp, end = 40.dp, bottom = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(36.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                coverBox(Modifier.fillMaxHeight().widthIn(max = 400.dp))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-                    infoRow()
-                    bars()
-                    controls()
+            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(start = 40.dp, end = 40.dp, bottom = 24.dp)) {
+                // the cover never reaches into the text: at most 40 % of the width
+                val side = minOf(maxHeight, maxWidth * 0.4f, 420.dp)
+                Row(
+                    Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(36.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    coverBox(Modifier.size(side))
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+                        infoRow()
+                        bars()
+                        controls()
+                    }
                 }
             }
         } else {

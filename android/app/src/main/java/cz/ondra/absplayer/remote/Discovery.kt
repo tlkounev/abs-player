@@ -30,6 +30,7 @@ class Discovery(context: Context) {
     private var listener: NsdManager.DiscoveryListener? = null
     private val queue = ArrayDeque<NsdServiceInfo>()
     private var resolving = false
+    private val attempts = mutableMapOf<String, Int>()
 
     fun start() {
         if (listener != null) return
@@ -37,7 +38,11 @@ class Discovery(context: Context) {
             override fun onDiscoveryStarted(serviceType: String) {}
             override fun onDiscoveryStopped(serviceType: String) {}
             override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
-                main.post { listener = null }
+                main.post {
+                    listener = null
+                    // try once more a bit later (e.g. a previous search was still stopping)
+                    main.postDelayed({ start() }, 2000)
+                }
             }
             override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {}
             override fun onServiceFound(info: NsdServiceInfo) {
@@ -73,6 +78,10 @@ class Discovery(context: Context) {
                 override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
                     main.post {
                         resolving = false
+                        // busy / timeout: try the same service again (max. 3×), other ones first
+                        val n = (attempts[info.serviceName] ?: 0) + 1
+                        attempts[info.serviceName] = n
+                        if (n < 3 && listener != null) main.postDelayed({ queue.addLast(info); resolveNext() }, 800L * n)
                         resolveNext()
                     }
                 }

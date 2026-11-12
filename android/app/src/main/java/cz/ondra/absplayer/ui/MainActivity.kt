@@ -48,6 +48,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        if (vm.error != null) vm.refreshAll()
         (application as App).targets.current.value.activate()
     }
 
