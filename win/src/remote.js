@@ -136,7 +136,7 @@ function createReceiver(opts) {
     const url = (req.url || '').split('?')[0];
     try {
       if (req.method === 'GET' && url === '/info') {
-        return send(res, 200, { deviceId: opts.deviceId, name: opts.name, version: PROTOCOL_VERSION, kind: 'pc', acceptsTokens: false, ...(await opts.info()) });
+        return send(res, 200, { deviceId: opts.deviceId, name: typeof opts.name === 'function' ? opts.name() : opts.name, version: PROTOCOL_VERSION, kind: 'pc', acceptsTokens: false, ...(await opts.info()) });
       }
       if (req.method === 'POST' && url === '/pair') {
         const now = Date.now();

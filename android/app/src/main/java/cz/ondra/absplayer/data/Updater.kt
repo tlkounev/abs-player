@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
  * own confirmation, the app keeps its data. Works only when all APKs are signed with the same key.
  */
 object Updater {
-    private const val RELEASES = "https://api.github.com/repos/tlkounev/abs-player/releases?per_page=30"
+    private const val RELEASES = "https://api.github.com/repos/tlkounev/abs-player/releases?per_page=100"
     private const val DAY_MS = 24 * 60 * 60 * 1000L
 
     data class Release(val version: String, val apkUrl: String, val size: Long)

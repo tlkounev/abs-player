@@ -81,6 +81,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('devices:pair', (_e, p) => { devCalls.push('pair:' + p.host + ':' + p.port + ':' + p.code); return { ok: true, id: 'pc2' }; });
   ipcMain.handle('devices:select', (_e, id) => { devCalls.push('select:' + id); return true; });
   ipcMain.handle('devices:unpair', (_e, id) => { devCalls.push('unpair:' + id); return true; });
+  ipcMain.handle('devices:rename', (_e, id, name) => { devCalls.push('rename:' + id + ':' + name); return true; });
   ipcMain.handle('devices:playHere', () => { devCalls.push('playHere'); return true; });
   ipcMain.handle('abs:cmd', (_e, n, a) => exec(`window.__absPlayer.cmd(${JSON.stringify(n)}, ${JSON.stringify(a ?? null)})`));
   ipcMain.on('popup:open-main', () => {});
@@ -223,6 +224,14 @@ app.whenReady().then(async () => {
   check('pair form hidden behind button', await jsP("document.getElementById('pairSection').classList.contains('hidden') && !document.getElementById('pairOpen').classList.contains('hidden')"));
   check('pair button label', (await jsP("document.getElementById('pairOpen').textContent")) === 'Spárovat zařízení (TV nebo PC)');
   await shot(popup, 'p-devices.png');
+  await jsP("document.querySelectorAll('#devRows .dev-row')[1].querySelector('.dev-tools .icon-btn').click()");
+  await wait(150);
+  check('rename turns the row into a field', await jsP("!!document.querySelector('#devRows .dev-row input.dev-name')"));
+  await shot(popup, 'p-rename.png');
+  await jsP("{ const i=document.querySelector('#devRows input.dev-name'); i.value='Obývák'; i.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })); }");
+  await wait(400);
+  check('rename saved', devCalls.some((c) => c.startsWith('rename:') && c.endsWith(':Obývák')));
+  check('field closed after save', await jsP("!document.querySelector('#devRows input.dev-name')"));
   await jsP("document.getElementById('pairOpen').click()");
   await wait(200);
   check('pair form opens', await jsP("!document.getElementById('pairSection').classList.contains('hidden') && document.getElementById('pairOpen').classList.contains('hidden')"));
@@ -242,7 +251,7 @@ app.whenReady().then(async () => {
   await shot(popup, 'p-pair.png');
   await jsP("document.getElementById('pBtn').click()");
   await wait(900);
-  check('pair + select called', JSON.stringify(devCalls) === JSON.stringify(['pair:10.0.0.7:8765:123456', 'select:pc2']));
+  check('pair + select called', JSON.stringify(devCalls.filter((c) => !c.startsWith('rename:'))) === JSON.stringify(['pair:10.0.0.7:8765:123456', 'select:pc2']));
   check('panel closed after pairing', await jsP("document.getElementById('devPanel').classList.contains('hidden')") && popup.getBounds().height === 236);
   // přepnutí z panelu zařízení na kapitoly nezmění velikost okna
   await jsP("document.querySelector('#player [data-act=devices]').click()");

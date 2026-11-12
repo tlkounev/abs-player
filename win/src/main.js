@@ -553,7 +553,7 @@ async function receiverCommand(c) {
 
 const receiver = remote.createReceiver({
   deviceId: config.deviceId,
-  name: deviceName(),
+  name: () => deviceName(),
   code: () => pairingCode,
   getSecrets: () => config.receiverSecrets.map((s) => s.secret),
   addSecret: (secret, from) => {
@@ -624,6 +624,20 @@ ipcMain.handle('devices:pair', async (_e, p) => {
   } catch (e) {
     return { ok: false, error: e.code || e.message };
   }
+});
+
+// přejmenování: tento počítač (posílá se i ostatním zařízením) nebo spárované zařízení (jen tady)
+ipcMain.handle('devices:rename', (_e, id, name) => {
+  const n = String(name || '').trim().slice(0, 60);
+  if (!n) return false;
+  if (id === 'local') config.deviceName = n;
+  else {
+    const d = config.paired.find((x) => x.deviceId === id);
+    if (!d) return false;
+    d.name = n;
+  }
+  saveConfig(config);
+  return true;
 });
 
 ipcMain.handle('devices:unpair', (_e, id) => {

@@ -16,5 +16,6 @@ contextBridge.exposeInMainWorld('abs', {
   playHere: () => ipcRenderer.invoke('devices:playHere'),
   deviceInfo: (host, port) => ipcRenderer.invoke('devices:info', host, port),
   pair: (p) => ipcRenderer.invoke('devices:pair', p),
-  unpair: (id) => ipcRenderer.invoke('devices:unpair', id)
+  unpair: (id) => ipcRenderer.invoke('devices:unpair', id),
+  renameDevice: (id, name) => ipcRenderer.invoke('devices:rename', id, name)
 });
