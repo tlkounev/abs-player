@@ -98,7 +98,7 @@
     if (Date.now() - inProgressCache.at < 30000 && inProgressCache.data) return inProgressCache.data;
     try {
       const res = await axios().$get('/api/me/items-in-progress');
-      const items = (res.libraryItems || []).slice(0, 3);
+      const items = (res.libraryItems || []).slice(0, 8);
       const out = [];
       for (const li of items) {
         const md = (li.media && li.media.metadata) || {};
@@ -107,6 +107,7 @@
           episodeId: li.recentEpisode ? li.recentEpisode.id : null,
           title: li.recentEpisode ? li.recentEpisode.title : md.title,
           author: md.authorName || md.author || '',
+          left: leftOf(li),
           cover: await coverData(coverSrc(li))
         });
       }
@@ -115,6 +116,15 @@
     } catch (e) {
       return [];
     }
+  }
+
+  /** Remaining seconds of an in-progress item (from the user's progress in the store), or null. */
+  function leftOf(li) {
+    try {
+      const p = store().getters['user/getUserMediaProgress'](li.id, li.recentEpisode ? li.recentEpisode.id : null);
+      if (p && p.duration > 0) return Math.max(0, p.duration - (p.currentTime || 0));
+    } catch (e) { /* bez zbývajícího času */ }
+    return null;
   }
 
   function currentTime(vm) {
@@ -233,7 +243,7 @@
     if (!vm) return { ready: false, loggedIn };
     const item = vm.streamLibraryItem;
     if (!item) {
-      return { ready: true, loggedIn, item: null, inProgress: loggedIn ? await inProgress() : [] };
+      return { ready: true, loggedIn, item: null, inProgress: loggedIn ? (await inProgress()).slice(0, 3) : [] };
     }
     let author = '';
     try {
@@ -364,6 +374,8 @@
         else if (ui && typeof ui.toggleMute === 'function') ui.toggleMute();
         return true;
       }
+      case 'recent':
+        return inProgress();
       case 'chapters':
         return (vm.chapters || []).map((c, i) => ({ n: i + 1, title: c.title, start: c.start, end: c.end }));
       case 'playItem': {

@@ -112,6 +112,22 @@ app.whenReady().then(async () => {
   check('chapter times', await jsP("document.getElementById('chElapsed').textContent + '|' + document.getElementById('chRemaining').textContent") === '20:34|-3:32');
   check('drag region', await jsP("getComputedStyle(document.querySelector('.card')).webkitAppRegion || getComputedStyle(document.querySelector('.card')).getPropertyValue('-webkit-app-region')") === 'drag');
 
+  // Pokračovat v poslechu při přehrávání (tlačítko nahoře)
+  await exec(`(() => { const orig = window.$nuxt.$axios.$get; window.$nuxt.$axios.$get = async (url) => url.includes('items-in-progress') ? ({ libraryItems: [
+      { id: 'li1', updatedAt: 1, media: { coverPath: '/c', metadata: { title: 'Stopařův průvodce po Galaxii', authorName: 'Douglas Adams' } } },
+      { id: 'li3', updatedAt: 1, media: { coverPath: null, metadata: { title: 'Saturnin', authorName: 'Zdeněk Jirotka' } } } ] }) : orig(url); })()`);
+  check('recent button visible', await jsP("getComputedStyle(document.getElementById('recBtn')).display !== 'none' && document.getElementById('recBtn').title === 'Pokračovat v poslechu'"));
+  await jsP("document.getElementById('recBtn').click()");
+  await wait(900);
+  check('recent opens', await jsP("document.querySelector('.card').classList.contains('rec') && !document.getElementById('recPanel').classList.contains('hidden') && getComputedStyle(document.getElementById('player')).display === 'none'"));
+  check('recent rows', await jsP("document.querySelectorAll('#recItems .row').length") === 2);
+  check('recent current', await jsP("document.querySelector('#recItems .row.cur .a').textContent") === 'Přehrává se');
+  await shot(popup, 'p-recent.png');
+  await jsP("document.getElementById('recBack').click()");
+  await wait(700);
+  check('recent closes', await jsP("!document.querySelector('.card').classList.contains('rec') && getComputedStyle(document.getElementById('player')).display !== 'none'"));
+  check('recent window size', popup.getBounds().height === 236);
+
   // hlasitost: najetí → posuvník; zavření podle polohy kurzoru (bez DOM událostí)
   const r = await jsP("JSON.stringify(document.getElementById('volBtn').getBoundingClientRect())").then(JSON.parse);
   const bx = Math.round(r.x + r.width / 2), by = Math.round(r.y + r.height / 2);
@@ -160,7 +176,7 @@ app.whenReady().then(async () => {
   // --- seznam kapitol ---
   await exec(`(() => { const p = ${P}; p.chapters = p.chapters41; p.currentTime = 17*512 + 100; })()`);
   await wait(700);
-  const geo = await jsP(`(() => { const o = document.querySelectorAll('[data-act=open]')[0].getBoundingClientRect(); const c = document.getElementById('chBtn').getBoundingClientRect(); return JSON.stringify({ox: o.x, oy: o.y, cx: c.x, cy: c.y}); })()`).then(JSON.parse);
+  const geo = await jsP(`(() => { const o = document.querySelector('#player [data-act=open]').getBoundingClientRect(); const c = document.getElementById('chBtn').getBoundingClientRect(); return JSON.stringify({ox: o.x, oy: o.y, cx: c.x, cy: c.y}); })()`).then(JSON.parse);
   check('list button under open-full button', Math.abs(geo.cx - geo.ox) < 2 && geo.cy > geo.oy);
   const layout = () => jsP(`(() => { const p = document.getElementById('player').getBoundingClientRect(); const r = (sel) => { const b = document.querySelector(sel).getBoundingClientRect(); return [Math.round(b.top - p.top), Math.round(b.height)]; }; return JSON.stringify({h: Math.round(p.height), head: r('.head'), prog: r('.progress'), ctl: r('.controls')}); })()`);
   const before = await layout();

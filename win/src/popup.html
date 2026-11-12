@@ -199,6 +199,14 @@
 
   /* --- prázdný stav --- */
   .empty { flex: 1; display: flex; flex-direction: column; }
+  /* Pokračovat v poslechu při přehrávání: okno naroste a seznam nahradí přehrávač */
+  .rec-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .rec-panel .list { flex: 1; min-height: 0; overflow-y: auto; }
+  .rec-head { display: flex; align-items: center; gap: 4px; margin: -4px -6px 6px -6px; }
+  .rec-head h1 { font-size: 14px; font-weight: 600; flex: 1; }
+  .card.rec #player, .card.rec #chPanel, .card.rec #devPanel { display: none !important; }
+  .row.cur { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+  .row.cur .t .a { color: var(--accent); }
   .empty-head { display: flex; align-items: center; justify-content: space-between; margin: -4px -6px 6px 0; }
   .empty-head h1 { font-size: 14px; font-weight: 600; }
   .list { display: flex; flex-direction: column; gap: 2px; }
@@ -259,6 +267,19 @@
     <div class="ch-list" id="chItems"></div>
   </div>
 
+  <!-- pokračovat v poslechu (otevřené z přehrávače) -->
+  <div id="recPanel" class="rec-panel hidden">
+    <div class="rec-head">
+      <button class="icon-btn" id="recBack" data-tip="backToPlayer"><svg viewBox="0 0 16 16"><path d="M10.3 2.9 5.2 8l5.1 5.1-1.1 1.1L3 8l6.2-6.2z"/></svg></button>
+      <h1 data-txt="continue"></h1>
+      <div class="win-btns">
+        <button class="icon-btn" data-act="hide" data-tip="hide"><svg viewBox="0 0 16 16"><path d="M3 11.25h10v1.5H3z"/></svg></button>
+        <button class="icon-btn" data-act="open" data-tip="openFull"><svg viewBox="0 0 16 16"><path d="M9 2h5v5h-1.5V4.56L7.53 9.53 6.47 8.47l4.97-4.97H9V2ZM3.5 4A.5.5 0 0 0 3 4.5v8a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V9h1.5v3.5a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2H7V4H3.5Z"/></svg></button>
+      </div>
+    </div>
+    <div class="list" id="recItems"></div>
+  </div>
+
   <!-- přehrává se -->
   <div id="player" class="hidden" style="display:flex;flex-direction:column;flex:1">
     <div class="head">
@@ -271,6 +292,7 @@
       </div>
       <div class="side">
         <div class="win-btns">
+          <button class="icon-btn" id="recBtn" data-tip="continue"><svg viewBox="0 0 16 16"><path d="M2 2.5h2.5v11H2zM5.5 2.5H8v11H5.5zM9.2 3.3l2.4-.65 2.85 10.6-2.4.65z"/></svg></button>
           <button class="icon-btn" data-act="hide" data-tip="hide"><svg viewBox="0 0 16 16"><path d="M3 11.25h10v1.5H3z"/></svg></button>
           <button class="icon-btn" data-act="open" data-tip="openFull"><svg viewBox="0 0 16 16"><path d="M9 2h5v5h-1.5V4.56L7.53 9.53 6.47 8.47l4.97-4.97H9V2ZM3.5 4A.5.5 0 0 0 3 4.5v8a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V9h1.5v3.5a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2H7V4H3.5Z"/></svg></button>
         </div>
@@ -449,6 +471,7 @@ function renderVolume() {
 
 function render() {
   if (listOpen && !(st && st.item && st.hasChapters)) setListOpen(false);
+  if (recOpen && !(st && st.item)) setRecOpen(false);
   if (!st || !st.ready) {
     show('msg');
     $('msgTxt').textContent = !st ? tr('unavailable') : (st.loggedIn ? tr('loadingPlayer') : tr('login'));
@@ -471,27 +494,7 @@ function render() {
     const key = items.map((i) => i.id + (i.cover ? 1 : 0)).join(',');
     if (key !== lastListKey) {
       lastListKey = key;
-      const list = $('list');
-      list.textContent = '';
-      for (const it of items) {
-        const row = document.createElement('div');
-        row.className = 'row';
-        const img = document.createElement('img');
-        if (it.cover) img.src = it.cover;
-        const t = document.createElement('div');
-        t.className = 't';
-        const a = document.createElement('div'); a.textContent = it.title || '';
-        const b = document.createElement('div'); b.className = 'a'; b.textContent = it.author || '';
-        t.append(a, b);
-        const btn = document.createElement('button');
-        btn.className = 'icon-btn';
-        btn.title = tr('play');
-        btn.innerHTML = '<svg viewBox="0 0 20 20">' + PLAY + '</svg>';
-        btn.onclick = () => cmd('playItem', { id: it.id, episodeId: it.episodeId });
-        row.ondblclick = btn.onclick;
-        row.append(img, t, btn);
-        list.append(row);
-      }
+      buildItemRows($('list'), items, null);
     }
     return;
   }
@@ -534,6 +537,68 @@ function render() {
   renderVolume();
   if (!dragging) setProgress(pendingSeek != null ? pendingSeek : st.currentTime);
   if (listOpen) updateChapterList();
+}
+
+/** Rows of in-progress books; [curId] = the one playing now (highlighted, click = back to the player). */
+function buildItemRows(list, items, curId) {
+  list.textContent = '';
+  for (const it of items) {
+    const isCur = it.id === curId;
+    const row = document.createElement('div');
+    row.className = 'row' + (isCur ? ' cur' : '');
+    const img = document.createElement('img');
+    if (it.cover) img.src = it.cover;
+    const t = document.createElement('div');
+    t.className = 't';
+    const a = document.createElement('div'); a.textContent = it.title || '';
+    const b = document.createElement('div'); b.className = 'a';
+    b.textContent = isCur ? tr('nowPlaying')
+      : [it.author, it.left != null ? tr('leftT', { t: fmt(it.left) }) : ''].filter(Boolean).join(' · ');
+    t.append(a, b);
+    const btn = document.createElement('button');
+    btn.className = 'icon-btn';
+    btn.title = isCur ? tr('backToPlayer') : tr('play');
+    btn.innerHTML = '<svg viewBox="0 0 20 20">' + PLAY + '</svg>';
+    btn.onclick = isCur ? () => setRecOpen(false) : () => playFromRecent(it);
+    row.ondblclick = btn.onclick;
+    row.onclick = (e) => { if (recOpen && !(e.target instanceof HTMLButtonElement)) btn.onclick(); };
+    row.append(img, t, btn);
+    list.append(row);
+  }
+}
+
+// --- pokračovat v poslechu při přehrávání ---
+let recOpen = false;
+
+async function setRecOpen(open) {
+  if (open === recOpen) return;
+  recOpen = open;
+  $('recBtn').classList.toggle('on', open);
+  const card = document.querySelector('.card');
+  if (open) {
+    const wasExpanded = listOpen || devOpen;
+    if (devOpen) { devOpen = false; setPairOpen(false); clearInterval(devTimer); devTimer = null; $('devPanel').classList.add('hidden'); }
+    if (listOpen) { listOpen = false; $('chBtn').classList.remove('on'); $('chPanel').classList.add('hidden'); }
+    if (!wasExpanded) await window.abs.list(true);
+    card.classList.remove('down');
+    card.classList.add('rec');
+    $('recPanel').classList.remove('hidden');
+    $('recItems').textContent = '';
+    const items = (await window.abs.cmd('recent')) || [];
+    if (recOpen) buildItemRows($('recItems'), items, st && st.item ? st.item.id : null);
+  } else {
+    card.classList.remove('rec');
+    $('recPanel').classList.add('hidden');
+    await window.abs.list(false);
+    render();
+  }
+}
+
+/** Another book: pause + save the current one, then play the chosen one from its own position. */
+async function playFromRecent(it) {
+  if (st && st.item && st.isPlaying && !(st.target && st.target.remote)) await window.abs.cmd('pauseSync');
+  await setRecOpen(false);
+  await cmd('playItem', { id: it.id, episodeId: it.episodeId });
 }
 
 async function poll() {
@@ -951,6 +1016,8 @@ for (const el of document.querySelectorAll('[data-act="devices"]')) el.onclick =
 $('devClose').onclick = () => setDevOpen(false);
 
 $('chBtn').onclick = () => setListOpen(!listOpen);
+$('recBtn').onclick = () => setRecOpen(!recOpen);
+$('recBack').onclick = () => setRecOpen(false);
 $('chClose').onclick = () => setListOpen(false);
 $('chLabel').onclick = () => setListOpen(!listOpen);
 $('chSearch').addEventListener('input', buildChapterRows);
@@ -971,7 +1038,7 @@ document.addEventListener('keydown', (e) => {
     else if (e.key === 'Enter') { const r = $('chItems').querySelector('.ch-row'); if (r) r.click(); }
     return;
   }
-  if (e.key === 'Escape') { if (devOpen) setDevOpen(false); else if (listOpen) setListOpen(false); else window.abs.hide(); }
+  if (e.key === 'Escape') { if (recOpen) setRecOpen(false); else if (devOpen) setDevOpen(false); else if (listOpen) setListOpen(false); else window.abs.hide(); }
   else if (e.key === ' ' || e.key === 'MediaPlayPause') { e.preventDefault(); cmd('playPause'); }
   else if (e.key === 'ArrowLeft') cmd('jumpBack');
   else if (e.key === 'ArrowRight') cmd('jumpFwd');
@@ -985,7 +1052,10 @@ window.abs.onShown(() => {
   listOpen = false;
   $('chBtn').classList.remove('on');
   $('chPanel').classList.add('hidden');
-  document.querySelector('.card').classList.remove('down');
+  recOpen = false;
+  $('recBtn').classList.remove('on');
+  $('recPanel').classList.add('hidden');
+  document.querySelector('.card').classList.remove('down', 'rec');
   poll();
 });
 window.abs.onLang((code) => { lang = code; applyLang(); });

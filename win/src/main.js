@@ -361,6 +361,7 @@ async function getState() {
 }
 
 async function routedCmd(name, arg) {
+  if (name === 'recent') return localCmd('recent'); // seznam „Pokračovat v poslechu“ je vždy z účtu ABS
   const target = targetInfo();
   if (!target.remote) return localCmd(name, arg);
   const d = pairedDevice(target.id);

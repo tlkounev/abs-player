@@ -20,7 +20,9 @@ Webový klient Audiobookshelf jako samostatná aplikace v oznamovací oblasti Wi
   Okno naroste nahoru (u horního okraje obrazovky dolů), seznam sjede na aktuální kapitolu,
   dohrané mají háček, klik skočí na začátek kapitoly, pole Hledat filtruje podle názvu (bez ohledu
   na diakritiku) nebo čísla. Esc vymaže hledání / zavře seznam.
-- Když nic nehraje, nabídne poslední rozposlouchané tituly.
+- Když nic nehraje, nabídne poslední rozposlouchané tituly. Při přehrávání je otevře tlačítko se
+  třemi knihami vpravo nahoře (okno naroste, právě hrající kniha je zvýrazněná, klik na jinou ji
+  pustí od jejího místa, šipka zpět nebo Esc vrátí přehrávač).
 
 ### Přehrávat na (TV, jiné PC) a z telefonu sem
 - Tlačítko s monitorem v minipřehrávači (nebo menu ikony → *Přehrávat na*) otevře seznam zařízení.
