@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            AbsTheme {
+            AbsTheme(tv = (application as App).isTv) {
                 AppRoot(vm)
             }
         }

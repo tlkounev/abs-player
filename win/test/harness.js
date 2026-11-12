@@ -116,7 +116,7 @@ app.whenReady().then(async () => {
   await exec(`(() => { const orig = window.$nuxt.$axios.$get; window.$nuxt.$axios.$get = async (url) => url.includes('items-in-progress') ? ({ libraryItems: [
       { id: 'li1', updatedAt: 1, media: { coverPath: '/c', metadata: { title: 'Stopařův průvodce po Galaxii', authorName: 'Douglas Adams' } } },
       { id: 'li3', updatedAt: 1, media: { coverPath: null, metadata: { title: 'Saturnin', authorName: 'Zdeněk Jirotka' } } } ] }) : orig(url); })()`);
-  check('home button visible', await jsP("getComputedStyle(document.getElementById('homeBtn')).display !== 'none' && document.getElementById('homeBtn').title === 'Pokračovat v poslechu'"));
+  check('home button visible', await jsP("getComputedStyle(document.getElementById('homeBtn')).display !== 'none' && document.getElementById('homeBtn').title === 'Zpět'"));
   await jsP("document.getElementById('homeBtn').click()");
   await wait(900);
   check('home page shown', await jsP("!document.getElementById('empty').classList.contains('hidden') && document.getElementById('player').classList.contains('hidden')"));

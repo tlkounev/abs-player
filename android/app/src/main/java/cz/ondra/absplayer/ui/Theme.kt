@@ -1,6 +1,14 @@
 package cz.ondra.absplayer.ui
 
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RippleConfiguration
+import androidx.compose.material.ripple.RippleAlpha
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
@@ -45,7 +53,26 @@ private val Scheme = darkColorScheme(
     error = C.Error,
 )
 
+/**
+ * [tv]: the same screens on a TV (1080p = 960×540 dp) are drawn a bit smaller so more fits.
+ * Text is ~12 % smaller than the Android default on the phone too.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AbsTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = Scheme, typography = Typography(), content = content)
+fun AbsTheme(tv: Boolean = false, content: @Composable () -> Unit) {
+    val d = LocalDensity.current
+    val density = Density(d.density * (if (tv) 0.82f else 1f), d.fontScale * (if (tv) 0.92f else 0.88f))
+    CompositionLocalProvider(LocalDensity provides density) {
+        MaterialTheme(colorScheme = Scheme, typography = Typography()) {
+            // Remote control (D-pad): a clear ring on the focused element instead of a faint tint
+            CompositionLocalProvider(
+                LocalIndication provides FocusRing(C.Accent),
+                LocalRippleConfiguration provides RippleConfiguration(
+                    color = C.Accent,
+                    rippleAlpha = RippleAlpha(draggedAlpha = 0.16f, focusedAlpha = 0.38f, hoveredAlpha = 0.08f, pressedAlpha = 0.20f),
+                ),
+                content = content,
+            )
+        }
+    }
 }

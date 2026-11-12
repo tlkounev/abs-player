@@ -21,7 +21,7 @@ Webový klient Audiobookshelf jako samostatná aplikace v oznamovací oblasti Wi
   dohrané mají háček, klik skočí na začátek kapitoly, pole Hledat filtruje podle názvu (bez ohledu
   na diakritiku) nebo čísla. Esc vymaže hledání / zavře seznam.
 - Když nic nehraje, nabídne poslední rozposlouchané tituly. Při přehrávání se na tuto úvodní
-  stránku vrátíš šipkou ← vpravo nahoře: právě hrající kniha je první a zvýrazněná (klik na ni
+  stránku vrátíš zaoblenou šipkou Zpět vpravo nahoře: právě hrající kniha je první a zvýrazněná (klik na ni
   nebo Esc = zpět do přehrávače), klik na jinou ji pustí od jejího místa. Aktivní je celý řádek knihy.
 
 ### Přehrávat na (TV, jiné PC) a z telefonu sem

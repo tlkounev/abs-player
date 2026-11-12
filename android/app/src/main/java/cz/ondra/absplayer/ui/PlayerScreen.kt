@@ -7,6 +7,22 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalConfiguration
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -92,6 +108,7 @@ fun PlayerScreen(vm: MainViewModel) {
     val itemId = s.itemId
     /** Position shown while a bar is being dragged (seconds in the book). */
     var preview by remember { mutableStateOf<Double?>(null) }
+    val wide = LocalConfiguration.current.let { it.screenWidthDp >= 600 && it.screenWidthDp > it.screenHeightDp }
 
     // --- drag down to close ---
     val closePx = with(LocalDensity.current) { 110.dp.toPx() }
@@ -155,128 +172,173 @@ fun PlayerScreen(vm: MainViewModel) {
             return@Column
         }
 
-        // --- cover (takes the space that is left) ---
-        Box(
-            Modifier.weight(1f).fillMaxWidth().padding(horizontal = 40.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(Modifier.widthIn(max = 360.dp).aspectRatio(1f, matchHeightConstraintsFirst = true)) {
+        val pos = preview ?: s.positionSec
+        val rate = s.speed.coerceAtLeast(0.1f)
+        // While dragging, the chapter labels follow the dragged position.
+        val ch = s.chapterAtSec(pos)
+
+        // remote control: start on Play
+        val playFocus = remember { FocusRequester() }
+        LaunchedEffect(itemId) {
+            if (vm.app.isTv) {
+                delay(200)
+                runCatching { playFocus.requestFocus() }
+            }
+        }
+        val coverBox: @Composable (Modifier) -> Unit = { m ->
+            Box(m.aspectRatio(1f, matchHeightConstraintsFirst = true)) {
                 Cover(itemId, s.title, Modifier.fillMaxSize(), corner = 10.dp)
                 if (s.isLoading || s.isBuffering) {
                     CircularProgressIndicator(Modifier.align(Alignment.Center).size(48.dp), color = C.Accent)
                 }
             }
         }
-
-        val pos = preview ?: s.positionSec
-        val rate = s.speed.coerceAtLeast(0.1f)
-        // While dragging, the chapter labels follow the dragged position.
-        val ch = s.chapterAtSec(pos)
-
-        // --- text | timer, play on, chapters (as in Windows) ---
-        Row(
-            Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(s.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, lineHeight = 25.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                val sub = listOf(s.author, s.series).filter { it.isNotBlank() }.joinToString(" · ")
-                if (sub.isNotEmpty()) Text(sub, color = C.Muted, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (ch != null) Text(ch.second.title, color = C.Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (target.isRemote) {
-                    Text(tr("playingOnT", "t" to target.name), color = C.Accent, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        val infoRow: @Composable () -> Unit = {
+            // --- text | timer, play on, chapters (as in Windows) ---
+            Row(
+                Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(s.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, lineHeight = 25.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    val sub = listOf(s.author, s.series).filter { it.isNotBlank() }.joinToString(" · ")
+                    if (sub.isNotEmpty()) Text(sub, color = C.Muted, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (ch != null) Text(ch.second.title, color = C.Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (target.isRemote) {
+                        Text(tr("playingOnT", "t" to target.name), color = C.Accent, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
                 }
-            }
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                val sleepOn = s.sleepSec != null
-                Row(
-                    Modifier
-                        .height(22.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .clickable { vm.sheet = Sheet.Sleep }
-                        .padding(horizontal = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Ic.WMoon, tr("sleep"), tint = if (sleepOn) C.Accent else C.Muted, modifier = Modifier.size(13.dp))
-                    if (sleepOn) Text(" " + sleepLabel(s.sleepSec), color = C.Muted, fontSize = 12.sp)
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                    IconBtn(
-                        Ic.WMonitor, tr("playOn"), width = 44.dp, size = 40.dp, iconSize = 20.dp,
-                        tint = if (target.isRemote) C.Accent else C.Text,
-                        background = if (target.isRemote) C.Press else Color.Transparent,
-                    ) { vm.sheet = Sheet.Devices }
-                    if (s.chapters.size > 1) {
-                        IconBtn(Ic.WChapters, tr("chapters"), width = 44.dp, size = 40.dp, iconSize = 20.dp) { vm.sheet = Sheet.Chapters }
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    val sleepOn = s.sleepSec != null
+                    Row(
+                        Modifier
+                            .height(22.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable { vm.sheet = Sheet.Sleep }
+                            .padding(horizontal = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(Ic.WMoon, tr("sleep"), tint = if (sleepOn) C.Accent else C.Muted, modifier = Modifier.size(13.dp))
+                        if (sleepOn) Text(" " + sleepLabel(s.sleepSec), color = C.Muted, fontSize = 12.sp)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                        IconBtn(
+                            Ic.WMonitor, tr("playOn"), width = 44.dp, size = 40.dp, iconSize = 20.dp,
+                            tint = if (target.isRemote) C.Accent else C.Text,
+                            background = if (target.isRemote) C.Press else Color.Transparent,
+                        ) { vm.sheet = Sheet.Devices }
+                        if (s.chapters.size > 1) {
+                            IconBtn(Ic.WChapters, tr("chapters"), width = 44.dp, size = 40.dp, iconSize = 20.dp) { vm.sheet = Sheet.Chapters }
+                        }
                     }
                 }
             }
-        }
 
-        // --- chapter bar + thin book bar, tight like Windows ---
-        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            val dur = s.durationSec.coerceAtLeast(1.0)
-            if (ch != null) {
-                val c = ch.second
-                val len = (c.endSec - c.startSec).coerceAtLeast(1.0)
-                val inCh = (pos - c.startSec).coerceIn(0.0, len)
-                SeekBar(
-                    fraction = (inCh / len).toFloat(),
-                    thin = false,
-                    onPreview = { f -> preview = f?.let { c.startSec + it * len } },
-                    onSeek = { f -> target.seekTo(c.startSec + f * len); preview = null },
-                )
+        }
+        val bars: @Composable () -> Unit = {
+            // --- chapter bar + thin book bar, tight like Windows ---
+            Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                val dur = s.durationSec.coerceAtLeast(1.0)
+                if (ch != null) {
+                    val c = ch.second
+                    val len = (c.endSec - c.startSec).coerceAtLeast(1.0)
+                    val inCh = (pos - c.startSec).coerceIn(0.0, len)
+                    SeekBar(
+                        fraction = (inCh / len).toFloat(),
+                        thin = false,
+                        onPreview = { f -> preview = f?.let { c.startSec + it * len } },
+                        onSeek = { f -> target.seekTo(c.startSec + f * len); preview = null },
+                        onStep = { d -> target.skip(d * 10.0) },
+                    )
+                    TimesRow(
+                        formatClock(inCh),
+                        tr("chapterN", "n" to ch.first + 1, "total" to s.chapters.size),
+                        "−" + formatClock((len - inCh) / rate),
+                        labelColor = C.Text,
+                        onLabel = { vm.sheet = Sheet.Chapters },
+                    )
+                    SeekBar(
+                        fraction = (pos / dur).toFloat(),
+                        thin = true,
+                        onPreview = { f -> preview = f?.let { it * dur } },
+                        onSeek = { f -> target.seekTo(f * dur); preview = null },
+                        onStep = { d -> target.skip(d * 60.0) },
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                } else {
+                    SeekBar(
+                        fraction = (pos / dur).toFloat(),
+                        thin = false,
+                        onPreview = { f -> preview = f?.let { it * dur } },
+                        onSeek = { f -> target.seekTo(f * dur); preview = null },
+                        onStep = { d -> target.skip(d * 30.0) },
+                    )
+                }
                 TimesRow(
-                    formatClock(inCh),
-                    tr("chapterN", "n" to ch.first + 1, "total" to s.chapters.size),
-                    "−" + formatClock((len - inCh) / rate),
-                    labelColor = C.Text,
-                    onLabel = { vm.sheet = Sheet.Chapters },
-                )
-                SeekBar(
-                    fraction = (pos / dur).toFloat(),
-                    thin = true,
-                    onPreview = { f -> preview = f?.let { it * dur } },
-                    onSeek = { f -> target.seekTo(f * dur); preview = null },
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            } else {
-                SeekBar(
-                    fraction = (pos / dur).toFloat(),
-                    thin = false,
-                    onPreview = { f -> preview = f?.let { it * dur } },
-                    onSeek = { f -> target.seekTo(f * dur); preview = null },
+                    formatClock(pos),
+                    tr("bookPct", "p" to ((pos / dur) * 100).toInt()),
+                    "−" + formatClock((dur - pos) / rate),
                 )
             }
-            TimesRow(
-                formatClock(pos),
-                tr("bookPct", "p" to ((pos / dur) * 100).toInt()),
-                "−" + formatClock((dur - pos) / rate),
-            )
+
+        }
+        val controls: @Composable () -> Unit = {
+            // --- volume | ⏮ | ↺10 | ▶ | ↻10 | ⏭ | speed ---
+            Row(
+                Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp, top = 18.dp, bottom = if (wide) 0.dp else 22.dp).navigationBarsPadding(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                VolumeButton(s, target)
+                val hasCh = s.chapters.size > 1
+                IconBtn(Ic.WPrev, tr("prevCh"), size = 48.dp, iconSize = 26.dp, enabled = hasCh) { target.prev() }
+                IconBtn(Ic.WBack, tr("back", "s" to SKIP.toInt()), size = 48.dp, iconSize = 30.dp) { target.skip(-SKIP) }
+                val playSrc = remember { MutableInteractionSource() }
+                val playFocused by playSrc.collectIsFocusedAsState()
+                Box(
+                    Modifier
+                        .graphicsLayer { val k = if (playFocused) 1.08f else 1f; scaleX = k; scaleY = k }
+                        .size(68.dp)
+                        .clip(CircleShape)
+                        .background(C.Accent)
+                        .focusRequester(playFocus)
+                        .clickable(interactionSource = playSrc, indication = FocusRing(Color.White)) { target.toggle() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        if (s.isPlaying) Ic.WPause else Ic.WPlay, if (s.isPlaying) tr("pause") else tr("play"),
+                        tint = C.OnAccent, modifier = Modifier.size(32.dp),
+                    )
+                }
+                IconBtn(Ic.WFwd, tr("fwd", "s" to SKIP.toInt()), size = 48.dp, iconSize = 30.dp) { target.skip(SKIP) }
+                IconBtn(Ic.WNext, tr("nextCh"), size = 48.dp, iconSize = 26.dp, enabled = hasCh) { target.next() }
+                SpeedButton(s, target)
+            }
         }
 
-        // --- volume | ⏮ | ↺10 | ▶ | ↻10 | ⏭ | speed ---
-        Row(
-            Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp, top = 18.dp, bottom = 22.dp).navigationBarsPadding(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            VolumeButton(s, target)
-            val hasCh = s.chapters.size > 1
-            IconBtn(Ic.WPrev, tr("prevCh"), size = 48.dp, iconSize = 26.dp, enabled = hasCh) { target.prev() }
-            IconBtn(Ic.WBack, tr("back", "s" to SKIP.toInt()), size = 48.dp, iconSize = 30.dp) { target.skip(-SKIP) }
-            Box(
-                Modifier.size(68.dp).clip(CircleShape).background(C.Accent).clickable { target.toggle() },
-                contentAlignment = Alignment.Center,
+        if (wide) {
+            // TV / landscape: cover left, everything else right (reachable with the remote's arrows)
+            Row(
+                Modifier.weight(1f).fillMaxWidth().padding(start = 40.dp, end = 40.dp, bottom = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(36.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    if (s.isPlaying) Ic.WPause else Ic.WPlay, if (s.isPlaying) tr("pause") else tr("play"),
-                    tint = C.OnAccent, modifier = Modifier.size(32.dp),
-                )
+                coverBox(Modifier.fillMaxHeight().widthIn(max = 400.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+                    infoRow()
+                    bars()
+                    controls()
+                }
             }
-            IconBtn(Ic.WFwd, tr("fwd", "s" to SKIP.toInt()), size = 48.dp, iconSize = 30.dp) { target.skip(SKIP) }
-            IconBtn(Ic.WNext, tr("nextCh"), size = 48.dp, iconSize = 26.dp, enabled = hasCh) { target.next() }
-            SpeedButton(s, target)
+        } else {
+            // --- cover (takes the space that is left) ---
+            Box(
+                Modifier.weight(1f).fillMaxWidth().padding(horizontal = 40.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) { coverBox(Modifier.widthIn(max = 360.dp)) }
+            infoRow()
+            bars()
+            controls()
         }
     }
 }
@@ -510,7 +572,11 @@ fun SeekBar(
     onPreview: (Float?) -> Unit,
     onSeek: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    /** Remote control: ←/→ on the focused bar (−1 / +1). */
+    onStep: ((Int) -> Unit)? = null,
 ) {
+    val keySrc = remember { MutableInteractionSource() }
+    val step by rememberUpdatedState(onStep)
     var width by remember { mutableIntStateOf(1) }
     var drag by remember { mutableStateOf<Float?>(null) }
     val preview by rememberUpdatedState(onPreview)
@@ -520,6 +586,20 @@ fun SeekBar(
     Box(
         modifier
             .fillMaxWidth()
+            .then(
+                if (onStep == null) Modifier else Modifier
+                    .onPreviewKeyEvent { e ->
+                        if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                        when (e.key) {
+                            Key.DirectionLeft -> { step?.invoke(-1); true }
+                            Key.DirectionRight -> { step?.invoke(1); true }
+                            else -> false
+                        }
+                    }
+                    .indication(keySrc, LocalIndication.current)
+                    .focusable(interactionSource = keySrc)
+                    .padding(horizontal = 2.dp, vertical = 3.dp)
+            )
             .height(if (thin) 12.dp else 18.dp)
             .onSizeChanged { width = it.width.coerceAtLeast(1) }
             .pointerInput(Unit) {

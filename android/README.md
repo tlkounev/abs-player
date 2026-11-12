@@ -1,7 +1,7 @@
 # ABS Player pro Android
 
 Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.3.3.
+Verze 1.4.0.
 
 ## Co umí
 
@@ -17,6 +17,11 @@ Verze 1.3.3.
 - Rychlost: klepnutí = další krok 0,75–2×, podržení = − / + po 0,05.
 - Stažením dolů (kdekoli na obrazovce) nebo šipkou se přehrávač zavře na hlavní stránku.
 - Když nic nehraje, přehrávač nabídne poslední rozposlouchané tituly.
+- Detail knihy: kapitoly jsou sbalené, otevře je řádek *Kapitoly (n)*.
+- Ovládání dálkovým ovladačem (TV): vybraná položka má oranžový rámeček, tlačítko Play bílý a je
+  větší. Detail knihy začíná na *Pokračovat*, přehrávač na Play. V přehrávači ↑/↓ přechází mezi
+  řádky a ←/→ na pruhu kapitoly posouvá o 10 s, na pruhu knihy o 1 minutu. Na TV a na šířku je
+  obal vlevo a ovládání vpravo.
 - Seznam kapitol s hledáním bez diakritiky i podle čísla, časovač (minuty nebo konec kapitoly).
 - Jazyk aplikace se mění vlajkou na hlavní stránce. Je to stejných 15 jazyků jako ve Windows:
   čeština, slovenština, angličtina, němčina, polština, francouzština, španělština, italština,
