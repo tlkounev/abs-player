@@ -1,6 +1,5 @@
 package cz.ondra.absplayer.ui
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -20,14 +19,9 @@ class MainActivity : ComponentActivity() {
     private val vm: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // The same APK runs on the TV: when the phone screen is opened there (e.g. "Open" after
-        // installing), switch to the TV screen, which also starts the receiver (code, IP, port).
-        if ((application as App).isTv) {
-            super.onCreate(savedInstanceState)
-            startActivity(Intent(this, cz.ondra.absplayer.tv.TvActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            finish()
-            return
-        }
+        // The same screen runs on the TV; there it also receives playback from phones / PCs
+        // (pairing code + address are in "Přehrávat na").
+        if ((application as App).isTv) cz.ondra.absplayer.tv.ReceiverService.start(this)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
@@ -39,7 +33,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (isFinishing) return
         (application as App).targets.current.value.activate()
     }
 

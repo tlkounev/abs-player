@@ -73,7 +73,7 @@ class ReceiverService : Service() {
             )
         }
         val open = PendingIntent.getActivity(
-            this, 0, Intent(this, TvActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
+            this, 0, Intent(this, cz.ondra.absplayer.ui.MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
         )
         val n: Notification = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
@@ -131,6 +131,15 @@ class ReceiverService : Service() {
             AndroidSettings.Global.getString(ctx.contentResolver, "device_name")
                 ?: AndroidSettings.Global.getString(ctx.contentResolver, AndroidSettings.Global.DEVICE_NAME)
                 ?: Build.MODEL
+
+        /** This device's address in the home network (shown on the TV next to the pairing code). */
+        fun lanAddress(): String? = runCatching {
+            java.net.NetworkInterface.getNetworkInterfaces().toList()
+                .filter { it.isUp && !it.isLoopback }
+                .flatMap { it.inetAddresses.toList() }
+                .firstOrNull { it is java.net.Inet4Address && it.isSiteLocalAddress }
+                ?.hostAddress
+        }.getOrNull()
 
         fun start(ctx: Context) {
             ContextCompat.startForegroundService(ctx, Intent(ctx, ReceiverService::class.java))

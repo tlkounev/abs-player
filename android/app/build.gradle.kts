@@ -13,8 +13,8 @@ android {
         applicationId = "cz.ondra.absplayer"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.3.1"
+        versionCode = 9
+        versionName = "1.3.2"
     }
 
     // One fixed release key (GitHub secret, decoded by CI into ABS_KEYSTORE), so every new APK

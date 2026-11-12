@@ -52,11 +52,10 @@ Týká se aplikace, jazyk samotného webu ABS se nastavuje v ABS.
 
 ### Aktualizace
 - Menu ikony v liště (pravý klik) ukazuje nahoře verzi a *Zkontrolovat aktualizace*.
-- *Zkontrolovat aktualizace* ukáže oznámení: buď *Máš nejnovější verzi*, nebo *Je k dispozici verze …* –
-  klik na něj novou verzi stáhne, nainstaluje a aplikaci restartuje.
-- Aplikace kontroluje novou verzi i sama při spuštění a každých 6 hodin a stáhne ji na pozadí. Pak ukáže
-  oznámení *Verze … je připravená*: klik = restart s novou verzí, jinak se nainstaluje při ukončení.
-  Do menu přibude *Restartovat a aktualizovat na …*.
+- Aplikace se při spuštění a pak každých 6 hodin podívá, jestli je novější verze; nic sama nestahuje.
+- Když je, ukáže oznámení *Je k dispozici verze …*: klik ji stáhne, tiše nainstaluje a aplikaci
+  znovu spustí. Totéž nabízí menu ikony (*Stáhnout a nainstalovat verzi …*).
+- *Zkontrolovat aktualizace* ukáže buď to oznámení, nebo *Máš nejnovější verzi*.
 - Zdroj: vydání `win-latest` na GitHubu (`latest.yml` + instalátor), ten po každém sestavení
   přepíše GitHub Actions. Funguje jen s veřejným repozitářem.
 

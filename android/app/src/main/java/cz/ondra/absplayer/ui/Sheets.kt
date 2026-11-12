@@ -230,6 +230,15 @@ private fun DevicesSheet(vm: MainViewModel) {
             tr("switchNote"),
             color = C.Muted, fontSize = 13.sp, modifier = Modifier.padding(8.dp),
         )
+        if (vm.app.isTv) {
+            // like the Windows app: this TV's own pairing code for phones / PCs
+            val port by cz.ondra.absplayer.tv.ReceiverService.port.collectAsStateWithLifecycle()
+            Text(
+                tr("pairingCodeT", "c" to cz.ondra.absplayer.tv.ReceiverService.pairingCode.chunked(3).joinToString(" ")) +
+                    " · " + (cz.ondra.absplayer.tv.ReceiverService.lanAddress() ?: "?") + ":" + (if (port > 0) port else "…"),
+                color = C.Text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+        }
         Spacer(Modifier.height(16.dp))
     }
 }

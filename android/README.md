@@ -1,7 +1,7 @@
 # ABS Player pro Android
 
 Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.3.1.
+Verze 1.3.2.
 
 ## Co umí
 
@@ -41,7 +41,8 @@ Verze 1.3.1.
   Heslo k ABS je potřeba jen pro TV, která ještě není přihlášená k tvému účtu.
 
 **Google TV (stejné APK)**
-- Na TV běží přijímač na pozadí (spouští se i po zapnutí TV) a ukazuje párovací kód.
+- Na TV je stejná obrazovka jako na telefonu. Běží tam přijímač na pozadí (spouští se i po zapnutí TV);
+  párovací kód TV a její adresa jsou v *Přehrávat na* dole.
 - Telefon: *Přehrávat na → Spárovat zařízení* → vybrat TV, zadat kód (a heslo, pokud TV není přihlášená).
 - Pak *Přehrávat na → TV*: telefon pozastaví, uloží pozici na server a TV pokračuje přesně odtud.
   Telefon se stane ovladačem (stav, kapitoly, rychlost, časovač). Zpět na telefon funguje stejně.
@@ -80,7 +81,7 @@ nejde nainstalovat přes předchozí verzi.
 
 ## Aktualizace
 
-- Verze je v menu ⋮ na hlavní stránce (na TV dole), tamtéž *Zkontrolovat aktualizace*.
+- Verze je v menu ⋮ na hlavní stránce, tamtéž *Zkontrolovat aktualizace* (i na TV).
 - Aplikace se při spuštění (nejvýš jednou denně) podívá do vydání na GitHubu (`android-v…`).
   Je-li novější verze, ukáže nahoře pruh *K dispozici je verze …*; ✕ ho skryje do další verze.
 - *Aktualizovat* stáhne APK a předá ho instalátoru Androidu, ten se zeptá na potvrzení.
@@ -112,4 +113,4 @@ nejde nainstalovat přes předchozí verzi.
 - `player/PlayerEngine.kt` – ExoPlayer + sync + časovač, sdílené telefonem i TV.
 - `player/PlaybackService.kt`, `BrowseTree.kt` – notifikace a Android Auto.
 - `remote/` – cíle přehrávání (telefon / TV), párování, vyhledávání TV v síti.
-- `tv/` – přijímač na TV (služba, HTTP API, UI ovladatelné dálkovým ovladačem).
+- `tv/` – přijímač na TV (služba, HTTP API, start po zapnutí TV).

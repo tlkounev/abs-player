@@ -576,43 +576,38 @@ function flagIcon(code) {
 
 // ---------- aktualizace ----------
 // electron-updater čte latest.yml z vydání „win-latest“ na GitHubu (adresa je v app-update.yml,
-// který vytvoří electron-builder z build.publish). Stáhne novou verzi na pozadí a nainstaluje ji
-// při ukončení aplikace, nebo hned po kliknutí na oznámení / položku v menu.
+// který vytvoří electron-builder z build.publish). Nic se nestahuje bez souhlasu: když je novější
+// verze, ukáže se oznámení „Je k dispozici verze …“; klik = stáhnout, nainstalovat a restartovat.
 const UPDATE_EVERY = 6 * 60 * 60 * 1000;
-const upd = { status: 'idle', version: null, error: null }; // idle | checking | none | downloading | ready | error
+// idle | checking | none | available | downloading | ready | error
+const upd = { status: 'idle', version: null, error: null, offered: null };
 let autoUpdater = null;
 let manualCheck = false;
-let installWhenReady = false; // klik na oznámení „je novější verze“ – nainstalovat hned po stažení
 
 function setupUpdater() {
   if (!app.isPackaged) return; // spuštění z vývojového prostředí
   try { ({ autoUpdater } = require('electron-updater')); } catch (e) { return; }
-  autoUpdater.autoDownload = true;
-  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.autoDownload = false; // stahovat až po kliknutí
+  autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.on('checking-for-update', () => { upd.status = 'checking'; });
   autoUpdater.on('update-not-available', () => { upd.status = 'none'; reportManual(); });
   autoUpdater.on('update-available', (info) => {
-    upd.status = 'downloading';
+    upd.status = 'available';
     upd.version = info.version;
-    if (manualCheck) {
-      // ruční kontrola: hned okno „je novější verze“, klik = stáhnout, nainstalovat a restartovat
-      manualCheck = false;
-      upd.announced = true;
-      notice(t('updAvailable', { v: info.version }), t('updClickInstall'), () => {
-        installWhenReady = true;
-        if (upd.status === 'ready') installUpdate();
-      });
-    }
+    // automatická kontrola nabídne stejnou verzi jen jednou za běh, ruční vždy
+    if (manualCheck || upd.offered !== info.version) offerUpdate();
+    manualCheck = false;
   });
   autoUpdater.on('update-downloaded', (info) => {
     upd.status = 'ready';
     upd.version = info.version;
-    if (installWhenReady) installUpdate();
-    else if (!upd.announced) notifyReady();
+    installUpdate();
   });
   autoUpdater.on('error', (e) => {
+    const wasDownloading = upd.status === 'downloading';
     upd.status = 'error';
     upd.error = String((e && e.message) || e).split('\n')[0].slice(0, 160);
+    if (wasDownloading) manualCheck = true;
     reportManual();
   });
   checkUpdates(false);
@@ -621,14 +616,8 @@ function setupUpdater() {
 
 function checkUpdates(manual) {
   if (!autoUpdater) return;
-  if (upd.status === 'ready') { if (manual) notifyReady(); return; }
-  if (upd.status === 'downloading') {
-    if (manual) notice(t('updAvailable', { v: upd.version }), t('updClickInstall'), () => { installWhenReady = true; });
-    return;
-  }
-  if (upd.status === 'checking') return;
+  if (upd.status === 'checking' || upd.status === 'downloading' || upd.status === 'ready') return;
   manualCheck = manual;
-  upd.announced = false;
   autoUpdater.checkForUpdates().catch(() => { /* hlásí se přes 'error' */ });
 }
 
@@ -639,16 +628,23 @@ function notice(title, body, onClick) {
   n.show();
 }
 
+function offerUpdate() {
+  upd.offered = upd.version;
+  notice(t('updAvailable', { v: upd.version }), t('updClickInstall'), downloadAndInstall);
+}
+
+/** Po souhlasu: stáhnout, nainstalovat (tiše) a aplikaci znovu spustit. */
+function downloadAndInstall() {
+  if (!autoUpdater || upd.status !== 'available') return;
+  upd.status = 'downloading';
+  autoUpdater.downloadUpdate().catch(() => { /* hlásí se přes 'error' */ });
+}
+
 function reportManual() {
   if (!manualCheck) return;
   manualCheck = false;
   if (upd.status === 'none') notice(APP_NAME, t('updNone', { v: app.getVersion() }));
   else if (upd.status === 'error') notice(APP_NAME, t('updError', { t: upd.error }));
-}
-
-function notifyReady() {
-  upd.announced = true;
-  notice(t('updReady', { v: upd.version }), t('updReadyBody'), installUpdate);
 }
 
 function installUpdate() {
@@ -659,15 +655,17 @@ function installUpdate() {
 
 function updateMenuItems() {
   const items = [{ label: APP_NAME + ' ' + app.getVersion(), enabled: false }];
-  if (upd.status === 'ready') items.push({ label: t('updRestart', { v: upd.version }), click: installUpdate });
-  const busy = upd.status === 'checking' || upd.status === 'downloading';
-  items.push({
-    label: upd.status === 'checking' ? t('updChecking')
-      : upd.status === 'downloading' ? t('updDownloading', { v: upd.version })
-      : t('updCheck'),
-    enabled: !busy && !!autoUpdater,
-    click: () => checkUpdates(true)
-  });
+  if (upd.status === 'available') {
+    items.push({ label: t('updInstall', { v: upd.version }), click: downloadAndInstall });
+  } else if (upd.status === 'downloading' || upd.status === 'ready') {
+    items.push({ label: t('updDownloading', { v: upd.version }), enabled: false });
+  } else {
+    items.push({
+      label: upd.status === 'checking' ? t('updChecking') : t('updCheck'),
+      enabled: upd.status !== 'checking' && !!autoUpdater,
+      click: () => checkUpdates(true)
+    });
+  }
   items.push({ type: 'separator' });
   return items;
 }
