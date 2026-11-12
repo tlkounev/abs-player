@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.ui
 
+import cz.ondra.absplayer.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -102,12 +103,12 @@ private fun ChaptersSheet(vm: MainViewModel) {
     LaunchedEffect(q) { if (q.isNotEmpty()) list.scrollToItem(0) }
 
     Row(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text("Kapitoly", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(tr("chapters"), fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text("  ${s.chapters.size}", color = C.Muted, fontSize = 14.sp)
         Spacer(Modifier.weight(1f))
         OutlinedTextField(
             value = query, onValueChange = { query = it },
-            placeholder = { Text("Hledat") },
+            placeholder = { Text(tr("search")) },
             leadingIcon = { Icon(Ic.Search, null, modifier = Modifier.size(18.dp)) },
             singleLine = true,
             modifier = Modifier.width(190.dp),
@@ -146,8 +147,8 @@ private fun ChaptersSheet(vm: MainViewModel) {
                     }
                 }
                 Text(formatClock(c.endSec - c.startSec), color = if (isCur) C.Accent else C.Muted, fontSize = 13.sp, modifier = Modifier.padding(start = 8.dp))
-                if (done) Icon(Ic.Check, "Dohráno", tint = C.Ok, modifier = Modifier.padding(start = 8.dp).size(18.dp))
-                if (isCur) Icon(Ic.VolumeDown, "Přehrává se", tint = C.Accent, modifier = Modifier.padding(start = 8.dp).size(18.dp))
+                if (done) Icon(Ic.Check, tr("done"), tint = C.Ok, modifier = Modifier.padding(start = 8.dp).size(18.dp))
+                if (isCur) Icon(Ic.VolumeDown, tr("playingNow"), tint = C.Accent, modifier = Modifier.padding(start = 8.dp).size(18.dp))
             }
         }
     }
@@ -160,12 +161,12 @@ private fun VolumeSheet(vm: MainViewModel) {
     val target by vm.target.collectAsStateWithLifecycle()
     val s by vm.playing.collectAsStateWithLifecycle()
     var value by remember { mutableFloatStateOf(if (s.muted) 0f else s.volume) }
-    SheetTitle("Hlasitost")
+    SheetTitle(tr("volume"))
     Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = {
             target.toggleMute()
             value = if (value > 0f) 0f else s.volume.takeIf { it > 0f } ?: 0.5f
-        }) { Icon(if (value <= 0f) Ic.VolumeOff else Ic.VolumeUp, "Ztlumit") }
+        }) { Icon(if (value <= 0f) Ic.VolumeOff else Ic.VolumeUp, tr("mute")) }
         Slider(
             value = value,
             onValueChange = { value = Math.round(it * 20) / 20f },
@@ -177,7 +178,7 @@ private fun VolumeSheet(vm: MainViewModel) {
         Text("${(value * 100).toInt()} %", modifier = Modifier.width(56.dp).padding(start = 8.dp))
     }
     Text(
-        "Hlasitost aplikace, nezávislá na hlasitosti systému.",
+        tr("volumeNote"),
         color = C.Muted, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
     )
     Spacer(Modifier.height(20.dp))
@@ -196,9 +197,9 @@ private fun DevicesSheet(vm: MainViewModel) {
         paired.forEach { targets.remote(it).refresh() }
     }
 
-    SheetTitle("Přehrávat na")
+    SheetTitle(tr("playOn"))
     Column(Modifier.padding(horizontal = 12.dp)) {
-        DeviceRow(Ic.Phone, targets.local.name, "Toto zařízení", selected = current.id == targets.local.id, online = true) {
+        DeviceRow(Ic.Phone, targets.local.name, tr("thisDevice"), selected = current.id == targets.local.id, online = true) {
             vm.switchTarget(targets.local)
             vm.sheet = null
         }
@@ -207,9 +208,9 @@ private fun DevicesSheet(vm: MainViewModel) {
             val online by rt.online.collectAsStateWithLifecycle()
             val rs by rt.state.collectAsStateWithLifecycle()
             val sub = when (online) {
-                null -> "Zjišťuji…"
-                false -> "Nedostupné (${d.host})"
-                true -> if (rs.itemId != null) (if (rs.isPlaying) "Hraje: " else "Pozastaveno: ") + rs.title else "Připraveno"
+                null -> tr("checking")
+                false -> tr("offlineHost", "h" to d.host)
+                true -> if (rs.itemId != null) tr(if (rs.isPlaying) "playingT" else "pausedT", "t" to rs.title) else tr("ready")
             }
             DeviceRow(
                 if (d.kind == "pc") Ic.Computer else Ic.Tv, d.name, sub, selected = current.id == d.deviceId, online = online == true,
@@ -223,10 +224,10 @@ private fun DevicesSheet(vm: MainViewModel) {
         OutlinedButton(onClick = { vm.sheet = Sheet.Pair }, modifier = Modifier.fillMaxWidth()) {
             Icon(Ic.Add, null)
             Spacer(Modifier.width(8.dp))
-            Text("Spárovat zařízení (TV nebo PC)")
+            Text(tr("pairNewBtn"))
         }
         Text(
-            "Při přepnutí se přehrávání pozastaví, pozice se uloží na server a pokračuje na vybraném zařízení.",
+            tr("switchNote"),
             color = C.Muted, fontSize = 13.sp, modifier = Modifier.padding(8.dp),
         )
         Spacer(Modifier.height(16.dp))
@@ -260,9 +261,9 @@ private fun DeviceRow(
             Text(name, fontWeight = FontWeight.SemiBold)
             Text(sub, color = if (selected) C.Accent else C.Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        if (selected) Icon(Ic.Check, "Vybráno", tint = C.Accent)
+        if (selected) Icon(Ic.Check, tr("selected"), tint = C.Accent)
         if (onRemove != null) {
-            IconButton(onClick = onRemove) { Icon(Ic.Close, "Zrušit spárování", tint = C.Muted) }
+            IconButton(onClick = onRemove) { Icon(Ic.Close, tr("unpair"), tint = C.Muted) }
         }
     }
 }
@@ -295,7 +296,7 @@ private fun PairSheet(vm: MainViewModel) {
         try {
             info = targets.info(host, p)
         } catch (e: Exception) {
-            infoError = "Zařízení na $host:$p neodpovídá"
+            infoError = tr("noResponseAt", "h" to "$host:$p")
         }
     }
     val needPassword = info?.let { targets.needsPassword(it) } ?: false
@@ -308,16 +309,15 @@ private fun PairSheet(vm: MainViewModel) {
             .imePadding(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text("Spárovat zařízení", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(tr("pairTitle"), fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text(
-            "TV: otevři ABS Player na televizi. PC: v ABS Player pro Windows otevři „Přehrávat na“ – kód je dole. " +
-                "Zařízení ukáže šestimístný kód. Musí být ve stejné síti.",
+            tr("pairHelp"),
             color = C.Muted, fontSize = 14.sp,
         )
         if (unpaired.isEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                Text("Hledám zařízení v síti…", color = C.Muted, modifier = Modifier.padding(start = 10.dp))
+                Text(tr("searchingNet"), color = C.Muted, modifier = Modifier.padding(start = 10.dp))
             }
         } else {
             unpaired.forEach { f ->
@@ -345,40 +345,40 @@ private fun PairSheet(vm: MainViewModel) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = host, onValueChange = { host = it.trim() },
-                label = { Text("IP adresa") }, singleLine = true,
+                label = { Text(tr("ipAddr")) }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                 modifier = Modifier.weight(2f),
             )
             OutlinedTextField(
                 value = port, onValueChange = { port = it.filter(Char::isDigit) },
-                label = { Text("Port") }, singleLine = true,
+                label = { Text(tr("port")) }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f),
             )
         }
         info?.let {
             Text(
-                (if (isPc) "PC: " else "TV: ") + it.name + if (it.loggedIn && !isPc) " · přihlášená jako ${it.username ?: "?"}" else "",
+                (if (isPc) "PC: " else "TV: ") + it.name + if (it.loggedIn && !isPc) " · " + tr("loggedInAs", "u" to (it.username ?: "?")) else "",
                 color = C.Ok, fontSize = 13.sp,
             )
         }
         infoError?.let { Text(it, color = C.Muted, fontSize = 13.sp) }
         OutlinedTextField(
             value = code, onValueChange = { code = it.filter(Char::isDigit).take(6) },
-            label = { Text("Kód ze zařízení") }, singleLine = true,
+            label = { Text(tr("codeFromDevice")) }, singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             modifier = Modifier.fillMaxWidth(),
         )
         if (needPassword) {
             OutlinedTextField(
                 value = password, onValueChange = { password = it },
-                label = { Text("Heslo k ABS (${vm.app.settings.username ?: ""})") }, singleLine = true,
+                label = { Text(tr("absPassword", "u" to (vm.app.settings.username ?: ""))) }, singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.fillMaxWidth(),
             )
             Text(
-                "Televize zatím není přihlášená k tvému účtu. Heslo se nikam neukládá – telefon s ním získá pro televizi vlastní přihlášení.",
+                tr("tvNotLoggedIn"),
                 color = C.Muted, fontSize = 12.sp,
             )
         }
@@ -390,7 +390,7 @@ private fun PairSheet(vm: MainViewModel) {
             enabled = !vm.pairBusy && info != null && code.length == 6 && (!needPassword || password.isNotEmpty()),
             modifier = Modifier.fillMaxWidth().height(52.dp),
         ) {
-            if (vm.pairBusy) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp) else Text("Spárovat")
+            if (vm.pairBusy) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp) else Text(tr("pairBtn"))
         }
         Spacer(Modifier.height(20.dp))
     }
@@ -400,14 +400,14 @@ private fun PairSheet(vm: MainViewModel) {
 private fun SleepSheet(vm: MainViewModel) {
     val target by vm.target.collectAsStateWithLifecycle()
     val s by vm.playing.collectAsStateWithLifecycle()
-    SheetTitle("Časovač vypnutí")
+    SheetTitle(tr("sleep"))
     s.sleepSec?.let {
         Text(
-            if (it < 0) "Zastaví se na konci kapitoly" else "Zastaví se za ${formatClock(it.toDouble())}",
+            if (it < 0) tr("stopsAtChEnd") else tr("stopsIn", "t" to formatClock(it.toDouble())),
             color = C.Accent, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
         )
     }
-    val options = listOf(5, 10, 15, 30, 45, 60, 90).map { "$it min" to it } + listOf("Konec kapitoly" to -1, "Vypnout" to 0)
+    val options = listOf(5, 10, 15, 30, 45, 60, 90).map { "$it min" to it } + listOf(tr("chapterEnd") to -1, tr("turnOff") to 0)
     Column(Modifier.padding(bottom = 16.dp)) {
         options.forEach { (label, min) ->
             Text(
@@ -430,7 +430,7 @@ private fun SpeedSheet(vm: MainViewModel) {
     val target: PlaybackTarget by vm.target.collectAsStateWithLifecycle()
     val s by vm.playing.collectAsStateWithLifecycle()
     var value by remember { mutableFloatStateOf(s.speed) }
-    SheetTitle("Rychlost přehrávání")
+    SheetTitle(tr("speedTitle"))
     Column(Modifier.padding(horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(PlayerEngine.formatSpeed(value), fontSize = 40.sp, fontWeight = FontWeight.Bold, color = C.Accent)
         Row(verticalAlignment = Alignment.CenterVertically) {

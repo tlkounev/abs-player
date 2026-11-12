@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.player
 
+import cz.ondra.absplayer.tr
 import android.content.Context
 import android.os.Bundle
 import android.os.SystemClock
@@ -102,9 +103,9 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
                         delay(3_000L * retries)
                         exo.prepare()
                     }
-                    showInfo("Výpadek spojení, zkouším znovu…")
+                    showInfo(tr("reconnecting"))
                 } else {
-                    error = "Chyba přehrávání (${e.errorCodeName})"
+                    error = tr("playbackError", "t" to e.errorCodeName)
                 }
                 publish()
             }
@@ -130,7 +131,7 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            error = "Knihu se nepodařilo otevřít: ${e.message ?: e.javaClass.simpleName}"
+            error = tr("openFailed", "t" to (e.message ?: e.javaClass.simpleName))
             player.detach()
         }
         publish()
@@ -176,7 +177,7 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
         val cur = exo.playbackParameters.speed
         val next = SPEEDS.firstOrNull { it > cur + 0.01f } ?: SPEEDS.first()
         setSpeed(next)
-        showInfo("Rychlost ${formatSpeed(next)}")
+        showInfo(tr("speedT", "t" to formatSpeed(next)))
     }
 
     /** In-app volume 0..1 (independent of the system volume, like the Windows app). */
@@ -242,8 +243,8 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
 
     fun handleCustomCommand(action: String, args: Bundle) {
         when (action) {
-            CMD_REWIND -> skip(-30.0)
-            CMD_FORWARD -> skip(30.0)
+            CMD_REWIND -> skip(-SKIP_SEC)
+            CMD_FORWARD -> skip(SKIP_SEC)
             CMD_SPEED -> cycleSpeed()
             CMD_SEEK -> seekTo(args.getDouble("sec"))
             CMD_SLEEP -> setSleep(args.getInt("min"))
@@ -257,17 +258,17 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
 
     fun customLayout(context: Context): List<CommandButton> = listOf(
         CommandButton.Builder()
-            .setDisplayName(context.getString(R.string.rewind))
+            .setDisplayName(tr("back", "s" to SKIP_SEC.toInt()))
             .setIconResId(R.drawable.ic_replay)
             .setSessionCommand(SessionCommand(CMD_REWIND, Bundle.EMPTY))
             .build(),
         CommandButton.Builder()
-            .setDisplayName(context.getString(R.string.forward))
+            .setDisplayName(tr("fwd", "s" to SKIP_SEC.toInt()))
             .setIconResId(R.drawable.ic_forward)
             .setSessionCommand(SessionCommand(CMD_FORWARD, Bundle.EMPTY))
             .build(),
         CommandButton.Builder()
-            .setDisplayName(context.getString(R.string.speed))
+            .setDisplayName(tr("speed"))
             .setIconResId(R.drawable.ic_speed)
             .setSessionCommand(SessionCommand(CMD_SPEED, Bundle.EMPTY))
             .build(),
@@ -280,7 +281,7 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
         if (at != null && SystemClock.elapsedRealtime() >= at) {
             sleepAt = null
             player.pause()
-            showInfo("Časovač vypnul přehrávání")
+            showInfo(tr("sleepStopped"))
         }
         if (sleepEndOfChapter && player.isPlaying) {
             val c = player.chapterAt(player.globalMs())
@@ -288,7 +289,7 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
                 sleepEndOfChapter = false
                 player.pause()
                 player.seekTo(c, 0)
-                showInfo("Konec kapitoly – pozastaveno")
+                showInfo(tr("chapterEndPaused"))
             }
         }
     }
@@ -303,7 +304,7 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
         val b = player.book
         if (b !== chapterInfosFor) {
             chapterInfos = b?.chapters?.mapIndexed { i, c ->
-                ChapterInfo(c.title.ifBlank { "Kapitola ${i + 1}" }, c.start, c.end)
+                ChapterInfo(c.title.ifBlank { tr("chapterX", "n" to i + 1) }, c.start, c.end)
             } ?: emptyList()
             chapterInfosFor = b
         }
@@ -313,6 +314,7 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
             itemId = b?.itemId,
             title = b?.title ?: "",
             author = b?.author ?: "",
+            series = b?.series ?: "",
             chapters = chapterInfos,
             durationSec = b?.durationSec ?: 0.0,
             positionSec = player.globalMs() / 1000.0,
@@ -333,6 +335,8 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
     }
 
     companion object {
+        /** Skip length of ↺ / ↻ (same as the Windows app). */
+        const val SKIP_SEC = 10.0
         const val CMD_REWIND = "abs.REWIND"
         const val CMD_FORWARD = "abs.FORWARD"
         const val CMD_SPEED = "abs.SPEED"

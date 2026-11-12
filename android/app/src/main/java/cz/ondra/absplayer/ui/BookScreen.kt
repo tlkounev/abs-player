@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.ui
 
+import cz.ondra.absplayer.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,7 +56,7 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
         topBar = {
             TopAppBar(
                 title = { Text(screen.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = { IconButton(onClick = { vm.pop() }) { Icon(Ic.Back, "Zpět") } },
+                navigationIcon = { IconButton(onClick = { vm.pop() }) { Icon(Ic.Back, tr("back0")) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = C.Bg),
             )
         },
@@ -71,22 +72,22 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                     if (b != null) {
                         Text(b.author, color = C.Text, fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp))
                         b.media.metadata.narrator.takeIf { it.isNotBlank() }?.let {
-                            Text("čte $it", color = C.Muted, fontSize = 14.sp)
+                            Text(tr("readBy", "t" to it), color = C.Muted, fontSize = 14.sp)
                         }
                         val dur = b.media.duration ?: 0.0
                         val line = when {
-                            p?.isFinished == true -> "Dokončeno · ${formatLeft(dur)}"
-                            p != null && p.currentTime > 0 -> "${(p.progress * 100).toInt()} % · zbývá ${formatLeft(dur - p.currentTime)}"
+                            p?.isFinished == true -> tr("finishedDur", "t" to formatLeft(dur))
+                            p != null && p.currentTime > 0 -> tr("pctLeft", "p" to (p.progress * 100).toInt(), "t" to formatLeft(dur - p.currentTime))
                             else -> formatLeft(dur)
                         }
                         Text(line, color = C.Muted, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
                     }
                     Spacer(Modifier.height(16.dp))
                     val label = when {
-                        isCurrent && playing.isPlaying -> "Přehrává se"
-                        p?.isFinished == true -> "Přehrát znovu"
-                        p != null && p.currentTime > 0 -> "Pokračovat"
-                        else -> "Přehrát"
+                        isCurrent && playing.isPlaying -> tr("playingNow")
+                        p?.isFinished == true -> tr("playAgain")
+                        p != null && p.currentTime > 0 -> tr("resume")
+                        else -> tr("play")
                     }
                     Button(
                         onClick = {
@@ -100,12 +101,12 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                         Text(label, fontSize = 17.sp)
                     }
                     Text(
-                        "na: ${target.name}", color = C.Muted, fontSize = 13.sp,
+                        tr("playOn") + ": " + target.name, color = C.Muted, fontSize = 13.sp,
                         modifier = Modifier.padding(top = 6.dp).clickable { vm.sheet = Sheet.Devices },
                     )
                     if (b != null) {
                         TextButton(onClick = { vm.setFinished(screen.id, p?.isFinished != true) }) {
-                            Text(if (p?.isFinished == true) "Označit jako nedokončené" else "Označit jako dokončené")
+                            Text(if (p?.isFinished == true) tr("markUnfinished") else tr("markFinished"))
                         }
                     }
                 }
@@ -124,7 +125,7 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
             val chapters = b?.media?.chapters.orEmpty()
             if (chapters.isNotEmpty()) {
                 item {
-                    Text("Kapitoly (${chapters.size})", fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp))
+                    Text(tr("chaptersN", "n" to chapters.size), fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp))
                 }
                 itemsIndexed(chapters) { i, c ->
                     val done = p != null && (p.isFinished || c.end <= p.currentTime + 1)
@@ -141,15 +142,15 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                     ) {
                         Text("${i + 1}", color = C.Muted, modifier = Modifier.width(36.dp))
                         Text(
-                            c.title.ifBlank { "Kapitola ${i + 1}" }, modifier = Modifier.weight(1f),
+                            c.title.ifBlank { tr("chapterX", "n" to i + 1) }, modifier = Modifier.weight(1f),
                             color = if (done) C.Muted else C.Text, maxLines = 2, overflow = TextOverflow.Ellipsis,
                         )
                         Text(formatClock(c.start), color = C.Muted, fontSize = 13.sp)
-                        if (done) Icon(Ic.Check, "Dohráno", tint = C.Ok, modifier = Modifier.padding(start = 8.dp).size(18.dp))
+                        if (done) Icon(Ic.Check, tr("done"), tint = C.Ok, modifier = Modifier.padding(start = 8.dp).size(18.dp))
                     }
                 }
             }
-            if (b == null) item { Empty("Načítám…") }
+            if (b == null) item { Empty(tr("loading")) }
         }
     }
 }
@@ -162,7 +163,7 @@ fun SeriesScreen(vm: MainViewModel, screen: Screen.SeriesBooks) {
         topBar = {
             TopAppBar(
                 title = { Text(screen.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = { IconButton(onClick = { vm.pop() }) { Icon(Ic.Back, "Zpět") } },
+                navigationIcon = { IconButton(onClick = { vm.pop() }) { Icon(Ic.Back, tr("back0")) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = C.Bg),
             )
         },

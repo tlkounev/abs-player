@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.tv
 
+import cz.ondra.absplayer.tr
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -117,17 +118,17 @@ private fun TvPairing(port: Int, onManual: () -> Unit) {
     ) {
         Text("ABS Player", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = C.Accent)
         Spacer(Modifier.height(24.dp))
-        Text("V telefonu otevři ABS Player → Přehrávat na → Spárovat televizi a zadej kód:", fontSize = 22.sp, color = C.Muted)
+        Text(tr("tvPairHelp"), fontSize = 22.sp, color = C.Muted)
         Spacer(Modifier.height(24.dp))
         Text(ReceiverService.pairingCode.chunked(3).joinToString(" "), fontSize = 88.sp, fontWeight = FontWeight.Bold, letterSpacing = 8.sp)
         Spacer(Modifier.height(12.dp))
         Text(
-            if (port > 0) "Adresa televize: ${lanAddress() ?: "?"} : $port" else "Spouštím přijímač…",
+            if (port > 0) tr("tvAddress", "a" to "${lanAddress() ?: "?"} : $port") else tr("startingReceiver"),
             fontSize = 20.sp, color = C.Muted,
         )
         Spacer(Modifier.height(40.dp))
         TvButton(onClick = onManual, modifier = Modifier.focusRequester(focus)) {
-            Text("Přihlásit se ručně", fontSize = 20.sp)
+            Text(tr("signInManually"), fontSize = 20.sp)
         }
     }
 }
@@ -140,11 +141,11 @@ private fun TvLogin(app: App, onBack: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     Column(Modifier.fillMaxSize().padding(64.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Přihlášení", fontSize = 34.sp, fontWeight = FontWeight.Bold)
-        OutlinedTextField(server, { server = it }, label = { Text("Adresa serveru") }, singleLine = true, modifier = Modifier.width(600.dp))
-        OutlinedTextField(user, { user = it }, label = { Text("Uživatel") }, singleLine = true, modifier = Modifier.width(600.dp))
+        Text(tr("signInTitle"), fontSize = 34.sp, fontWeight = FontWeight.Bold)
+        OutlinedTextField(server, { server = it }, label = { Text(tr("serverAddr")) }, singleLine = true, modifier = Modifier.width(600.dp))
+        OutlinedTextField(user, { user = it }, label = { Text(tr("user")) }, singleLine = true, modifier = Modifier.width(600.dp))
         OutlinedTextField(
-            pass, { pass = it }, label = { Text("Heslo") }, singleLine = true,
+            pass, { pass = it }, label = { Text(tr("password")) }, singleLine = true,
             visualTransformation = PasswordVisualTransformation(), modifier = Modifier.width(600.dp),
         )
         error?.let { Text(it, color = C.Error) }
@@ -155,11 +156,11 @@ private fun TvLogin(app: App, onBack: () -> Unit) {
                     try {
                         app.onLoggedIn(url, app.api.login(url, user.trim(), pass))
                     } catch (e: Exception) {
-                        error = e.message ?: "Přihlášení selhalo"
+                        error = e.message ?: tr("loginFailed")
                     }
                 }
-            }) { Text("Přihlásit", fontSize = 20.sp) }
-            TvButton(onClick = onBack) { Text("Zpět", fontSize = 20.sp) }
+            }) { Text(tr("signIn"), fontSize = 20.sp) }
+            TvButton(onClick = onBack) { Text(tr("back0"), fontSize = 20.sp) }
         }
     }
 }
@@ -184,7 +185,7 @@ private fun TvHome(app: App, s: NowPlaying, port: Int) {
             Text("ABS Player", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = C.Accent)
             Spacer(Modifier.weight(1f))
             Text(
-                "Párování: ${ReceiverService.pairingCode} · ${lanAddress() ?: "?"}:$port",
+                tr("pairingCodeT", "c" to ReceiverService.pairingCode) + " · ${lanAddress() ?: "?"}:$port",
                 fontSize = 15.sp, color = C.Muted,
             )
         }
@@ -203,7 +204,7 @@ private fun TvHome(app: App, s: NowPlaying, port: Int) {
                         Text(s.author, fontSize = 20.sp, color = C.Muted)
                         s.chapter?.let {
                             Text(
-                                "Kapitola ${s.chapterIndex + 1}/${s.chapters.size} · ${it.title}",
+                                tr("chapterN", "n" to s.chapterIndex + 1, "total" to s.chapters.size) + " · " + it.title,
                                 fontSize = 20.sp, color = C.Accent, fontWeight = FontWeight.SemiBold,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp),
                             )
@@ -229,18 +230,18 @@ private fun TvHome(app: App, s: NowPlaying, port: Int) {
                             modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(4.dp),
                         )
                         Text(
-                            "Celá kniha ${(frac * 100).toInt()} % · zbývá ${formatLeft((s.durationSec - s.positionSec) / s.speed)}",
+                            tr("wholeBook", "p" to (frac * 100).toInt(), "t" to formatLeft((s.durationSec - s.positionSec) / s.speed)),
                             color = C.Muted, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp),
                         )
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        TvButton(onClick = { engine { it.prevChapter() } }) { Icon(Ic.Prev, "Předchozí kapitola") }
-                        TvButton(onClick = { engine { it.skip(-30.0) } }) { Icon(Ic.Replay, null); Text(" 30", fontSize = 18.sp) }
+                        TvButton(onClick = { engine { it.prevChapter() } }) { Icon(Ic.Prev, tr("prevCh")) }
+                        TvButton(onClick = { engine { it.skip(-10.0) } }) { Icon(Ic.Replay, null); Text(" 10", fontSize = 18.sp) }
                         TvButton(onClick = { engine { it.toggle() } }, modifier = Modifier.focusRequester(playFocus)) {
-                            Icon(if (s.isPlaying) Ic.Pause else Ic.Play, if (s.isPlaying) "Pozastavit" else "Přehrát", Modifier.size(34.dp))
+                            Icon(if (s.isPlaying) Ic.Pause else Ic.Play, if (s.isPlaying) tr("pause") else tr("play"), Modifier.size(34.dp))
                         }
-                        TvButton(onClick = { engine { it.skip(30.0) } }) { Icon(Ic.Forward, null); Text(" 30", fontSize = 18.sp) }
-                        TvButton(onClick = { engine { it.nextChapter() } }) { Icon(Ic.Next, "Další kapitola") }
+                        TvButton(onClick = { engine { it.skip(10.0) } }) { Icon(Ic.Forward, null); Text(" 10", fontSize = 18.sp) }
+                        TvButton(onClick = { engine { it.nextChapter() } }) { Icon(Ic.Next, tr("nextCh")) }
                         TvButton(onClick = { engine { it.cycleSpeed() } }) { Text(PlayerEngine.formatSpeed(s.speed), fontSize = 18.sp) }
                         TvButton(onClick = {
                             engine { e ->
@@ -261,11 +262,11 @@ private fun TvHome(app: App, s: NowPlaying, port: Int) {
                 }
             }
         } else {
-            Text("Nic se nepřehrává. Vyber knihu níže nebo ji pošli z telefonu.", fontSize = 22.sp, color = C.Muted)
+            Text(tr("tvNothing"), fontSize = 22.sp, color = C.Muted)
         }
 
         Spacer(Modifier.height(32.dp))
-        Text("Pokračovat", fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
+        Text(tr("continueListening"), fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(12.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
             items(items, key = { it.id }) { li ->

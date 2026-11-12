@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.player
 
+import cz.ondra.absplayer.tr
 import android.os.Bundle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -34,10 +35,10 @@ class BrowseTree(private val app: App) {
         val size = pageSize.coerceIn(1, 200)
         return when {
             parentId == ROOT -> listOf(
-                folder(CONTINUE, "Pokračovat", grid = true),
-                folder(LIBRARY, "Knihovna", grid = true),
-                folder(SERIES, "Série"),
-                folder(RECENT, "Nové", grid = true),
+                folder(CONTINUE, tr("tabContinue"), grid = true),
+                folder(LIBRARY, tr("tabLibrary"), grid = true),
+                folder(SERIES, tr("tabSeries")),
+                folder(RECENT, tr("newest"), grid = true),
             )
 
             parentId == CONTINUE -> {
@@ -160,7 +161,7 @@ class BrowseTree(private val app: App) {
             extras.putInt(COMPLETION_STATUS, 0)
         }
         val remaining = if (p != null && li.media.duration != null && !p.isFinished) {
-            "zbývá " + formatDuration(li.media.duration - p.currentTime)
+            tr("left", "t" to formatDuration(li.media.duration - p.currentTime))
         } else li.media.duration?.let { formatDuration(it) }
         return MediaItem.Builder()
             .setMediaId("book:${li.id}")

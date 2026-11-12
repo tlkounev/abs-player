@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.player
 
+import cz.ondra.absplayer.tr
 import android.os.Bundle
 import android.os.Handler
 import androidx.media3.common.C
@@ -109,7 +110,7 @@ class ChapterPlayer(
 
     private fun chapterMediaItem(b: LoadedBook, i: Int): MediaItem {
         val c = b.chapters[i]
-        val chTitle = c.title.ifBlank { "Kapitola ${i + 1}" }
+        val chTitle = c.title.ifBlank { tr("chapterX", "n" to i + 1) }
         val extras = Bundle().apply { putString("itemId", b.itemId) }
         return MediaItem.Builder()
             .setMediaId("book:${b.itemId}#$i")
@@ -321,7 +322,7 @@ class ChapterPlayer(
 
     companion object {
         const val TICK_MS = 500L
-        const val SKIP_MS = 30_000L
+        const val SKIP_MS = 10_000L
 
         fun itemIdOf(mediaId: String): String? =
             if (mediaId.startsWith("book:")) mediaId.removePrefix("book:").substringBefore('#') else null

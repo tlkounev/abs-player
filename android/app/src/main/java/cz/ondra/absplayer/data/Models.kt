@@ -142,6 +142,8 @@ data class PlaybackSession(
     val episodeId: String? = null,
     val displayTitle: String? = null,
     val displayAuthor: String? = null,
+    /** Full book metadata; only the series is used (as "Name #n", like the Windows app). */
+    val mediaMetadata: kotlinx.serialization.json.JsonObject? = null,
     val duration: Double = 0.0,
     val currentTime: Double = 0.0,
     val chapters: List<Chapter> = emptyList(),

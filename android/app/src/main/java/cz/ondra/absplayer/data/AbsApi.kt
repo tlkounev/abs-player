@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.data
 
+import cz.ondra.absplayer.tr
 import android.os.Build
 import android.util.Base64
 import cz.ondra.absplayer.BuildConfig
@@ -125,7 +126,7 @@ class AbsApi(private val settings: Settings) {
         }
     }
 
-    private fun base(): String = settings.serverUrl ?: throw IOException("Není nastaven server")
+    private fun base(): String = settings.serverUrl ?: throw IOException(tr("noServer"))
 
     private suspend fun get(path: String): String = call(Request.Builder().url(base() + path).get().build())
 
@@ -152,7 +153,7 @@ class AbsApi(private val settings: Settings) {
         val text = try {
             call(req)
         } catch (e: ApiException) {
-            if (e.code == 401) throw ApiException(401, "Špatné jméno nebo heslo") else throw e
+            if (e.code == 401) throw ApiException(401, tr("badLogin")) else throw e
         }
         return json.decodeFromString(LoginResponse.serializer(), text)
     }

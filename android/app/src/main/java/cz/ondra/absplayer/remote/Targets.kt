@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.remote
 
+import cz.ondra.absplayer.tr
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
@@ -65,7 +66,7 @@ interface PlaybackTarget {
 
 class LocalTarget(private val app: App) : PlaybackTarget {
     override val id = "local"
-    override val name: String get() = if (app.isTv) "Tato televize" else "Tento telefon"
+    override val name: String get() = if (app.isTv) tr("thisTv") else tr("thisPhone")
     override val isRemote = false
     override val state: StateFlow<NowPlaying> = PlaybackHub.state
 
@@ -162,7 +163,7 @@ class RemoteTarget(private val app: App, device: PairedDevice) : PlaybackTarget 
         if (cmd != null) b.post(RemoteHttp.json.encodeToString(cmd).toRequestBody(RemoteHttp.JSON))
         RemoteHttp.client.newCall(b.build()).execute().use { resp ->
             val text = resp.body?.string() ?: ""
-            if (resp.code == 401) throw ApiException(401, "Zařízení je potřeba znovu spárovat")
+            if (resp.code == 401) throw ApiException(401, tr("repairNeeded"))
             if (!resp.isSuccessful) throw ApiException(resp.code, text.take(200))
             RemoteHttp.json.decodeFromString(NowPlaying.serializer(), text)
         }
@@ -175,7 +176,7 @@ class RemoteTarget(private val app: App, device: PairedDevice) : PlaybackTarget 
                 online.value = true
             } catch (e: Exception) {
                 online.value = false
-                _state.value = _state.value.copy(error = e.message ?: "Zařízení neodpovídá")
+                _state.value = _state.value.copy(error = e.message ?: tr("deviceNoResponse"))
             }
         }
     }
@@ -291,14 +292,14 @@ class TargetManager(private val app: App) {
      * share one). A PC, or a TV already on this account, only needs the code it shows.
      */
     suspend fun pair(host: String, port: Int, code: String, password: String?): PairedDevice {
-        val server = app.settings.serverUrl ?: throw IOException("Nejsi přihlášen")
-        val user = app.settings.username ?: throw IOException("Nejsi přihlášen")
+        val server = app.settings.serverUrl ?: throw IOException(tr("notSignedIn"))
+        val user = app.settings.username ?: throw IOException(tr("notSignedIn"))
         val info = info(host, port)
         var req = PairRequest(code.trim(), server, user, app.settings.userId, phoneName = Build.MODEL)
         if (needsPassword(info)) {
-            if (password.isNullOrEmpty()) throw IOException("Zadej heslo k ABS – zařízení zatím není přihlášené")
+            if (password.isNullOrEmpty()) throw IOException(tr("needPassword"))
             val login = app.api.login(server, user, password)
-            val token = login.user.accessToken ?: login.user.token ?: throw IOException("Server nevrátil token")
+            val token = login.user.accessToken ?: login.user.token ?: throw IOException(tr("noToken"))
             req = req.copy(userId = login.user.id, accessToken = token, refreshToken = login.user.refreshToken)
         }
         val resp = withContext(Dispatchers.IO) {

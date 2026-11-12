@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.tv
 
+import cz.ondra.absplayer.tr
 import android.os.SystemClock
 import cz.ondra.absplayer.App
 import cz.ondra.absplayer.player.NowPlaying
@@ -63,10 +64,10 @@ class ReceiverServer(
         when {
             get && s.uri == "/info" -> ok(InfoResponse.serializer(), info())
             post && s.uri == "/pair" -> pair(body(s))
-            !authorized(s) -> error(NanoHTTPD.Response.Status.UNAUTHORIZED, "Zařízení není spárované")
+            !authorized(s) -> error(NanoHTTPD.Response.Status.UNAUTHORIZED, tr("notPaired"))
             get && s.uri == "/state" -> ok(NowPlaying.serializer(), onMain { PlaybackHub.state.value })
             post && s.uri == "/cmd" -> ok(NowPlaying.serializer(), command(json.decodeFromString(Command.serializer(), body(s))))
-            else -> error(NanoHTTPD.Response.Status.NOT_FOUND, "Neznámý požadavek")
+            else -> error(NanoHTTPD.Response.Status.NOT_FOUND, tr("unknownRequest"))
         }
     } catch (e: Exception) {
         error(NanoHTTPD.Response.Status.INTERNAL_ERROR, e.message ?: e.javaClass.simpleName)
@@ -91,7 +92,7 @@ class ReceiverServer(
     private fun pair(text: String): NanoHTTPD.Response {
         val now = SystemClock.elapsedRealtime()
         if (now < lockedUntil) {
-            return error(NanoHTTPD.Response.Status.FORBIDDEN, "Příliš mnoho pokusů, zkus to za minutu")
+            return error(NanoHTTPD.Response.Status.FORBIDDEN, tr("tooManyTries"))
         }
         val req = json.decodeFromString(PairRequest.serializer(), text)
         if (req.code.trim() != code) {
@@ -100,14 +101,14 @@ class ReceiverServer(
                 failedPairs = 0
                 lockedUntil = now + 60_000
             }
-            return error(NanoHTTPD.Response.Status.FORBIDDEN, "Špatný párovací kód")
+            return error(NanoHTTPD.Response.Status.FORBIDDEN, tr("badCode"))
         }
         failedPairs = 0
         val secret = ByteArray(24).also { SecureRandom().nextBytes(it) }.joinToString("") { "%02x".format(it) }
         val st = app.settings
         val sameAccount = st.isLoggedIn && sameServer(st.serverUrl, req.server) && st.username == req.username
         if (req.accessToken == null && !sameAccount) {
-            return error(NanoHTTPD.Response.Status.BAD_REQUEST, "Televize není přihlášená k tomuto účtu – zadej heslo")
+            return error(NanoHTTPD.Response.Status.BAD_REQUEST, tr("tvNeedsPassword"))
         }
         onMain {
             if (req.accessToken != null) {
@@ -140,7 +141,7 @@ class ReceiverServer(
             "mute" -> engine.toggleMute()
             "playItem" -> cmd.itemId?.let { engine.playItem(it, v) }
             "stop" -> engine.stop()
-            else -> throw IOException("Neznámý příkaz ${cmd.action}")
+            else -> throw IOException(tr("unknownCmd", "t" to cmd.action))
         }
         engine.publish()
         PlaybackHub.state.value

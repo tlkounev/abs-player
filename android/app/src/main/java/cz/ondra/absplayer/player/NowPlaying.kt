@@ -14,6 +14,8 @@ data class NowPlaying(
     val itemId: String? = null,
     val title: String = "",
     val author: String = "",
+    /** "Series #n" (may be empty). */
+    val series: String = "",
     val chapters: List<ChapterInfo> = emptyList(),
     val durationSec: Double = 0.0,
     val positionSec: Double = 0.0,

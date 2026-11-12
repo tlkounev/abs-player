@@ -13,6 +13,26 @@ object Ic {
             .addPath(addPathNodes(path), fill = SolidColor(Color.Black))
             .build()
 
+    private fun icon(name: String, vp: Float, path: String): ImageVector =
+        ImageVector.Builder(name, 24.dp, 24.dp, vp, vp)
+            .addPath(addPathNodes(path), fill = SolidColor(Color.Black))
+            .build()
+
+    // --- the same glyphs as the Windows mini player ---
+    val WPlay = icon("wplay", 20f, "M6 3.7v12.6a.9.9 0 0 0 1.4.8l9.8-6.3a1 1 0 0 0 0-1.6L7.4 2.9a.9.9 0 0 0-1.4.8Z")
+    val WPause = icon("wpause", 20f, "M5 3h3.4v14H5zM11.6 3H15v14h-3.4z")
+    val WPrev = icon("wprev", 20f, "M4 3h2v14H4V3Zm12.2.6a.8.8 0 0 1 .8.7v11.4a.8.8 0 0 1-1.2.7L7.5 11a1.2 1.2 0 0 1 0-2l8.3-5.3a.8.8 0 0 1 .4-.1Z")
+    val WNext = icon("wnext", 20f, "M16 3h-2v14h2V3ZM3.8 3.6a.8.8 0 0 0-.8.7v11.4a.8.8 0 0 0 1.2.7l8.3-5.4a1.2 1.2 0 0 0 0-2L4.2 3.7a.8.8 0 0 0-.4-.1Z")
+    val WBack = icon("wback", 24f, "M12 4.5V1.8L7.2 5.5 12 9.2V6.5a6.5 6.5 0 1 1-6.5 6.5h-2A8.5 8.5 0 1 0 12 4.5Z")
+    val WFwd = icon("wfwd", 24f, "M12 4.5V1.8l4.8 3.7L12 9.2V6.5A6.5 6.5 0 1 0 18.5 13h2A8.5 8.5 0 1 1 12 4.5Z")
+    val WVolume = icon("wvol", 20f, "M2.5 7.2h3l4.2-3.6a.6.6 0 0 1 1 .5v11.8a.6.6 0 0 1-1 .5L5.5 12.8h-3a.8.8 0 0 1-.8-.8V8a.8.8 0 0 1 .8-.8ZM13.4 7a4 4 0 0 1 0 6l-1-1.1a2.5 2.5 0 0 0 0-3.8zM15.4 4.6a7.2 7.2 0 0 1 0 10.8l-1-1.1a5.7 5.7 0 0 0 0-8.6z")
+    val WVolumeLow = icon("wvollow", 20f, "M2.5 7.2h3l4.2-3.6a.6.6 0 0 1 1 .5v11.8a.6.6 0 0 1-1 .5L5.5 12.8h-3a.8.8 0 0 1-.8-.8V8a.8.8 0 0 1 .8-.8ZM13.4 7a4 4 0 0 1 0 6l-1-1.1a2.5 2.5 0 0 0 0-3.8z")
+    val WMuted = icon("wmuted", 20f, "M2.5 7.2h3l4.2-3.6a.6.6 0 0 1 1 .5v11.8a.6.6 0 0 1-1 .5L5.5 12.8h-3a.8.8 0 0 1-.8-.8V8a.8.8 0 0 1 .8-.8ZM13.1 7.6l1-1 1.9 1.9 1.9-1.9 1 1-1.9 1.9 1.9 1.9-1 1-1.9-1.9-1.9 1.9-1-1 1.9-1.9z")
+    val WMonitor = icon("wmon", 16f, "M1.5 3.5A1.5 1.5 0 0 1 3 2h10a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 11H9v1.5h2V14H5v-1.5h2V11H3a1.5 1.5 0 0 1-1.5-1.5v-6ZM3 3.5v6h10v-6H3Z")
+    val WChapters = icon("wch", 16f, "M2.7 2.65a1.35 1.35 0 1 1 0 2.7 1.35 1.35 0 0 1 0-2.7ZM2.7 6.65a1.35 1.35 0 1 1 0 2.7 1.35 1.35 0 0 1 0-2.7ZM2.7 10.65a1.35 1.35 0 1 1 0 2.7 1.35 1.35 0 0 1 0-2.7ZM5.6 3.25H14v1.5H5.6zM5.6 7.25H14v1.5H5.6zM5.6 11.25H14v1.5H5.6z")
+    val WMoon = icon("wmoon", 16f, "M6.2 1.3a.6.6 0 0 1 .1.7A5.6 5.6 0 0 0 14 9.7a.6.6 0 0 1 .8.8A6.8 6.8 0 1 1 5.5 1.2a.6.6 0 0 1 .7.1Z")
+    val WDown = icon("wdown", 16f, "M8 11.3 2.9 6.2 4 5.1l4 4 4-4 1.1 1.1z")
+
     val Play = icon("play", "M8,5v14l11,-7z")
     val Pause = icon("pause", "M6,19h4V5H6v14zM14,5v14h4V5h-4z")
     val Next = icon("next", "M6,18l8.5,-6L6,6v12zM16,6v12h2V6h-2z")

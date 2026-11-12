@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.player
 
+import cz.ondra.absplayer.tr
 import android.os.SystemClock
 import android.util.Log
 import cz.ondra.absplayer.App
@@ -113,7 +114,7 @@ class SyncManager(
         }
         serverPosSec = sec
         itemId?.let { settings.saveLocalProgress(it, sec, synced = true) }
-        onInfo("Pozice převzata z: " + (device ?: "jiného zařízení"))
+        onInfo(tr("positionFrom", "t" to (device ?: tr("otherDevice"))))
     }
 
     fun onUserSeek() {

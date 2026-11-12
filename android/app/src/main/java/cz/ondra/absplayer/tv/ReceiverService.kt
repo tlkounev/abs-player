@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.tv
 
+import cz.ondra.absplayer.tr
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -68,7 +69,7 @@ class ReceiverService : Service() {
         val nm = getSystemService(NotificationManager::class.java)
         if (nm.getNotificationChannel(CHANNEL) == null) {
             nm.createNotificationChannel(
-                NotificationChannel(CHANNEL, getString(R.string.receiver_channel), NotificationManager.IMPORTANCE_MIN)
+                NotificationChannel(CHANNEL, tr("receiverChannel"), NotificationManager.IMPORTANCE_MIN)
             )
         }
         val open = PendingIntent.getActivity(
@@ -77,7 +78,7 @@ class ReceiverService : Service() {
         val n: Notification = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.app_name))
-            .setContentText(getString(R.string.receiver_running))
+            .setContentText(tr("receiverRunning"))
             .setContentIntent(open)
             .setOngoing(true)
             .build()

@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.ui
 
+import cz.ondra.absplayer.tr
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -50,11 +51,11 @@ fun LoginScreen(vm: MainViewModel) {
     ) {
         Column(Modifier.widthIn(max = 420.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text("ABS Player", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = C.Accent)
-            Text("Přihlášení k serveru Audiobookshelf", color = C.Muted)
+            Text(tr("loginTitle"), color = C.Muted)
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = server, onValueChange = { server = it },
-                label = { Text("Adresa serveru") },
+                label = { Text(tr("serverAddr")) },
                 placeholder = { Text("https://abs.example.cz") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
@@ -62,14 +63,14 @@ fun LoginScreen(vm: MainViewModel) {
             )
             OutlinedTextField(
                 value = user, onValueChange = { user = it },
-                label = { Text("Uživatel") },
+                label = { Text(tr("user")) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
                 value = pass, onValueChange = { pass = it },
-                label = { Text("Heslo") },
+                label = { Text(tr("password")) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
@@ -82,7 +83,7 @@ fun LoginScreen(vm: MainViewModel) {
                 modifier = Modifier.fillMaxWidth().height(52.dp),
             ) {
                 if (vm.loginBusy) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
-                else Text("Přihlásit", fontSize = 17.sp)
+                else Text(tr("signIn"), fontSize = 17.sp)
             }
         }
     }

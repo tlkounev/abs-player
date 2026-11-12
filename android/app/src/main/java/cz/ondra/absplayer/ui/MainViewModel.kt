@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.ui
 
+import cz.ondra.absplayer.tr
 import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -105,8 +106,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun message(e: Throwable): String = when (e) {
-        is ApiException -> e.message ?: "Chyba serveru ${e.code}"
-        is IOException -> "Server není dostupný (${e.message ?: e.javaClass.simpleName})"
+        is ApiException -> e.message ?: tr("serverError", "n" to e.code)
+        is IOException -> tr("serverUnavailable", "t" to (e.message ?: e.javaClass.simpleName))
         else -> e.message ?: e.javaClass.simpleName
     }
 

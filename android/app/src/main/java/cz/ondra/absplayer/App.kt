@@ -45,6 +45,7 @@ class App : Application() {
         super.onCreate()
         instance = this
         settings = Settings(this)
+        L.init(this)
         api = AbsApi(settings)
         socket = SocketManager(settings, api, appScope)
         targets = TargetManager(this)

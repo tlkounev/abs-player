@@ -49,12 +49,21 @@ fun AppRoot(vm: MainViewModel) {
             return@Box
         }
         BackHandler(enabled = vm.stack.size > 1) { vm.pop() }
-        when (val s = vm.stack.last()) {
-            Screen.Home -> HomeScreen(vm)
-            is Screen.Book -> BookScreen(vm, s)
-            is Screen.SeriesBooks -> SeriesScreen(vm, s)
-            Screen.Player -> PlayerScreen(vm)
-        }
+        val top = vm.stack.last()
+        val overlay = top == Screen.Player && vm.stack.size > 1
+        // The screen below stays composed (keeps its scroll position) and visible while the player is dragged down.
+        ScreenFor(vm, if (overlay) vm.stack[vm.stack.size - 2] else top)
+        if (overlay) PlayerScreen(vm)
         Sheets(vm)
+    }
+}
+
+@Composable
+private fun ScreenFor(vm: MainViewModel, s: Screen) {
+    when (s) {
+        Screen.Home -> HomeScreen(vm)
+        is Screen.Book -> BookScreen(vm, s)
+        is Screen.SeriesBooks -> SeriesScreen(vm, s)
+        Screen.Player -> PlayerScreen(vm)
     }
 }
