@@ -225,33 +225,17 @@ private fun ListEntry(vm: MainViewModel, entry: () -> Boolean) {
 /** TV search field: moving onto it must not open the keyboard – only OK does. Down goes to the list. */
 @Composable
 private fun SearchField(vm: MainViewModel, value: String, placeholder: String, onChange: (String) -> Unit) {
-    var editing by remember { mutableStateOf(!vm.app.isTv) }
-    val keyboard = LocalSoftwareKeyboardController.current
-    OutlinedTextField(
+    AbsTextField(
         value = value,
         onValueChange = onChange,
-        readOnly = !editing,
         placeholder = { Text(placeholder) },
         leadingIcon = { Icon(Ic.Search, null) },
         trailingIcon = {
             if (value.isNotEmpty()) IconButton(onClick = { onChange("") }) { Icon(Ic.Close, tr("clear")) }
         },
-        singleLine = true,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp)
-            .onFocusChanged { if (!it.isFocused && vm.app.isTv) editing = false }
-            .onPreviewKeyEvent { e ->
-                if (vm.app.isTv && !editing && e.type == KeyEventType.KeyUp &&
-                    (e.key == Key.DirectionCenter || e.key == Key.Enter || e.key == Key.NumPadEnter)
-                ) {
-                    editing = true
-                    keyboard?.show()
-                    true
-                } else {
-                    false
-                }
-            }
             .downToList(vm),
     )
 }

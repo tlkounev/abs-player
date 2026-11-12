@@ -308,11 +308,17 @@ class TargetManager(private val app: App) {
     }
 
     suspend fun info(host: String, port: Int): InfoResponse = withContext(Dispatchers.IO) {
-        val r = Request.Builder().url("http://$host:$port/info").get().build()
-        RemoteHttp.client.newCall(r).execute().use { resp ->
-            val text = resp.body?.string() ?: ""
-            if (!resp.isSuccessful) throw ApiException(resp.code, "HTTP ${resp.code}")
-            RemoteHttp.json.decodeFromString(InfoResponse.serializer(), text)
+        val r = Request.Builder().url("http://${host.trim()}:$port/info").get().build()
+        try {
+            RemoteHttp.client.newCall(r).execute().use { resp ->
+                val text = resp.body?.string() ?: ""
+                if (!resp.isSuccessful) throw ApiException(resp.code, "HTTP ${resp.code}")
+                RemoteHttp.json.decodeFromString(InfoResponse.serializer(), text)
+            }
+        } catch (e: ApiException) {
+            throw e
+        } catch (e: Exception) {
+            throw IOException(tr("noResponseAt", "h" to "$host:$port"), e)
         }
     }
 
@@ -329,7 +335,7 @@ class TargetManager(private val app: App) {
         val server = app.settings.serverUrl ?: throw IOException(tr("notSignedIn"))
         val user = app.settings.username ?: throw IOException(tr("notSignedIn"))
         val info = info(host, port)
-        var req = PairRequest(code.trim(), server, user, app.settings.userId, phoneName = Build.MODEL)
+        var req = PairRequest(code.trim(), server, user, app.settings.userId, phoneName = local.name)
         if (needsPassword(info)) {
             if (password.isNullOrEmpty()) throw IOException(tr("needPassword"))
             val login = app.api.login(server, user, password)

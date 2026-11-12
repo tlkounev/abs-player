@@ -53,7 +53,7 @@ fun LoginScreen(vm: MainViewModel) {
             Text("ABS Player", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = C.Accent)
             Text(tr("loginTitle"), color = C.Muted)
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
+            AbsTextField(
                 value = server, onValueChange = { server = it },
                 label = { Text(tr("serverAddr")) },
                 placeholder = { Text("https://abs.example.cz") },
@@ -61,14 +61,14 @@ fun LoginScreen(vm: MainViewModel) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
             )
-            OutlinedTextField(
+            AbsTextField(
                 value = user, onValueChange = { user = it },
                 label = { Text(tr("user")) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
             )
-            OutlinedTextField(
+            AbsTextField(
                 value = pass, onValueChange = { pass = it },
                 label = { Text(tr("password")) },
                 singleLine = true,

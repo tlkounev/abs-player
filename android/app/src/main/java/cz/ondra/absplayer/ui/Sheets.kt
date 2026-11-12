@@ -120,7 +120,7 @@ private fun ChaptersSheet(vm: MainViewModel) {
         Text(tr("chapters"), fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text("  ${s.chapters.size}", color = C.Muted, fontSize = 14.sp)
         Spacer(Modifier.weight(1f))
-        OutlinedTextField(
+        AbsTextField(
             value = query, onValueChange = { query = it },
             placeholder = { Text(tr("search")) },
             leadingIcon = { Icon(Ic.Search, null, modifier = Modifier.size(18.dp)) },
@@ -320,7 +320,7 @@ private fun DeviceRow(
             var text by remember { mutableStateOf(name) }
             val fr = remember { FocusRequester() }
             LaunchedEffect(Unit) { runCatching { fr.requestFocus() } }
-            OutlinedTextField(
+            AbsTextField(
                 value = text, onValueChange = { text = it }, singleLine = true,
                 label = { Text(tr("newName")) },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -356,7 +356,9 @@ private fun PairSection(vm: MainViewModel, onCancel: () -> Unit) {
     /** null = unknown (not checked yet / unreachable) */
     var info by remember { mutableStateOf<InfoResponse?>(null) }
     var infoError by remember { mutableStateOf<String?>(null) }
-    val unpaired = found.values.filter { f -> paired.none { it.deviceId == f.deviceId } }
+    val unpaired = found.values
+        .filter { f -> paired.none { it.deviceId == f.deviceId } }
+        .distinctBy { it.deviceId ?: (it.host + ":" + it.port) }
     val codeFocus = remember { FocusRequester() }
 
     // Ask the selected device what it is and whether it needs the password.
@@ -369,7 +371,12 @@ private fun PairSection(vm: MainViewModel, onCancel: () -> Unit) {
         try {
             info = targets.info(host, p)
         } catch (e: Exception) {
-            infoError = tr("noResponseAt", "h" to "$host:$p")
+            // nothing on that port: the TV may be on the next one (8766 when 8765 is taken)
+            val other = cz.ondra.absplayer.remote.Discovery.SCAN_PORTS.filter { it != p }.firstNotNullOfOrNull { q ->
+                runCatching { q to targets.info(host, q) }.getOrNull()
+            }
+            if (other != null) port = other.first.toString() // runs this again and fills info
+            else infoError = tr("noResponseAt", "h" to "$host:$p")
         }
     }
     val needPassword = info?.let { targets.needsPassword(it) } ?: false
@@ -397,27 +404,27 @@ private fun PairSection(vm: MainViewModel, onCancel: () -> Unit) {
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
+            AbsTextField(
                 value = host, onValueChange = { host = it.trim() },
                 label = { Text(tr("ipAddr")) }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                 modifier = Modifier.weight(2f),
             )
-            OutlinedTextField(
+            AbsTextField(
                 value = port, onValueChange = { port = it.filter(Char::isDigit) },
                 label = { Text(tr("port")) }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f),
             )
         }
-        OutlinedTextField(
+        AbsTextField(
             value = code, onValueChange = { code = it.filter(Char::isDigit).take(6) },
             label = { Text(tr("codeFromDevice")) }, singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             modifier = Modifier.fillMaxWidth().focusRequester(codeFocus),
         )
         if (needPassword) {
-            OutlinedTextField(
+            AbsTextField(
                 value = password, onValueChange = { password = it },
                 label = { Text(tr("absPassword", "u" to (vm.app.settings.username ?: ""))) }, singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
@@ -438,7 +445,8 @@ private fun PairSection(vm: MainViewModel, onCancel: () -> Unit) {
             onClick = {
                 vm.pair(host, port.toIntOrNull() ?: DEFAULT_PORT, code, password.ifEmpty { null }) { vm.sheet = null }
             },
-            enabled = !vm.pairBusy && info != null && code.length == 6 && (!needPassword || password.isNotEmpty()),
+            // active as soon as there is an address and the code; what is wrong is said after pressing it
+            enabled = !vm.pairBusy && host.isNotBlank() && code.length == 6 && (!needPassword || password.isNotEmpty()),
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier.fillMaxWidth().height(46.dp),
         ) {

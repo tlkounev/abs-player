@@ -9,6 +9,21 @@ import android.os.Looper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.net.Inet4Address
+import java.net.InetSocketAddress
+import java.net.NetworkInterface
+import java.net.Socket
+import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import okhttp3.OkHttpClient
+import okhttp3.Request
 
 data class Discovered(
     val serviceName: String,
@@ -19,8 +34,13 @@ data class Discovered(
     val kind: String = "tv",
 )
 
-/** Finds ABS Player receivers (TVs) on the local network via mDNS / DNS-SD. */
+/**
+ * Finds ABS Player receivers (TVs, PCs) on the local network: via mDNS / DNS-SD and, because
+ * mDNS is unreliable on some phones and routers, also by asking every address of the home
+ * network (/24) on the receiver ports directly (GET /info).
+ */
 class Discovery(context: Context) {
+    private val app = context.applicationContext as cz.ondra.absplayer.App
     private val nsd = context.getSystemService(Context.NSD_SERVICE) as NsdManager
     private val main = Handler(Looper.getMainLooper())
 
@@ -32,7 +52,52 @@ class Discovery(context: Context) {
     private var resolving = false
     private val attempts = mutableMapOf<String, Int>()
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var scanJob: Job? = null
+    private val scanHttp = OkHttpClient.Builder()
+        .connectTimeout(1500, TimeUnit.MILLISECONDS)
+        .readTimeout(2, TimeUnit.SECONDS)
+        .build()
+
+    /** Scans the home network (/24 of this device) for receivers; results go to [found]. */
+    fun scan() {
+        if (scanJob?.isActive == true) return
+        scanJob = scope.launch {
+            val me = ownAddress() ?: return@launch
+            val prefix = me.substringBeforeLast('.') + "."
+            val gate = Semaphore(64)
+            (1..254).map { "$prefix$it" }.filter { it != me }.flatMap { host -> SCAN_PORTS.map { host to it } }
+                .map { (host, port) ->
+                    async {
+                        gate.withPermit {
+                            if (!open(host, port)) return@withPermit
+                            val info = runCatching {
+                                scanHttp.newCall(Request.Builder().url("http://$host:$port/info").build()).execute().use { r ->
+                                    if (!r.isSuccessful) null
+                                    else RemoteHttp.json.decodeFromString(InfoResponse.serializer(), r.body?.string() ?: "")
+                                }
+                            }.getOrNull() ?: return@withPermit
+                            if (info.deviceId == app.settings.deviceId) return@withPermit
+                            main.post {
+                                // one entry per device: mDNS and scan may both find it
+                                val key = "id:" + info.deviceId
+                                val rest = _found.value.filterValues { it.deviceId != info.deviceId }
+                                _found.value = rest + (key to Discovered(key, info.deviceId, info.name, host, port, info.kind))
+                            }
+                        }
+                    }
+                }.awaitAll()
+        }
+    }
+
+    private fun open(host: String, port: Int): Boolean = try {
+        Socket().use { it.connect(InetSocketAddress(host, port), 400); true }
+    } catch (_: Exception) {
+        false
+    }
+
     fun start() {
+        scan()
         if (listener != null) return
         val l = object : NsdManager.DiscoveryListener {
             override fun onDiscoveryStarted(serviceType: String) {}
@@ -94,7 +159,10 @@ class Discovery(context: Context) {
                             val id = attrs["id"]?.let { String(it, Charsets.UTF_8) }
                             val name = attrs["name"]?.let { String(it, Charsets.UTF_8) } ?: si.serviceName
                             val kind = attrs["kind"]?.let { String(it, Charsets.UTF_8) } ?: "tv"
-                            _found.value = _found.value + (si.serviceName to Discovered(si.serviceName, id, name, host, si.port, kind))
+                            if (id != app.settings.deviceId) {
+                                val rest = if (id == null) _found.value else _found.value.filterValues { it.deviceId != id }
+                                _found.value = rest + (si.serviceName to Discovered(si.serviceName, id, name, host, si.port, kind))
+                            }
                         }
                         resolving = false
                         resolveNext()
@@ -113,5 +181,21 @@ class Discovery(context: Context) {
             if (v4 != null) return v4.hostAddress
         }
         return si.host?.hostAddress?.substringBefore('%')
+    }
+
+    companion object {
+        /** The TV takes the first free one from 8765 (8766 when something else holds 8765). */
+        val SCAN_PORTS = (DEFAULT_PORT until DEFAULT_PORT + 4).toList()
+
+        /** This device's IPv4 address in the home network. */
+        fun ownAddress(): String? = runCatching {
+            NetworkInterface.getNetworkInterfaces().toList()
+                .filter { it.isUp && !it.isLoopback }
+                // Wi-Fi / Ethernet first (mobile data can have a private address too)
+                .sortedBy { n -> if (n.name.startsWith("wlan") || n.name.startsWith("eth")) 0 else 1 }
+                .flatMap { it.inetAddresses.toList() }
+                .firstOrNull { it is Inet4Address && it.isSiteLocalAddress }
+                ?.hostAddress
+        }.getOrNull()
     }
 }

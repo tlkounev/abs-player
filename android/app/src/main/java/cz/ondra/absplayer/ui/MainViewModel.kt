@@ -402,7 +402,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 onDone()
                 app.targets.switchTo(app.targets.remote(d))
             } catch (e: Exception) {
-                pairError = message(e)
+                // the receiver's own message (bad code, no response…), not "server unavailable"
+                pairError = e.message ?: e.javaClass.simpleName
             } finally {
                 pairBusy = false
             }
