@@ -55,7 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
-    val b = vm.book?.takeIf { it.id == screen.id }
+    val b = vm.books[screen.id]
     val p = vm.progress[screen.id]
     val target by vm.target.collectAsStateWithLifecycle()
     val playing by vm.playing.collectAsStateWithLifecycle()
@@ -102,7 +102,7 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                         Text(b?.title ?: screen.title, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                         b?.media?.metadata?.subtitle?.let { Text(it, color = C.Muted) }
                         if (b != null) {
-                            Text(b.author, color = C.Text, fontSize = 15.sp, modifier = Modifier.padding(top = 2.dp))
+                            Box(Modifier.padding(top = 2.dp)) { MetaLinks(vm, b, center = align == Alignment.CenterHorizontally) }
                             b.media.metadata.narrator.takeIf { it.isNotBlank() }?.let {
                                 Text(tr("readBy", "t" to it), color = C.Muted, fontSize = 14.sp)
                             }
@@ -234,7 +234,33 @@ fun SeriesScreen(vm: MainViewModel, screen: Screen.SeriesBooks) {
         bottomBar = { MiniPlayer(vm) },
     ) { pad ->
         Box(Modifier.padding(pad).fillMaxSize().background(C.Bg)) {
-            BookGrid(vm, vm.seriesBooks)
+            val list = vm.seriesBooks[screen.seriesId]
+            if (list == null) Empty(tr("loading")) else BookGrid(vm, list)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AuthorScreen(vm: MainViewModel, screen: Screen.AuthorBooks) {
+    Scaffold(
+        containerColor = C.Bg,
+        topBar = {
+            TopAppBar(
+                title = { Text(screen.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                navigationIcon = { IconButton(onClick = { vm.pop() }) { Icon(Ic.Back, tr("back0")) } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = C.Bg),
+            )
+        },
+        bottomBar = { MiniPlayer(vm) },
+    ) { pad ->
+        Box(Modifier.padding(pad).fillMaxSize().background(C.Bg)) {
+            val list = vm.authorBooks[screen.authorId]
+            when {
+                list == null -> Empty(tr("loading"))
+                list.isEmpty() -> Empty(tr("notFound"))
+                else -> BookGrid(vm, list)
+            }
         }
     }
 }

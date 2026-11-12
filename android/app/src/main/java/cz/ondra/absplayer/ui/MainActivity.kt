@@ -125,6 +125,7 @@ private fun ScreenFor(vm: MainViewModel, s: Screen) {
         Screen.Home -> HomeScreen(vm)
         is Screen.Book -> BookScreen(vm, s)
         is Screen.SeriesBooks -> SeriesScreen(vm, s)
+        is Screen.AuthorBooks -> AuthorScreen(vm, s)
         Screen.Player -> PlayerScreen(vm)
     }
 }

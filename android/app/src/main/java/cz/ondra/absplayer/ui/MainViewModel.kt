@@ -17,6 +17,8 @@ import cz.ondra.absplayer.data.Library
 import cz.ondra.absplayer.data.LibraryItem
 import cz.ondra.absplayer.data.MediaProgress
 import cz.ondra.absplayer.data.Series
+import cz.ondra.absplayer.data.Author
+import cz.ondra.absplayer.data.Recent
 import cz.ondra.absplayer.player.NowPlaying
 import cz.ondra.absplayer.remote.PlaybackTarget
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,6 +35,7 @@ sealed interface Screen {
     data object Home : Screen
     data class Book(val id: String, val title: String) : Screen
     data class SeriesBooks(val libraryId: String, val seriesId: String, val name: String) : Screen
+    data class AuthorBooks(val libraryId: String, val authorId: String, val name: String) : Screen
     data object Player : Screen
 }
 
@@ -73,12 +76,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var query by mutableStateOf("")
     var searchResults by mutableStateOf<List<LibraryItem>?>(null)
     var series by mutableStateOf<List<Series>>(emptyList())
+    var seriesQuery by mutableStateOf("")
+    var authors by mutableStateOf<List<Author>?>(null)
+    var authorQuery by mutableStateOf("")
+    var recent by mutableStateOf<Recent?>(null)
+
+    /**
+     * Remote control: Down from the tabs / a search field goes to the first visible item of the list
+     * below (set by that list), not to the item nearest the middle.
+     */
+    var listEntry: (() -> Boolean)? = null
     var refreshing by mutableStateOf(false)
     var error by mutableStateOf<String?>(null)
 
     // detail screens
-    var book by mutableStateOf<LibraryItem?>(null)
-    var seriesBooks by mutableStateOf<List<LibraryItem>>(emptyList())
+    /** Per screen (screens can now nest: book → author → book). */
+    var books by mutableStateOf<Map<String, LibraryItem>>(emptyMap())
+    var seriesBooks by mutableStateOf<Map<String, List<LibraryItem>>>(emptyMap())
+    var authorBooks by mutableStateOf<Map<String, List<LibraryItem>>>(emptyMap())
 
     private var searchJob: Job? = null
     private var continueRefreshJob: Job? = null
@@ -128,6 +143,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     libraryId = keep
                     loadLibrary(reset = true)
                     series = emptyList()
+                    authors = null
+                }
+                recent = null
+                when (tab) {
+                    TAB_ADDED -> loadRecent()
+                    TAB_AUTHORS -> loadAuthors()
                 }
                 retries = 0
             } catch (e: Exception) {
@@ -152,10 +173,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         libraryId = id
         app.settings.lastLibraryId = id
         series = emptyList()
+        authors = null
+        recent = null
         query = ""
         searchResults = null
         loadLibrary(reset = true)
-        if (tab == 2) loadSeries()
+        onTab(tab)
     }
 
     fun loadLibrary(reset: Boolean = false) {
@@ -208,6 +231,44 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun onTab(i: Int) {
+        tab = i
+        when (i) {
+            TAB_ADDED -> loadRecent()
+            TAB_SERIES -> loadSeries()
+            TAB_AUTHORS -> loadAuthors()
+        }
+    }
+
+    fun loadRecent() {
+        val lib = libraryId ?: return
+        if (recent != null) return
+        viewModelScope.launch {
+            try {
+                recent = api.recent(lib)
+            } catch (e: Exception) {
+                error = message(e)
+            }
+        }
+    }
+
+    fun loadAuthors() {
+        val lib = libraryId ?: return
+        if (authors != null) return
+        viewModelScope.launch {
+            try {
+                val c = java.text.Collator.getInstance()
+                authors = api.authors(lib).sortedWith { a, b -> c.compare(a.name, b.name) }
+            } catch (e: Exception) {
+                error = message(e)
+            }
+        }
+    }
+
+    /** Book details (authors / series with ids) – cached, also used by the player. */
+    suspend fun details(itemId: String): LibraryItem? =
+        books[itemId] ?: runCatching { api.item(itemId) }.getOrNull()?.also { books = books + (itemId to it) }
+
     /** Last opened book – the TV home screen puts the remote's focus back on it. */
     var lastOpenedBook: String? = null
         private set
@@ -215,10 +276,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun openBook(id: String, title: String) {
         lastOpenedBook = id
         push(Screen.Book(id, title))
-        book = null
         viewModelScope.launch {
             try {
-                book = api.item(id)
+                api.item(id).let { books = books + (id to it) }
                 runCatching { api.progress(id) }.getOrNull()?.let { progress = progress + (id to it) }
             } catch (e: Exception) {
                 error = message(e)
@@ -228,10 +288,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun openSeries(s: Series) {
         val lib = libraryId ?: return
-        push(Screen.SeriesBooks(lib, s.id, s.name))
-        seriesBooks = s.books
+        if (s.books.isNotEmpty()) seriesBooks = seriesBooks + (s.id to s.books)
+        openSeries(lib, s.id, s.name)
+    }
+
+    fun openSeries(libId: String?, id: String, name: String) {
+        val lib = libId ?: libraryId ?: return
+        if (stack.lastOrNull() == Screen.Player) pop()
+        push(Screen.SeriesBooks(lib, id, name))
         viewModelScope.launch {
-            runCatching { api.seriesBooks(lib, s.id) }.getOrNull()?.takeIf { it.isNotEmpty() }?.let { seriesBooks = it }
+            try {
+                api.seriesBooks(lib, id).takeIf { it.isNotEmpty() }?.let { seriesBooks = seriesBooks + (id to it) }
+            } catch (e: Exception) {
+                error = message(e)
+            }
+        }
+    }
+
+    fun openAuthor(libId: String?, id: String, name: String) {
+        val lib = libId ?: libraryId ?: return
+        if (stack.lastOrNull() == Screen.Player) pop()
+        push(Screen.AuthorBooks(lib, id, name))
+        viewModelScope.launch {
+            try {
+                authorBooks = authorBooks + (id to api.authorBooks(lib, id))
+            } catch (e: Exception) {
+                error = message(e)
+            }
         }
     }
 
@@ -281,6 +364,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         libItems = emptyList()
         libraries = emptyList()
         series = emptyList()
+        authors = null
+        recent = null
+        books = emptyMap()
+        seriesBooks = emptyMap()
+        authorBooks = emptyMap()
     }
 
     // ------------------------------------------------------------------ playback
@@ -317,5 +405,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     companion object {
         const val PAGE = 60
+        const val TAB_CONTINUE = 0
+        const val TAB_ADDED = 1
+        const val TAB_LIBRARY = 2
+        const val TAB_SERIES = 3
+        const val TAB_AUTHORS = 4
     }
 }

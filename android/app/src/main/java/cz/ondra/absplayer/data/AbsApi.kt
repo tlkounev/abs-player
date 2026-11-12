@@ -199,6 +199,32 @@ class AbsApi(private val settings: Settings) {
         return libraryItems(libraryId, 0, 200, sort = "sequence", filter = filter).results
     }
 
+    /** Books of one author (by title). */
+    suspend fun authorBooks(libraryId: String, authorId: String): List<LibraryItem> {
+        val enc = Base64.encodeToString(authorId.toByteArray(), Base64.NO_WRAP)
+        val filter = "authors." + java.net.URLEncoder.encode(enc, "UTF-8")
+        return libraryItems(libraryId, 0, 300, filter = filter).results
+    }
+
+    suspend fun authors(libraryId: String): List<Author> =
+        json.decodeFromString(AuthorsResponse.serializer(), get("/api/libraries/$libraryId/authors")).authors
+
+    /** "Recently added" and "Recent series" from the library's personalized home (as on the ABS web home). */
+    suspend fun recent(libraryId: String, limit: Int = 12): Recent {
+        val root = json.parseToJsonElement(get("/api/libraries/$libraryId/personalized?limit=$limit"))
+        val shelves = (root as? kotlinx.serialization.json.JsonArray) ?: return Recent()
+        fun entities(id: String) = shelves.firstOrNull {
+            ((it as? JsonObject)?.get("id") as? kotlinx.serialization.json.JsonPrimitive)?.content == id
+        }?.let { (it as JsonObject)["entities"] }
+        val books = entities("recently-added")?.let {
+            runCatching { json.decodeFromJsonElement(kotlinx.serialization.builtins.ListSerializer(LibraryItem.serializer()), it) }.getOrNull()
+        }.orEmpty()
+        val series = entities("recent-series")?.let {
+            runCatching { json.decodeFromJsonElement(kotlinx.serialization.builtins.ListSerializer(Series.serializer()), it) }.getOrNull()
+        }.orEmpty()
+        return Recent(books, series)
+    }
+
     suspend fun search(libraryId: String, query: String): List<LibraryItem> {
         val q = java.net.URLEncoder.encode(query, "UTF-8")
         return json.decodeFromString(SearchResponse.serializer(), get("/api/libraries/$libraryId/search?q=$q&limit=25"))
@@ -255,6 +281,9 @@ class AbsApi(private val settings: Settings) {
     }
 
     // ---------------------------------------------------------------- urls
+
+    fun authorImageUrl(authorId: String, width: Int = 300): String? =
+        settings.serverUrl?.let { "$it/api/authors/$authorId/image?width=$width" }
 
     fun coverUrl(itemId: String, width: Int = 600): String? =
         settings.serverUrl?.let { "$it/api/items/$itemId/cover?width=$width" }

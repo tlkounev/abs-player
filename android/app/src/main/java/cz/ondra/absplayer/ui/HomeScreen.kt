@@ -56,7 +56,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -130,16 +135,16 @@ fun HomeScreen(vm: MainViewModel) {
     ) { pad ->
         Column(Modifier.padding(pad).fillMaxSize()) {
             UpdateBanner(Modifier.padding(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 10.dp))
-            TabRow(
+            ScrollableTabRow(
                 selectedTabIndex = vm.tab, containerColor = C.Bg, contentColor = C.Accent,
+                edgePadding = 8.dp,
                 divider = { HorizontalDivider(color = C.Line) },
             ) {
-                listOf(tr("tabContinue"), tr("tabLibrary"), tr("tabSeries")).forEachIndexed { i, t ->
-                    Tab(selected = vm.tab == i, onClick = {
-                        vm.tab = i
-                        if (i == 2) vm.loadSeries()
-                    }, text = { Text(t, fontSize = 15.sp, fontWeight = if (vm.tab == i) FontWeight.SemiBold else FontWeight.Medium) },
-                        selectedContentColor = C.Accent, unselectedContentColor = C.Muted)
+                listOf(tr("tabContinue"), tr("tabAdded"), tr("tabLibrary"), tr("tabSeries"), tr("tabAuthors")).forEachIndexed { i, t ->
+                    Tab(selected = vm.tab == i, onClick = { vm.onTab(i) },
+                        text = { Text(t, fontSize = 15.sp, fontWeight = if (vm.tab == i) FontWeight.SemiBold else FontWeight.Medium) },
+                        selectedContentColor = C.Accent, unselectedContentColor = C.Muted,
+                        modifier = Modifier.downToList(vm))
                 }
             }
             vm.error?.let {
@@ -149,9 +154,11 @@ fun HomeScreen(vm: MainViewModel) {
                 )
             }
             when (vm.tab) {
-                0 -> ContinueTab(vm)
-                1 -> LibraryTab(vm)
-                else -> SeriesTab(vm)
+                MainViewModel.TAB_CONTINUE -> ContinueTab(vm)
+                MainViewModel.TAB_ADDED -> AddedTab(vm)
+                MainViewModel.TAB_LIBRARY -> LibraryTab(vm)
+                MainViewModel.TAB_SERIES -> SeriesTab(vm)
+                else -> AuthorsTab(vm)
             }
         }
     }
@@ -163,7 +170,243 @@ private fun ContinueTab(vm: MainViewModel) {
         Empty(if (vm.refreshing) tr("loading") else tr("nothingInProgress"))
         return
     }
-    BookGrid(vm, vm.continueItems, showPlay = true)
+    BookGrid(vm, vm.continueItems, showPlay = true, entry = true)
+}
+
+/** Remote: Down goes to the first visible item of the list below (see [MainViewModel.listEntry]). */
+fun Modifier.downToList(vm: MainViewModel): Modifier = onPreviewKeyEvent { e ->
+    vm.app.isTv && e.key == Key.DirectionDown && e.type == KeyEventType.KeyDown && vm.listEntry?.invoke() == true
+}
+
+/** Registers [entry] as the list's Down target while it is shown. */
+@Composable
+private fun ListEntry(vm: MainViewModel, entry: () -> Boolean) {
+    if (!vm.app.isTv) return
+    val current by rememberUpdatedState(entry)
+    DisposableEffect(Unit) {
+        val f: () -> Boolean = { runCatching { current() }.getOrDefault(false) }
+        vm.listEntry = f
+        onDispose { if (vm.listEntry === f) vm.listEntry = null }
+    }
+}
+
+/** TV search field: moving onto it must not open the keyboard – only OK does. Down goes to the list. */
+@Composable
+private fun SearchField(vm: MainViewModel, value: String, placeholder: String, onChange: (String) -> Unit) {
+    var editing by remember { mutableStateOf(!vm.app.isTv) }
+    val keyboard = LocalSoftwareKeyboardController.current
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        readOnly = !editing,
+        placeholder = { Text(placeholder) },
+        leadingIcon = { Icon(Ic.Search, null) },
+        trailingIcon = {
+            if (value.isNotEmpty()) IconButton(onClick = { onChange("") }) { Icon(Ic.Close, tr("clear")) }
+        },
+        singleLine = true,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .onFocusChanged { if (!it.isFocused && vm.app.isTv) editing = false }
+            .onPreviewKeyEvent { e ->
+                if (vm.app.isTv && !editing && e.type == KeyEventType.KeyUp &&
+                    (e.key == Key.DirectionCenter || e.key == Key.Enter || e.key == Key.NumPadEnter)
+                ) {
+                    editing = true
+                    keyboard?.show()
+                    true
+                } else {
+                    false
+                }
+            }
+            .downToList(vm),
+    )
+}
+
+@Composable
+private fun AddedTab(vm: MainViewModel) {
+    LaunchedEffect(vm.libraryId) { vm.loadRecent() }
+    val r = vm.recent
+    if (r == null) {
+        Empty(tr("loading"))
+        return
+    }
+    if (r.books.isEmpty() && r.series.isEmpty()) {
+        Empty(tr("nothingAdded"))
+        return
+    }
+    val bookRow = rememberLazyListState()
+    val requesters = remember { mutableMapOf<String, FocusRequester>() }
+    val onTop = vm.stack.lastOrNull() == Screen.Home
+    ListEntry(vm) {
+        val first = r.books.getOrNull(bookRow.firstVisibleItemIndex)?.id ?: r.series.firstOrNull()?.id
+        first?.let { requesters[it]?.requestFocus() } != null
+    }
+    if (vm.app.isTv) {
+        LaunchedEffect(r, onTop) {
+            if (!onTop) return@LaunchedEffect
+            val want = vm.lastOpenedBook?.takeIf { id -> r.books.any { it.id == id } }
+            val idx = want?.let { id -> r.books.indexOfFirst { it.id == id } } ?: 0
+            if (want != null) runCatching { bookRow.scrollToItem(idx) }
+            delay(120)
+            (want ?: r.books.firstOrNull()?.id ?: r.series.firstOrNull()?.id)?.let { id -> runCatching { requesters[id]?.requestFocus() } }
+        }
+    }
+    LazyColumn(contentPadding = PaddingValues(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (r.books.isNotEmpty()) {
+            item { SectionTitle(tr("recentlyAdded")) }
+            item {
+                LazyRow(
+                    state = bookRow,
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    items(r.books, key = { it.id }) { li ->
+                        BookCard(
+                            vm, li, false,
+                            if (vm.app.isTv) requesters.getOrPut(li.id) { FocusRequester() } else null,
+                            Modifier.width(140.dp),
+                        )
+                    }
+                }
+            }
+        }
+        if (r.series.isNotEmpty()) {
+            item { SectionTitle(tr("recentSeries")) }
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(18.dp),
+                ) {
+                    items(r.series, key = { it.id }) { se ->
+                        SeriesCard(vm, se, if (vm.app.isTv) requesters.getOrPut(se.id) { FocusRequester() } else null)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionTitle(t: String) {
+    Text(t, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 16.dp, top = 6.dp))
+}
+
+/** Series tile: up to three covers fanned out, the name under them. */
+@Composable
+private fun SeriesCard(vm: MainViewModel, se: cz.ondra.absplayer.data.Series, focus: FocusRequester?) {
+    val src = remember { MutableInteractionSource() }
+    val focused by src.collectIsFocusedAsState()
+    Column(
+        Modifier
+            .width(184.dp)
+            .then(if (focus != null) Modifier.focusRequester(focus) else Modifier)
+            .clickable(interactionSource = src, indication = null) { vm.openSeries(se) },
+    ) {
+        Box(
+            Modifier
+                .graphicsLayer { val k = if (focused) 1.04f else 1f; scaleX = k; scaleY = k }
+                .indication(src, FocusRing(C.Accent, 6.dp))
+                .fillMaxWidth()
+                .height(120.dp),
+        ) {
+            val books = se.books.take(3)
+            if (books.isEmpty()) Box(Modifier.size(120.dp).clip(RoundedCornerShape(6.dp)).background(C.Surface2))
+            books.forEachIndexed { i, b ->
+                Cover(
+                    b.id, b.title,
+                    Modifier
+                        .padding(start = (32 * i).dp)
+                        .size(120.dp)
+                        .graphicsLayer { shadowElevation = if (i > 0) 8f else 0f; shape = RoundedCornerShape(6.dp); clip = true },
+                    corner = 6.dp,
+                )
+            }
+            Text(
+                tr("nBooks", "n" to se.books.size), fontSize = 11.sp,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(4.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color(0xB3000000))
+                    .padding(horizontal = 6.dp, vertical = 1.dp),
+            )
+        }
+        Text(
+            se.name, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, maxLines = 1,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp),
+        )
+    }
+}
+
+@Composable
+private fun AuthorsTab(vm: MainViewModel) {
+    LaunchedEffect(vm.libraryId) { vm.loadAuthors() }
+    Column(Modifier.fillMaxSize()) {
+        SearchField(vm, vm.authorQuery, tr("searchAuthor")) { vm.authorQuery = it }
+        val all = vm.authors
+        if (all == null) {
+            Empty(tr("loading"))
+            return@Column
+        }
+        val q = vm.authorQuery.trim()
+        val list = if (q.isEmpty()) all else all.filter { it.name.contains(q, ignoreCase = true) }
+        if (list.isEmpty()) {
+            Empty(tr("notFound"))
+            return@Column
+        }
+        val state = rememberLazyGridState()
+        val requesters = remember { mutableMapOf<String, FocusRequester>() }
+        ListEntry(vm) { list.getOrNull(state.firstVisibleItemIndex)?.let { requesters[it.id]?.requestFocus() } != null }
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(118.dp),
+            state = state,
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            items(list, key = { it.id }) { a ->
+                val src = remember { MutableInteractionSource() }
+                val focused by src.collectIsFocusedAsState()
+                Column(
+                    Modifier
+                        .then(if (vm.app.isTv) Modifier.focusRequester(requesters.getOrPut(a.id) { FocusRequester() }) else Modifier)
+                        .clickable(interactionSource = src, indication = null) { vm.openAuthor(vm.libraryId, a.id, a.name) },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Box(
+                        Modifier
+                            .graphicsLayer { val k = if (focused) 1.06f else 1f; scaleX = k; scaleY = k }
+                            .indication(src, FocusRing(C.Accent))
+                            .size(92.dp)
+                            .clip(CircleShape)
+                            .background(placeholderFor(a.id)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        val ini = a.name.split(' ', '.').filter { it.isNotBlank() }.let {
+                            ((it.firstOrNull()?.take(1) ?: "") + (if (it.size > 1) it.last().take(1) else "")).uppercase()
+                        }
+                        Text(ini, fontSize = 28.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                        if (a.imagePath != null) {
+                            coil.compose.AsyncImage(
+                                model = cz.ondra.absplayer.player.ArtworkProvider.uriForAuthor(a.id),
+                                contentDescription = a.name,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                    }
+                    Text(
+                        a.name, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 2, textAlign = TextAlign.Center,
+                        overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp),
+                    )
+                    a.numBooks?.let { Text(tr("nBooks", "n" to it), color = C.Muted, fontSize = 12.sp) }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -183,40 +426,12 @@ private fun LibraryTab(vm: MainViewModel) {
                 }
             }
         }
-        // TV: moving onto the field must not open the keyboard – only OK does
-        var editing by remember { mutableStateOf(!vm.app.isTv) }
-        val keyboard = LocalSoftwareKeyboardController.current
-        OutlinedTextField(
-            value = vm.query,
-            onValueChange = { vm.onQuery(it) },
-            readOnly = !editing,
-            placeholder = { Text(tr("searchLibrary")) },
-            leadingIcon = { Icon(Ic.Search, null) },
-            trailingIcon = {
-                if (vm.query.isNotEmpty()) IconButton(onClick = { vm.onQuery("") }) { Icon(Ic.Close, tr("clear")) }
-            },
-            singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 4.dp)
-                .onFocusChanged { if (!it.isFocused && vm.app.isTv) editing = false }
-                .onPreviewKeyEvent { e ->
-                    if (vm.app.isTv && !editing && e.type == KeyEventType.KeyUp &&
-                        (e.key == Key.DirectionCenter || e.key == Key.Enter || e.key == Key.NumPadEnter)
-                    ) {
-                        editing = true
-                        keyboard?.show()
-                        true
-                    } else {
-                        false
-                    }
-                },
-        )
+        SearchField(vm, vm.query, tr("searchLibrary")) { vm.onQuery(it) }
         val results = vm.searchResults
         if (results != null) {
-            if (results.isEmpty()) Empty(tr("notFound")) else BookGrid(vm, results)
+            if (results.isEmpty()) Empty(tr("notFound")) else BookGrid(vm, results, entry = true)
         } else {
-            BookGrid(vm, vm.libItems, onNearEnd = { vm.loadLibrary() })
+            BookGrid(vm, vm.libItems, onNearEnd = { vm.loadLibrary() }, entry = true)
         }
     }
 }
@@ -224,15 +439,27 @@ private fun LibraryTab(vm: MainViewModel) {
 @Composable
 private fun SeriesTab(vm: MainViewModel) {
     LaunchedEffect(vm.libraryId) { vm.loadSeries() }
+    Column(Modifier.fillMaxSize()) {
+    SearchField(vm, vm.seriesQuery, tr("searchSeries")) { vm.seriesQuery = it }
     if (vm.series.isEmpty()) {
         Empty(tr("loadingSeries"))
-        return
+        return@Column
     }
-    LazyColumn(contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(vm.series, key = { it.id }) { s ->
+    val q = vm.seriesQuery.trim()
+    val list = if (q.isEmpty()) vm.series else vm.series.filter { it.name.contains(q, ignoreCase = true) }
+    if (list.isEmpty()) {
+        Empty(tr("notFound"))
+        return@Column
+    }
+    val state = rememberLazyListState()
+    val requesters = remember { mutableMapOf<String, FocusRequester>() }
+    ListEntry(vm) { list.getOrNull(state.firstVisibleItemIndex)?.let { requesters[it.id]?.requestFocus() } != null }
+    LazyColumn(state = state, contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        items(list, key = { it.id }) { s ->
             Row(
                 Modifier
                     .fillMaxWidth()
+                    .then(if (vm.app.isTv) Modifier.focusRequester(requesters.getOrPut(s.id) { FocusRequester() }) else Modifier)
                     .clip(RoundedCornerShape(14.dp))
                     .background(C.Surface)
                     .clickable { vm.openSeries(s) }
@@ -250,6 +477,7 @@ private fun SeriesTab(vm: MainViewModel) {
             }
         }
     }
+    }
 }
 
 @Composable
@@ -258,6 +486,7 @@ fun BookGrid(
     items: List<LibraryItem>,
     showPlay: Boolean = false,
     onNearEnd: (() -> Unit)? = null,
+    entry: Boolean = false,
 ) {
     val state = rememberLazyGridState()
     if (onNearEnd != null) {
@@ -272,6 +501,7 @@ fun BookGrid(
     // TV: start on the first book; after coming back from a book, on that book again
     val requesters = remember { mutableMapOf<String, FocusRequester>() }
     val onTop = vm.stack.lastOrNull() == Screen.Home
+    if (entry) ListEntry(vm) { items.getOrNull(state.firstVisibleItemIndex)?.let { requesters[it.id]?.requestFocus() } != null }
     if (vm.app.isTv) {
         LaunchedEffect(items.firstOrNull()?.id, onTop) {
             if (!onTop || items.isEmpty()) return@LaunchedEffect
@@ -300,12 +530,12 @@ fun BookGrid(
 }
 
 @Composable
-private fun BookCard(vm: MainViewModel, li: LibraryItem, showPlay: Boolean, focus: FocusRequester? = null) {
+private fun BookCard(vm: MainViewModel, li: LibraryItem, showPlay: Boolean, focus: FocusRequester? = null, modifier: Modifier = Modifier) {
     val p = vm.progress[li.id]
     val src = remember { MutableInteractionSource() }
     val focused by src.collectIsFocusedAsState()
     Column(
-        Modifier
+        modifier
             .then(if (focus != null) Modifier.focusRequester(focus) else Modifier)
             .clickable(interactionSource = src, indication = null) { vm.openBook(li.id, li.title) },
     ) {
@@ -337,9 +567,17 @@ private fun BookCard(vm: MainViewModel, li: LibraryItem, showPlay: Boolean, focu
             p != null && li.media.duration != null -> tr("left", "t" to formatLeft(li.media.duration - p.currentTime))
             else -> li.author
         }
+        li.media.metadata.seriesLabel.takeIf { it.isNotBlank() }?.let {
+            Text(it, color = C.Accent, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
         Text(sub, color = C.Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
+
+private val authorColors = listOf(
+    Color(0xFF2B4D6B), Color(0xFF5C2E2E), Color(0xFF2B5876), Color(0xFF6B5233), Color(0xFF4A3D5C), Color(0xFF3D5C4A),
+)
+private fun placeholderFor(id: String) = authorColors[kotlin.math.abs(id.hashCode()) % authorColors.size]
 
 @Composable
 fun Empty(text: String) {

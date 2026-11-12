@@ -51,7 +51,7 @@ class ReceiverService : Service() {
         mediaSession = MediaSession.Builder(this, engine.player).setId("tv").build()
         PlaybackHub.attach(engine)
 
-        val srv = ReceiverServer(app, engine, deviceName(this), pairingCode)
+        val srv = ReceiverServer(app, engine, { deviceName(this) }, pairingCode)
         server = srv
         val port = srv.startOnFreePort(DEFAULT_PORT)
         if (port > 0) {
@@ -127,7 +127,10 @@ class ReceiverService : Service() {
         val listeningPort = MutableStateFlow(0)
         val port: StateFlow<Int> get() = listeningPort
 
-        fun deviceName(ctx: Context): String =
+        /** Name shown to phones / PCs: the one chosen in "Přehrávat na", else the system name. */
+        fun deviceName(ctx: Context): String = (ctx.applicationContext as App).settings.localName ?: systemName(ctx)
+
+        fun systemName(ctx: Context): String =
             AndroidSettings.Global.getString(ctx.contentResolver, "device_name")
                 ?: AndroidSettings.Global.getString(ctx.contentResolver, AndroidSettings.Global.DEVICE_NAME)
                 ?: Build.MODEL

@@ -27,7 +27,7 @@ import java.security.SecureRandom
 class ReceiverServer(
     private val app: App,
     private val engine: PlayerEngine,
-    private val name: String,
+    private val name: () -> String,
     private val code: String,
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -76,7 +76,7 @@ class ReceiverServer(
 
     private fun info() = InfoResponse(
         deviceId = app.settings.deviceId,
-        name = name,
+        name = name(),
         loggedIn = app.settings.isLoggedIn,
         server = app.settings.serverUrl,
         username = app.settings.username,
@@ -122,7 +122,7 @@ class ReceiverServer(
             st.receiverSecrets = (if (sameAccount) st.receiverSecrets else emptySet()) + secret
             app.onCredentialsChanged()
         }
-        return ok(PairResponse.serializer(), PairResponse(secret, app.settings.deviceId, name))
+        return ok(PairResponse.serializer(), PairResponse(secret, app.settings.deviceId, name()))
     }
 
     private fun command(cmd: Command): NowPlaying = onMain {

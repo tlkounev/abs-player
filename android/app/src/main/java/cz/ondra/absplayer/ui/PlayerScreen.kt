@@ -206,8 +206,13 @@ fun PlayerScreen(vm: MainViewModel) {
             ) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(s.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, lineHeight = 25.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    val sub = listOf(s.author, s.series).filter { it.isNotBlank() }.joinToString(" · ")
-                    if (sub.isNotEmpty()) Text(sub, color = C.Muted, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    // author / series open their books (ids come from the book details)
+                    val meta by androidx.compose.runtime.produceState<cz.ondra.absplayer.data.LibraryItem?>(null, s.itemId) {
+                        value = s.itemId?.let { vm.details(it) }
+                    }
+                    if (s.author.isNotBlank() || s.series.isNotBlank() || meta != null) {
+                        MetaLinks(vm, meta, fallbackAuthor = s.author, fallbackSeries = s.series, fontSize = 14.sp)
+                    }
                     if (ch != null) Text(ch.second.title, color = C.Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (target.isRemote) {
                         Text(tr("playingOnT", "t" to target.name), color = C.Accent, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -592,6 +597,19 @@ fun SeekBar(
     val preview by rememberUpdatedState(onPreview)
     val seek by rememberUpdatedState(onSeek)
     val shown = (drag ?: fraction).coerceIn(0f, 1f)
+    // remote: the focused bar is shown by a pulsing knob (bigger, lighter), not by a ring
+    val focused by keySrc.collectIsFocusedAsState()
+    val pulse = if (focused) {
+        val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "knob")
+        t.animateFloat(
+            0f, 1f,
+            androidx.compose.animation.core.infiniteRepeatable(
+                androidx.compose.animation.core.tween(550, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+                androidx.compose.animation.core.RepeatMode.Reverse,
+            ),
+            label = "knobPulse",
+        ).value
+    } else 0f
 
     Box(
         modifier
@@ -606,7 +624,6 @@ fun SeekBar(
                             else -> false
                         }
                     }
-                    .indication(keySrc, LocalIndication.current)
                     .focusable(interactionSource = keySrc)
                     .padding(horizontal = 2.dp, vertical = 3.dp)
             )
@@ -644,7 +661,13 @@ fun SeekBar(
             drawRoundRect(C.Line, Offset(0f, cy - rh / 2), Size(size.width, rh), r)
             drawRoundRect(C.Accent, Offset(0f, cy - rh / 2), Size(size.width * shown, rh), r)
             val x = (size.width * shown).coerceIn(0f, size.width)
-            if (!thin) {
+            if (focused) {
+                val base = (if (thin) 6.dp else 8.dp).toPx()
+                val k = 1f + 0.45f * pulse
+                drawCircle(C.Accent.copy(alpha = 0.18f * pulse), base * k + 7.dp.toPx() * pulse, Offset(x, cy))
+                drawCircle(C.Bg, base * k + 2.dp.toPx(), Offset(x, cy))
+                drawCircle(androidx.compose.ui.graphics.lerp(C.Accent, Color(0xFFFFD28C), pulse), base * k, Offset(x, cy))
+            } else if (!thin) {
                 drawCircle(C.Bg, 11.dp.toPx(), Offset(x, cy))
                 drawCircle(C.Accent, (if (drag != null) 9.dp else 8.dp).toPx(), Offset(x, cy))
             } else if (drag != null) {

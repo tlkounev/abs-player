@@ -2,6 +2,17 @@ package cz.ondra.absplayer.ui
 
 import cz.ondra.absplayer.tr
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -198,8 +209,16 @@ private fun DevicesSheet(vm: MainViewModel) {
     }
 
     SheetTitle(tr("playOn"))
+    // same as the Windows panel: this device first ("toto zařízení"), paired ones with ×, renaming with the pencil
+    var renaming by remember { mutableStateOf<String?>(null) }
     Column(Modifier.padding(horizontal = 12.dp)) {
-        DeviceRow(Ic.Phone, targets.local.name, tr("thisDevice"), selected = current.id == targets.local.id, online = true) {
+        DeviceRow(
+            if (vm.app.isTv) Ic.Tv else Ic.Phone, targets.local.name, tr("thisDevice").lowercase(),
+            selected = current.id == targets.local.id, online = true,
+            renaming = renaming == targets.local.id,
+            onRename = { renaming = targets.local.id },
+            onRenamed = { n -> vm.app.settings.localName = n; renaming = null },
+        ) {
             vm.switchTarget(targets.local)
             vm.sheet = null
         }
@@ -214,33 +233,39 @@ private fun DevicesSheet(vm: MainViewModel) {
             }
             DeviceRow(
                 if (d.kind == "pc") Ic.Computer else Ic.Tv, d.name, sub, selected = current.id == d.deviceId, online = online == true,
+                renaming = renaming == d.deviceId,
+                onRename = { renaming = d.deviceId },
+                onRenamed = { n -> targets.rename(d.deviceId, n); renaming = null },
                 onRemove = { targets.unpair(d.deviceId) },
             ) {
                 vm.switchTarget(rt)
                 vm.sheet = null
             }
         }
-        Spacer(Modifier.height(8.dp))
-        OutlinedButton(onClick = { vm.sheet = Sheet.Pair }, modifier = Modifier.fillMaxWidth()) {
-            Icon(Ic.Add, null)
-            Spacer(Modifier.width(8.dp))
-            Text(tr("pairNewBtn"))
+        Spacer(Modifier.height(10.dp))
+        OutlinedButton(
+            onClick = { vm.sheet = Sheet.Pair }, modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp), border = BorderStroke(1.dp, C.Outline),
+        ) {
+            Text("+ " + tr("pairNewBtn"), color = C.Accent, fontWeight = FontWeight.SemiBold)
         }
-        Text(
-            tr("switchNote"),
-            color = C.Muted, fontSize = 13.sp, modifier = Modifier.padding(8.dp),
-        )
         if (vm.app.isTv) {
-            // like the Windows app: this TV's own pairing code for phones / PCs
+            // like the Windows app: this device's own pairing code for phones / PCs
             val port by cz.ondra.absplayer.tv.ReceiverService.port.collectAsStateWithLifecycle()
             Text(
-                tr("pairingCodeT", "c" to cz.ondra.absplayer.tv.ReceiverService.pairingCode.chunked(3).joinToString(" ")) +
-                    " · " + (cz.ondra.absplayer.tv.ReceiverService.lanAddress() ?: "?") + ":" + (if (port > 0) port else "…"),
-                color = C.Text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                buildAnnotatedString {
+                    append(tr("pairCodeThis") + " ")
+                    withStyle(SpanStyle(color = C.Text, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)) {
+                        append(cz.ondra.absplayer.tv.ReceiverService.pairingCode.chunked(3).joinToString(" "))
+                    }
+                    append(" · " + (cz.ondra.absplayer.tv.ReceiverService.lanAddress() ?: "?") + ":" + (if (port > 0) port else "…"))
+                },
+                color = C.Muted, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
             )
             OverlayPermission()
         }
-        Spacer(Modifier.height(16.dp))
+        Text(tr("switchNote"), color = C.Muted, fontSize = 12.sp, modifier = Modifier.padding(8.dp))
+        Spacer(Modifier.height(12.dp))
     }
 }
 
@@ -251,29 +276,51 @@ private fun DeviceRow(
     sub: String,
     selected: Boolean,
     online: Boolean,
+    renaming: Boolean = false,
+    onRename: (() -> Unit)? = null,
+    onRenamed: (String) -> Unit = {},
     onRemove: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (selected) C.AccentDark else C.Surface2)
-            .clickable(enabled = online || selected, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(vertical = 2.dp)
+            .alpha(if (online || selected) 1f else 0.55f)
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (selected) C.AccentDark else Color.Transparent)
+            .drawBehind {
+                // accent bar on the left of the selected device (as in Windows)
+                if (selected) drawRect(C.Accent, size = androidx.compose.ui.geometry.Size(3.dp.toPx(), size.height))
+            }
+            .then(if (renaming) Modifier else Modifier.clickable(enabled = online || selected, onClick = onClick))
+            .padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(42.dp).clip(RoundedCornerShape(10.dp)).background(C.Bg), contentAlignment = Alignment.Center) {
-            Icon(icon, null, tint = if (selected) C.Accent else if (online) C.Text else C.Muted)
-        }
-        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-            Text(name, fontWeight = FontWeight.SemiBold)
-            Text(sub, color = if (selected) C.Accent else C.Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        if (selected) Icon(Ic.Check, tr("selected"), tint = C.Accent)
-        if (onRemove != null) {
-            IconButton(onClick = onRemove) { Icon(Ic.Close, tr("unpair"), tint = C.Muted) }
+        Icon(icon, null, tint = if (selected) C.Accent else C.Text, modifier = Modifier.size(22.dp))
+        if (renaming) {
+            var text by remember { mutableStateOf(name) }
+            val fr = remember { FocusRequester() }
+            LaunchedEffect(Unit) { runCatching { fr.requestFocus() } }
+            OutlinedTextField(
+                value = text, onValueChange = { text = it }, singleLine = true,
+                label = { Text(tr("newName")) },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { onRenamed(text) }),
+                modifier = Modifier.weight(1f).padding(horizontal = 12.dp).focusRequester(fr),
+            )
+            IconButton(onClick = { onRenamed(text) }) { Icon(Ic.Check, tr("save"), tint = C.Accent) }
+        } else {
+            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                Text(name, fontWeight = FontWeight.SemiBold, color = if (selected) C.Accent else C.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(sub, color = C.Muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            if (onRename != null) {
+                IconButton(onClick = onRename) { Icon(Ic.Edit, tr("rename"), tint = C.Muted, modifier = Modifier.size(18.dp)) }
+            }
+            if (onRemove != null) {
+                IconButton(onClick = onRemove) { Icon(Ic.Close, tr("unpair"), tint = C.Muted, modifier = Modifier.size(20.dp)) }
+            }
         }
     }
 }

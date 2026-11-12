@@ -24,15 +24,19 @@ class ArtworkProvider : ContentProvider() {
         val itemId = uri.lastPathSegment?.takeIf { ID.matches(it) } ?: throw FileNotFoundException(uri.toString())
         val ctx = context ?: throw FileNotFoundException("no context")
         val dir = File(ctx.cacheDir, "covers").apply { mkdirs() }
-        val file = File(dir, "$itemId.img")
-        if (!file.exists() || file.length() == 0L) download(itemId, file)
+        val author = uri.pathSegments.firstOrNull() == "author"
+        val file = File(dir, if (author) "a_$itemId.img" else "$itemId.img")
+        if (!file.exists() || file.length() == 0L) {
+            val url = if (author) App.instance.api.authorImageUrl(itemId) else App.instance.api.coverUrl(itemId)
+            download(url, file)
+        }
         if (!file.exists()) throw FileNotFoundException(uri.toString())
         return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
     }
 
-    private fun download(itemId: String, target: File) {
+    private fun download(url: String?, target: File) {
         val app = App.instance
-        val url = app.api.coverUrl(itemId) ?: return
+        if (url == null) return
         try {
             app.api.http.newCall(Request.Builder().url(url).build()).execute().use { resp ->
                 if (!resp.isSuccessful) return
@@ -56,6 +60,9 @@ class ArtworkProvider : ContentProvider() {
 
         fun uriFor(itemId: String): Uri =
             Uri.parse("content://${BuildConfig.APPLICATION_ID}.artwork/cover/$itemId")
+
+        fun uriForAuthor(authorId: String): Uri =
+            Uri.parse("content://${BuildConfig.APPLICATION_ID}.artwork/author/$authorId")
 
         fun clearCache(app: App) {
             File(app.cacheDir, "covers").listFiles()?.forEach { it.delete() }

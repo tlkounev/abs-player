@@ -66,7 +66,7 @@ interface PlaybackTarget {
 
 class LocalTarget(private val app: App) : PlaybackTarget {
     override val id = "local"
-    override val name: String get() = if (app.isTv) tr("thisTv") else tr("thisPhone")
+    override val name: String get() = app.settings.localName ?: cz.ondra.absplayer.tv.ReceiverService.systemName(app)
     override val isRemote = false
     override val state: StateFlow<NowPlaying> = PlaybackHub.state
 
@@ -355,6 +355,16 @@ class TargetManager(private val app: App) {
         app.settings.upsertPaired(d)
         _paired.value = app.settings.pairedDevices
         return d
+    }
+
+    /** Local name for a paired device (only on this device). */
+    fun rename(deviceId: String, name: String) {
+        val n = name.trim().takeIf { it.isNotEmpty() } ?: return
+        val p = app.settings.pairedDevices.find { it.deviceId == deviceId } ?: return
+        val np = p.copy(name = n)
+        app.settings.upsertPaired(np)
+        remotes[deviceId]?.device = np
+        _paired.value = app.settings.pairedDevices
     }
 
     fun unpair(deviceId: String) {

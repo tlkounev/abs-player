@@ -1,6 +1,11 @@
 package cz.ondra.absplayer.data
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 // Subset of the Audiobookshelf API models. Unknown fields are ignored (see AbsApi.json).
 
@@ -58,7 +63,21 @@ data class BookMetadata(
     val publishedYear: String? = null,
     val authors: List<Named> = emptyList(),
     val narrators: List<String> = emptyList(),
+    /** Expanded items: list of {id, name, sequence}; some filtered lists: one object; minified: absent. */
+    val series: JsonElement? = null,
 ) {
+    val seriesRefs: List<SeriesRef>
+        get() = when (val s = series) {
+            is JsonArray -> s.mapNotNull { (it as? JsonObject)?.let(::seriesRef) }
+            is JsonObject -> listOfNotNull(seriesRef(s))
+            else -> emptyList()
+        }
+
+    /** "Duna #2" (several series joined by ", "). */
+    val seriesLabel: String
+        get() = seriesRefs.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.label }
+            ?: seriesName.orEmpty()
+
     val author: String
         get() = authorName?.takeIf { it.isNotBlank() } ?: authors.joinToString(", ") { it.name }
     val narrator: String
@@ -161,3 +180,29 @@ data class ProgressEvent(
     val lastUpdate: Long,
     val progress: Double,
 )
+
+@Serializable
+data class SeriesRef(val id: String = "", val name: String = "", val sequence: String? = null) {
+    val label: String get() = if (sequence.isNullOrBlank()) name else "$name #$sequence"
+}
+
+private fun seriesRef(o: JsonObject): SeriesRef? {
+    fun str(k: String) = (o[k] as? JsonPrimitive)?.contentOrNull
+    val id = str("id") ?: return null
+    return SeriesRef(id, str("name").orEmpty(), str("sequence"))
+}
+
+@Serializable
+data class Author(
+    val id: String,
+    val name: String = "",
+    val imagePath: String? = null,
+    val numBooks: Int? = null,
+    val addedAt: Long? = null,
+)
+
+@Serializable
+data class AuthorsResponse(val authors: List<Author> = emptyList())
+
+/** The two shelves of the Audiobookshelf home that the app shows under "Přidané". */
+data class Recent(val books: List<LibraryItem> = emptyList(), val series: List<Series> = emptyList())
