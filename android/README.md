@@ -1,7 +1,7 @@
 # ABS Player pro Android
 
 Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.5.8.
+Verze 1.5.9.
 
 ## Co umí
 

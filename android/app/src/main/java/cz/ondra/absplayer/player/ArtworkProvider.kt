@@ -26,28 +26,44 @@ class ArtworkProvider : ContentProvider() {
         val dir = File(ctx.cacheDir, "covers").apply { mkdirs() }
         val author = uri.pathSegments.firstOrNull() == "author"
         val file = File(dir, if (author) "a_$itemId.img" else "$itemId.img")
-        if (!file.exists() || file.length() == 0L) {
-            val url = if (author) App.instance.api.authorImageUrl(itemId) else App.instance.api.coverUrl(itemId)
-            download(url, file)
+        // one download per cover at a time (grid, player and notification ask together – two writers
+        // into one file left broken covers in the cache for good)
+        synchronized(locks.getOrPut(file.name) { Any() }) {
+            if (file.exists() && !isImage(file)) file.delete() // broken from before: fetch again
+            if (!file.exists()) {
+                val api = App.instance.api
+                val urls = if (author) listOf(api.authorImageUrl(itemId)) else listOf(api.coverUrl(itemId), api.coverRawUrl(itemId))
+                // resized first; if the server cannot resize this cover, the original file
+                for (u in urls) if (download(u, file)) break
+            }
         }
         if (!file.exists()) throw FileNotFoundException(uri.toString())
         return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
     }
 
-    private fun download(url: String?, target: File) {
+    /** Downloads an image; keeps it only when it really is a picture. */
+    private fun download(url: String?, target: File): Boolean {
         val app = App.instance
-        if (url == null) return
+        if (url == null) return false
+        val tmp = File.createTempFile(target.name, ".part", target.parentFile)
         try {
             app.api.http.newCall(Request.Builder().url(url).build()).execute().use { resp ->
-                if (!resp.isSuccessful) return
-                val tmp = File(target.parentFile, target.name + ".part")
+                if (!resp.isSuccessful) return false
                 resp.body?.byteStream()?.use { input -> tmp.outputStream().use { input.copyTo(it) } }
-                if (tmp.length() > 0) tmp.renameTo(target) else tmp.delete()
             }
+            return isImage(tmp) && tmp.renameTo(target)
         } catch (_: Exception) {
-            // No cover (offline, missing): caller throws FileNotFoundException.
+            return false // no cover (offline, missing): caller throws FileNotFoundException
+        } finally {
+            if (tmp.exists()) tmp.delete()
         }
     }
+
+    private fun isImage(f: File): Boolean = f.length() > 0 && runCatching {
+        val o = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeFile(f.path, o)
+        o.outWidth > 0 && o.outHeight > 0
+    }.getOrDefault(false)
 
     override fun getType(uri: Uri): String = "image/jpeg"
     override fun query(uri: Uri, p: Array<out String>?, s: String?, a: Array<out String>?, o: String?): Cursor? = null
@@ -57,6 +73,7 @@ class ArtworkProvider : ContentProvider() {
 
     companion object {
         private val ID = Regex("[A-Za-z0-9_\\-]+")
+        private val locks = java.util.concurrent.ConcurrentHashMap<String, Any>()
 
         fun uriFor(itemId: String): Uri =
             Uri.parse("content://${BuildConfig.APPLICATION_ID}.artwork/cover/$itemId")

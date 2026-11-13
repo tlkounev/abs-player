@@ -285,6 +285,10 @@ class AbsApi(private val settings: Settings) {
     fun authorImageUrl(authorId: String, width: Int = 300): String? =
         settings.serverUrl?.let { "$it/api/authors/$authorId/image?width=$width" }
 
+    /** The original cover file (when the server cannot make the resized one). */
+    fun coverRawUrl(itemId: String): String? =
+        settings.serverUrl?.let { "$it/api/items/$itemId/cover?raw=1" }
+
     fun coverUrl(itemId: String, width: Int = 600): String? =
         settings.serverUrl?.let { "$it/api/items/$itemId/cover?width=$width" }
 
