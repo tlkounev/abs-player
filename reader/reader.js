@@ -187,6 +187,23 @@
     return k;
   }
 
+  function diag() {
+    const v = document.getElementById('viewer');
+    const fr = [...document.querySelectorAll('iframe')];
+    const f = fr[0];
+    let txt = -1, fg = '', bgc = '';
+    try {
+      const d = f && f.contentDocument;
+      txt = d && d.body ? d.body.innerText.length : -1;
+      if (d && d.body) { const cs = d.defaultView.getComputedStyle(d.body); fg = cs.color; bgc = cs.backgroundColor; }
+    } catch (e) { txt = -2; }
+    const r = f ? f.getBoundingClientRect() : null;
+    return 'win ' + innerWidth + 'x' + innerHeight + ' viewer ' + (v ? v.clientWidth + 'x' + v.clientHeight : '-') +
+      ' iframes ' + fr.length + (r ? ' [' + Math.round(r.left) + ',' + Math.round(r.top) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + ']' : '') +
+      ' text ' + txt + ' color ' + fg + ' on ' + bgc + ' cfi ' + (current && current.start ? current.start.cfi : '-');
+  }
+  window.readerDiag = diag;
+
   function report(location) {
     if (!location || !location.start) return;
     current = location;
@@ -216,6 +233,8 @@
     next() { if (rendition) rendition.next(); },
     prev() { if (rendition) rendition.prev(); },
     goto(href) { if (rendition) rendition.display(href); },
+    /** 'none' (one page) or 'always' (two pages side by side). */
+    setSpread(mode) { if (rendition) { rendition.spread(mode); relayout(); } },
     applySettings(json) { applySettings(json); },
     async gotoAudio(seconds) {
       await whenLocations();
@@ -240,14 +259,31 @@
   }
 
   // klepnutí: okraje listují, střed ukáže / schová lištu
+  // new size / one or two pages: lay out again and return to the same place (else the columns end up
+  // shifted half a page)
+  let relayoutTimer = null;
+  function relayout() {
+    clearTimeout(relayoutTimer);
+    relayoutTimer = setTimeout(async () => {
+      if (!rendition) return;
+      let cfi = null;
+      try { const l = rendition.currentLocation(); cfi = l && l.start && l.start.cfi; } catch (e) { cfi = null; }
+      if (!cfi && current && current.start) cfi = current.start.cfi;
+      try { rendition.resize(); } catch (e) { /* ignore */ }
+      if (cfi) { try { await rendition.display(cfi); } catch (e) { /* ignore */ } }
+    }, 150);
+  }
+
   let lastSwipe = 0;
   function onTap(ev) {
     if (Date.now() - lastSwipe < 400) return; // the end of a swipe is not a tap
     let x = ev.clientX;
     try { if (ev.view && ev.view.frameElement) x += ev.view.frameElement.getBoundingClientRect().left; } catch (e) {}
-    const w = window.innerWidth || 1;
-    if (x < w * 0.25) api.prev();
-    else if (x > w * 0.75) api.next();
+    // zones of the text area (the Windows window has the contents list on the left)
+    const v = document.getElementById('viewer').getBoundingClientRect();
+    const rel = (x - v.left) / Math.max(1, v.width);
+    if (rel < 0.3) api.prev();
+    else if (rel > 0.7) api.next();
     else call('tap', 'center');
   }
 
@@ -292,7 +328,8 @@
       rendition.on('click', onTap);
       rendition.on('keyup', onKey);
       document.addEventListener('keyup', onKey);
-      window.addEventListener('resize', () => { try { rendition.resize(); } catch (e) {} });
+      window.addEventListener('resize', relayout);
+      window.addEventListener('epub-resize', relayout);
       await book.ready;
 
       // pozice: z mezipaměti hostitele, jinak spočítat (u velkých knih několik sekund)
@@ -326,6 +363,8 @@
       try { rendition.resize(); } catch (e) { /* ignore */ }
       ready = true;
       call('ready', '');
+      // what is on the screen (for finding display problems on a device)
+      setTimeout(() => call('log', 'diag: ' + diag()), 1500);
       if (cfg.mode === 'toAudio') api.listenHere();
     } catch (e) {
       showWait(false);

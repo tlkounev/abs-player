@@ -126,6 +126,7 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
     var turns by remember { mutableIntStateOf(0) }
     // errors from the page (shown small at the bottom: a screenshot tells what went wrong)
     var jsLog by remember { mutableStateOf<List<String>>(emptyList()) }
+    var showDiag by remember { mutableStateOf(true) }
     var lastCfi by remember { mutableStateOf<String?>(null) }
     val item = vm.books[screen.itemId]
     val hasAudio = item?.media?.hasAudio == true
@@ -154,7 +155,10 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
     // the bars go away when you start reading
     LaunchedEffect(turns) { if (turns > 0) bars = false }
     // TV: the text alone; OK shows the bars (←/→ then move between the buttons, Back hides them)
-    LaunchedEffect(loading) { if (tv && !loading && error == null) bars = false }
+    LaunchedEffect(loading) {
+        if (tv && !loading && error == null) bars = false
+        if (!loading) { delay(30_000); showDiag = false }
+    }
     LaunchedEffect(bars) { if (tv && bars && hasAudio) { delay(80); runCatching { listenFocus.requestFocus() } } else if (tv) runCatching { rootFocus.requestFocus() } }
 
     BackHandler {
@@ -190,6 +194,10 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
                 factory = { ctx ->
                     val main = Handler(Looper.getMainLooper())
                     WebView(ctx).apply {
+                        // without this the WebView sizes itself to its content (height 0 = a black page)
+                        layoutParams = android.view.ViewGroup.LayoutParams(
+                            android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                        )
                         isFocusable = !tv
                         isFocusableInTouchMode = !tv
                         setBackgroundColor((READER_BG[theme] ?: READER_BG.getValue("dark")).let {
@@ -311,7 +319,7 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
             )
         }
 
-        if (jsLog.isNotEmpty() && pos.progress == null) {
+        if (jsLog.isNotEmpty() && (pos.progress == null || showDiag)) {
             Text(
                 jsLog.joinToString("\n"), color = C.Error, fontSize = 10.sp, lineHeight = 13.sp,
                 modifier = Modifier.align(Alignment.BottomStart).padding(start = 12.dp, end = 12.dp, bottom = 120.dp),

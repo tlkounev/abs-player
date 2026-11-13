@@ -120,7 +120,26 @@
   $('aaBtn').onclick = (e) => { e.stopPropagation(); buildAa(); $('aa').classList.toggle('hidden'); $('aaBtn').classList.toggle('on'); };
   $('aa').onclick = (e) => e.stopPropagation();
   document.addEventListener('click', () => { $('aa').classList.add('hidden'); $('aaBtn').classList.remove('on'); });
-  $('tocBtn').onclick = () => { document.body.classList.toggle('noside'); setTimeout(() => window.dispatchEvent(new Event('resize')), 0); };
+  $('tocBtn').onclick = () => { document.body.classList.toggle('noside'); layout(); };
+
+  // the page has book proportions (about 2 : 3); two pages side by side when they fit
+  let spread = 'none';
+  function layout() {
+    const side = document.body.classList.contains('noside') ? 0 : 230;
+    const availW = window.innerWidth - side, availH = window.innerHeight - 44 - 34;
+    const page = Math.round(availH * 0.7);
+    const two = availW >= 2 * page + 80;
+    const w = Math.min(availW, two ? 2 * page + 80 : page + 60);
+    const v = $('viewer');
+    v.style.left = (side + Math.round((availW - w) / 2)) + 'px';
+    v.style.width = w + 'px';
+    v.style.right = 'auto';
+    const mode = two ? 'always' : 'none';
+    if (mode !== spread) { spread = mode; if (window.reader) window.reader.setSpread(mode); }
+    else if (window.reader) window.dispatchEvent(new Event('epub-resize'));
+  }
+  layout();
+  window.addEventListener('resize', layout);
   $('listen').onclick = () => { $('listen').disabled = true; window.reader.listenHere(); };
 
   function markToc() {
@@ -131,7 +150,7 @@
 
   // hostitel pro sdílenou čtečku (reader.js)
   window.AbsHost = {
-    config: () => JSON.stringify(Object.assign({}, cfg, { settings, spread: 'auto' })),
+    config: () => JSON.stringify(Object.assign({}, cfg, { settings, spread })),
     bookData: () => window.absReader.bookData(),
     relocated(json) {
       const r = JSON.parse(json);
@@ -163,11 +182,6 @@
     ready() { $('wait').classList.add('hidden'); $('listen').disabled = false; },
     error(text) { $('waitTxt').textContent = tr('ebookError') + ' (' + text + ')'; $('waitTxt').className = 'err'; document.querySelector('#wait div').remove(); }
   };
-  document.addEventListener('keydown', (e) => {
-    if (e.target instanceof HTMLInputElement) return;
-    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { window.reader && window.reader.prev(); e.preventDefault(); }
-    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { window.reader && window.reader.next(); e.preventDefault(); }
-  });
   let lastWheel = 0;
   document.addEventListener('wheel', (e) => {
     if (e.target.closest && e.target.closest('.side, .aa')) return;

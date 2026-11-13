@@ -55,10 +55,40 @@ app.whenReady().then(async () => {
   await wait(700);
   check('contents click -> chapter 2', (got.relocated[got.relocated.length - 1] || {}).chapter === 'Kapitola 2');
   fs.writeFileSync(path.join(OUT, 'r-sepia.png'), (await win.webContents.capturePage()).toPNG());
+  // klik vlevo / šipka vlevo = právě jedna strana zpět (tam a zpět = stejné místo)
+  const cfiNow = () => (got.relocated[got.relocated.length - 1] || {}).cfi;
+  const key = async (k) => { win.webContents.sendInputEvent({ type: 'keyDown', keyCode: k }); win.webContents.sendInputEvent({ type: 'keyUp', keyCode: k }); await wait(600); };
+  await js("window.reader.next()"); await wait(500);
+  await js("window.reader.next()"); await wait(500);
+  const a0 = cfiNow();
+  await key('Left');
+  const a1 = cfiNow();
+  await key('Right');
+  check('arrow left / right = one page each', a1 !== a0 && cfiNow() === a0, { a0, a1, now: cfiNow() });
+  const vr = await js("(() => { const r = document.getElementById('viewer').getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; })()");
+  const click = async (fx) => {
+    const x = Math.round(vr.x + vr.w * fx), y = Math.round(vr.y + vr.h / 2);
+    win.webContents.sendInputEvent({ type: 'mouseDown', x, y, button: 'left', clickCount: 1 });
+    win.webContents.sendInputEvent({ type: 'mouseUp', x, y, button: 'left', clickCount: 1 });
+    await wait(600);
+  };
+  const c0 = cfiNow();
+  await click(0.1);
+  const c1 = cfiNow();
+  await click(0.9);
+  check('click left = one page back, right = forward again', c1 !== c0 && cfiNow() === c0, { c0, c1, now: cfiNow() });
+  check('page has book proportions (not wider than tall × 0.8)', vr.w <= vr.h * 0.8 + 70, vr);
+  // široké okno: dvě strany
+  win.setSize(1500, 800); await wait(1200);
+  const vw = await js("(() => { const r = document.getElementById('viewer').getBoundingClientRect(); return { w: r.width, h: r.height }; })()");
+  check('wide window: two pages', vw.w > vw.h * 1.2, vw);
+  fs.writeFileSync(path.join(OUT, 'r-wide.png'), (await win.webContents.capturePage()).toPNG());
+  win.setSize(1000, 700); await wait(800);
+
   // poslouchat od této strany: začátek kapitoly 2
   await js("document.getElementById('listen').click()");
   for (let i = 0; i < 30 && !got.listen.length; i++) await wait(100);
-  check('listen from this page -> start of chapter 2', got.listen.length === 1 && Math.abs(got.listen[0] - chapters[1].start) < 5, got.listen);
+  check('listen from this page -> chapter 2', got.listen.length === 1 && got.listen[0] >= chapters[1].start && got.listen[0] < chapters[1].end, got.listen);
   check('locations handed to the host', got.locations === 1);
   console.log(fails ? fails + ' FAIL' : 'all passed');
   app.exit(fails ? 1 : 0);
