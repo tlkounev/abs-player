@@ -32,6 +32,7 @@ Webový klient Audiobookshelf jako samostatná aplikace v oznamovací oblasti Wi
 - **Hledání přijímače:** když na zadaném portu nic neodpovídá, zkusí se porty 8765–8774 (TV bere
   první volný). Spárované zařízení, které přešlo na jiný port, se najde samo.
 - Panel *Přehrávat na* je vysoký přesně podle obsahu; rozbalené párování okno protáhne.
+  IP | port | kód jsou v jednom řádku s hodnotami uprostřed, pod nimi stav a Spárovat.
 - **Přejmenování:** tužka u zařízení změní řádek na pole (Enter uloží, Esc zruší). Název tohoto
   PC se posílá i ostatním zařízením, název spárovaného zařízení platí jen tady.
 - **Párování:** tlačítko „+ Spárovat zařízení (TV nebo PC)“ otevře formulář (křížek / Esc ho zavře).
