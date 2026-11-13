@@ -277,7 +277,18 @@ class AbsApi(private val settings: Settings) {
     }
 
     suspend fun setFinished(itemId: String, finished: Boolean) {
-        patch("/api/me/progress/$itemId", buildJsonObject { put("isFinished", finished) })
+        patch("/api/me/progress/$itemId", buildJsonObject {
+            put("isFinished", finished)
+            // listening and reading together: finished = both at the end, not finished = both from the start
+            if (finished) {
+                put("ebookProgress", 1.0)
+            } else {
+                put("progress", 0.0)
+                put("currentTime", 0.0)
+                put("ebookProgress", 0.0)
+                put("ebookLocation", "")
+            }
+        })
     }
 
     // ---------------------------------------------------------------- urls

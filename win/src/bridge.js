@@ -409,6 +409,14 @@
         return (vm.chapters || []).map((c, i) => ({ n: i + 1, title: c.title, start: c.start, end: c.end }));
       case 'playItem': {
         if (!arg || !arg.id) return false;
+        // the same book is already loaded (paused): ABS would not start it again – seek and play
+        if (vm.streamLibraryItem && vm.streamLibraryItem.id === arg.id && !arg.episodeId && vm.playerHandler && vm.playerHandler.player) {
+          if (typeof arg.startTime === 'number' && isFinite(arg.startTime)) {
+            vm.seek(Math.max(0, arg.startTime));
+          }
+          if (!vm.isPlaying) vm.playPause();
+          return true;
+        }
         const payload = { libraryItemId: arg.id, episodeId: arg.episodeId || null };
         if (typeof arg.startTime === 'number' && isFinite(arg.startTime)) payload.startTime = arg.startTime;
         watch.sessionAt = Date.now(); // startovní pozice je záměrná, nekontrolovat proti serveru

@@ -606,9 +606,10 @@ ipcMain.on('reader:settings', (_e, json) => {
 ipcMain.on('reader:listen', async (e, seconds) => {
   const r = readers.get(e.sender.id);
   if (!r) return;
+  // reading goes on: the reader stays open, the book plays and the mini player shows up
   await routedCmd('playItem', { id: r.id, startTime: Number(seconds) || 0 });
-  r.win.close();
   showPopup();
+  if (!r.win.isDestroyed()) r.win.focus();
 });
 
 // ---------- přijímač: telefon (nebo jiné PC) může přehrávání poslat sem ----------

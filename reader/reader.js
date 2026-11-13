@@ -363,8 +363,6 @@
       try { rendition.resize(); } catch (e) { /* ignore */ }
       ready = true;
       call('ready', '');
-      // what is on the screen (for finding display problems on a device)
-      setTimeout(() => call('log', 'diag: ' + diag()), 1500);
       if (cfg.mode === 'toAudio') api.listenHere();
     } catch (e) {
       showWait(false);

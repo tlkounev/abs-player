@@ -47,6 +47,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +57,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -119,14 +126,13 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
     var toc by remember { mutableStateOf<List<TocEntry>>(emptyList()) }
     var sheet by remember { mutableStateOf<String?>(null) } // "text" | "toc"
     var theme by remember { mutableStateOf(st.readerTheme) }
-    var fontSize by remember { mutableIntStateOf(st.readerFontSize.let { if (tv && it == 100) 130 else it }) }
+    var fontSize by remember { mutableIntStateOf(st.readerFontSize) }
     var font by remember { mutableStateOf(st.readerFont) }
     var lineHeight by remember { mutableStateOf(st.readerLineHeight) }
     var web by remember { mutableStateOf<WebView?>(null) }
     var turns by remember { mutableIntStateOf(0) }
     // errors from the page (shown small at the bottom: a screenshot tells what went wrong)
     var jsLog by remember { mutableStateOf<List<String>>(emptyList()) }
-    var showDiag by remember { mutableStateOf(true) }
     var lastCfi by remember { mutableStateOf<String?>(null) }
     val item = vm.books[screen.itemId]
     val hasAudio = item?.media?.hasAudio == true
@@ -157,7 +163,6 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
     // TV: the text alone; OK shows the bars (←/→ then move between the buttons, Back hides them)
     LaunchedEffect(loading) {
         if (tv && !loading && error == null) bars = false
-        if (!loading) { delay(30_000); showDiag = false }
     }
     LaunchedEffect(bars) { if (tv && bars && hasAudio) { delay(80); runCatching { listenFocus.requestFocus() } } else if (tv) runCatching { rootFocus.requestFocus() } }
 
@@ -169,10 +174,11 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
         }
     }
 
+    Column(Modifier.fillMaxSize().background(READER_BG[theme] ?: READER_BG.getValue("dark"))) {
     Box(
         Modifier
-            .fillMaxSize()
-            .background(READER_BG[theme] ?: READER_BG.getValue("dark"))
+            .fillMaxWidth()
+            .weight(1f)
             .focusRequester(rootFocus)
             .focusable()
             .onPreviewKeyEvent { e ->
@@ -190,7 +196,7 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
         val f = file
         if (f != null && error == null) {
             AndroidView(
-                modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
+                modifier = Modifier.fillMaxSize().statusBarsPadding(),
                 factory = { ctx ->
                     val main = Handler(Looper.getMainLooper())
                     WebView(ctx).apply {
@@ -215,6 +221,7 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
                         }
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
+                        settings.textZoom = 100 // the size is set in Aa, not by the system font scale
                         settings.allowFileAccess = false
                         addJavascriptInterface(object {
                             @JavascriptInterface
@@ -276,7 +283,9 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
 
                             @JavascriptInterface
                             fun listen(seconds: String) = main.post {
-                                seconds.toDoubleOrNull()?.let { vm.listenFrom(screen.itemId, it) }
+                                // from the book detail ("listen from where you read"): to the player;
+                                // from the reader's button: keep reading, the mini player shows up
+                                seconds.toDoubleOrNull()?.let { vm.listenFrom(screen.itemId, it, stay = screen.mode != "toAudio") }
                             }
 
                             @JavascriptInterface
@@ -319,12 +328,6 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
             )
         }
 
-        if (jsLog.isNotEmpty() && (pos.progress == null || showDiag)) {
-            Text(
-                jsLog.joinToString("\n"), color = C.Error, fontSize = 10.sp, lineHeight = 13.sp,
-                modifier = Modifier.align(Alignment.BottomStart).padding(start = 12.dp, end = 12.dp, bottom = 120.dp),
-            )
-        }
         if (loading && error == null) {
             Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                 CircularProgressIndicator(color = C.Accent)
@@ -365,7 +368,6 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .background(C.Surface)
-                    .navigationBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
@@ -392,44 +394,61 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
         }
     }
 
+    // listening started from the reader: the same playing bar as everywhere in the app
+    val playingNow by vm.playing.collectAsStateWithLifecycle()
+    if (playingNow.itemId != null) MiniPlayer(vm) else Spacer(Modifier.navigationBarsPadding())
+    }
+
     // --- Aa: text settings
     if (sheet == "text") {
         ModalBottomSheet(onDismissRequest = { sheet = null }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = C.Surface) {
+            // remote: Down / Up move between the rows and always land on the first item on the left
+            val fSize = remember { FocusRequester() }
+            val fFont = remember { FocusRequester() }
+            val fTheme = remember { FocusRequester() }
+            val fLine = remember { FocusRequester() }
+            LaunchedEffect(Unit) { if (tv) { delay(150); runCatching { fSize.requestFocus() } } }
             Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(tr("readerText"), fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 Label(tr("fontSize"))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("A", fontSize = 13.sp)
-                    Slider(
-                        value = fontSize.toFloat(), valueRange = 70f..200f, steps = 12,
-                        onValueChange = { fontSize = (it / 10).toInt() * 10 }, onValueChangeFinished = { applySettings() },
-                        colors = SliderDefaults.colors(thumbColor = C.Accent, activeTrackColor = C.Accent),
-                        modifier = Modifier.weight(1f),
+                    StepBar(
+                        value = fontSize, min = 70, max = 200, step = 10,
+                        onChange = { fontSize = it; applySettings() },
+                        modifier = Modifier.weight(1f).focusRequester(fSize).focusProperties { down = fFont },
                     )
                     Text("A", fontSize = 20.sp)
+                    Text("$fontSize %", color = C.Muted, fontSize = 12.sp, modifier = Modifier.width(44.dp))
                 }
                 Label(tr("font"))
-                Segmented(listOf("serif" to tr("fontSerif"), "sans" to tr("fontSans"), "original" to tr("fontOriginal")), font) { font = it; applySettings() }
+                Segmented(
+                    listOf("serif" to tr("fontSerif"), "sans" to tr("fontSans"), "original" to tr("fontOriginal")), font,
+                    first = fFont, up = fSize, down = fTheme,
+                ) { font = it; applySettings() }
                 Label(tr("theme"))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     listOf(Triple("dark", tr("themeDark"), Color(0xFFE6E1D8)), Triple("sepia", tr("themeSepia"), Color(0xFF4A3F2C)), Triple("light", tr("themeLight"), Color(0xFF222222)))
-                        .forEach { (k, label, fg) ->
+                        .forEachIndexed { i, (k, label, fg) ->
                             Box(
                                 Modifier
                                     .weight(1f)
                                     .height(44.dp)
+                                    .then(if (i == 0) Modifier.focusRequester(fTheme) else Modifier)
+                                    .focusProperties { up = fFont; down = fLine }
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(READER_BG.getValue(k))
                                     .border(if (theme == k) 2.dp else 1.dp, if (theme == k) C.Accent else C.Outline, RoundedCornerShape(10.dp))
-                                    .clickable { theme = k; applySettings() },
+                                    .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = FocusRing(C.Accent, 10.dp)) { theme = k; applySettings() },
                                 contentAlignment = Alignment.Center,
                             ) { Text(label, color = fg, fontSize = 13.sp) }
                         }
                 }
                 Label(tr("lineHeight"))
-                Segmented(listOf("1.35" to tr("lhTight"), "1.6" to tr("lhNormal"), "1.9" to tr("lhLoose")), lineHeight.toString()) {
-                    lineHeight = it.toFloat(); applySettings()
-                }
+                Segmented(
+                    listOf("1.35" to tr("lhTight"), "1.6" to tr("lhNormal"), "1.9" to tr("lhLoose")), lineHeight.toString(),
+                    first = fLine, up = fTheme, down = null,
+                ) { lineHeight = it.toFloat(); applySettings() }
             }
         }
     }
@@ -467,21 +486,30 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
 private fun Label(t: String) = Text(t, color = C.Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 10.dp))
 
 @Composable
-private fun Segmented(options: List<Pair<String, String>>, value: String, onPick: (String) -> Unit) {
+private fun Segmented(
+    options: List<Pair<String, String>>,
+    value: String,
+    first: FocusRequester? = null,
+    up: FocusRequester? = null,
+    down: FocusRequester? = null,
+    onPick: (String) -> Unit,
+) {
     Row(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .border(1.dp, C.Outline, RoundedCornerShape(10.dp)),
     ) {
-        options.forEach { (k, label) ->
+        options.forEachIndexed { i, (k, label) ->
             val on = k == value
             Box(
                 Modifier
                     .weight(1f)
                     .height(40.dp)
+                    .then(if (i == 0 && first != null) Modifier.focusRequester(first) else Modifier)
+                    .focusProperties { up?.let { this.up = it }; down?.let { this.down = it } }
                     .background(if (on) C.Accent.copy(alpha = 0.18f) else Color.Transparent)
-                    .clickable { onPick(k) },
+                    .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = FocusRing(C.Accent, 8.dp)) { onPick(k) },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -491,5 +519,60 @@ private fun Segmented(options: List<Pair<String, String>>, value: String, onPick
                 )
             }
         }
+    }
+}
+
+/**
+ * Value bar for the remote and the finger: ←/→ change it by [step], dragging / tapping too. When
+ * selected, the knob pulses (as on the player's progress bar).
+ */
+@Composable
+private fun StepBar(value: Int, min: Int, max: Int, step: Int, onChange: (Int) -> Unit, modifier: Modifier = Modifier) {
+    val src = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val focused by src.collectIsFocusedAsState()
+    val pulse = if (focused) {
+        val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "knob")
+        t.animateFloat(
+            0f, 1f,
+            androidx.compose.animation.core.infiniteRepeatable(
+                androidx.compose.animation.core.tween(550, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+                androidx.compose.animation.core.RepeatMode.Reverse,
+            ),
+            label = "knobPulse",
+        ).value
+    } else 0f
+    val current by androidx.compose.runtime.rememberUpdatedState(value)
+    fun set(v: Int) {
+        val c = (((v - min).toFloat() / step).let { kotlin.math.round(it) } * step + min).toInt().coerceIn(min, max)
+        if (c != current) onChange(c)
+    }
+    androidx.compose.foundation.Canvas(
+        modifier
+            .height(32.dp)
+            .onPreviewKeyEvent { e ->
+                if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                when (e.key) {
+                    Key.DirectionLeft -> { set(current - step); true }
+                    Key.DirectionRight -> { set(current + step); true }
+                    else -> false
+                }
+            }
+            .focusable(interactionSource = src)
+            .pointerInput(min, max) {
+                detectTapGestures { o -> set((min + (o.x / size.width) * (max - min)).toInt()) }
+            }
+            .pointerInput(min, max) {
+                detectHorizontalDragGestures { ch, _ -> set((min + (ch.position.x / size.width) * (max - min)).toInt()) }
+            },
+    ) {
+        val cy = size.height / 2
+        val frac = (value - min).toFloat() / (max - min)
+        val x = size.width * frac
+        drawLine(Color.White.copy(alpha = 0.18f), androidx.compose.ui.geometry.Offset(0f, cy), androidx.compose.ui.geometry.Offset(size.width, cy), 4.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+        drawLine(C.Accent, androidx.compose.ui.geometry.Offset(0f, cy), androidx.compose.ui.geometry.Offset(x, cy), 4.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+        val base = 8.dp.toPx()
+        val k = 1f + 0.45f * pulse
+        if (focused) drawCircle(C.Accent.copy(alpha = 0.18f * pulse), base * k + 7.dp.toPx() * pulse, androidx.compose.ui.geometry.Offset(x, cy))
+        drawCircle(androidx.compose.ui.graphics.lerp(C.Accent, Color(0xFFFFD28C), pulse), base * k, androidx.compose.ui.geometry.Offset(x, cy))
     }
 }

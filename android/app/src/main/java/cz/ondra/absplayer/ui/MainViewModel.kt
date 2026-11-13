@@ -419,8 +419,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** From the reader: listen from [seconds] – the player replaces the reader. */
-    fun listenFrom(itemId: String, seconds: Double) {
+    fun listenFrom(itemId: String, seconds: Double, stay: Boolean = false) {
         play(itemId, seconds)
+        if (stay) return // keep reading; the mini player shows up under the text
         if (stack.lastOrNull() is Screen.Reader) pop()
         if (stack.lastOrNull() != Screen.Player) push(Screen.Player)
     }

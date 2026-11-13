@@ -325,6 +325,11 @@ app.whenReady().then(async () => {
   check('handoff ' + JSON.stringify(h) + ' ' + JSON.stringify(n2), h && h.id === 'li1' && Math.round(h.time) === 7000 && n2.some((x) => x.startsWith('post:/api/session/sess1/sync:7000:')) && n2.includes('closePlayer'));
   await exec("window.__absPlayer.cmd('playItem', { id: 'li2', startTime: 42 })");
   check('playItem with startTime', (await exec('window.__log')).includes('play-item:{"libraryItemId":"li2","episodeId":null,"startTime":42}'));
+  // stejná kniha už načtená a pozastavená (Poslouchat od této strany ve čtečce): posun + přehrát
+  await exec(`(() => { const p = ${P}; p.streamLibraryItem = { id: 'li1', updatedAt: 1, media: {} }; p.isPlaying = false; p.playerHandler.playerPlaying = false; window.__log.length = 0; })()`);
+  await exec("window.__absPlayer.cmd('playItem', { id: 'li1', startTime: 321 })");
+  const lg = await exec('window.__log');
+  check('same book: seek + play, not a new session', lg.includes('seek:321') && lg.includes('playPause') && !lg.some((x) => x.startsWith('play-item')), lg);
   await exec(`(() => { const p = ${P}; p.streamLibraryItem = { id: 'li1', updatedAt: 1, media: {} }; p.currentTime = 1234; p.isPlaying = true; p.playerHandler.playerPlaying = true; })()`);
 
   // hide tlačítko

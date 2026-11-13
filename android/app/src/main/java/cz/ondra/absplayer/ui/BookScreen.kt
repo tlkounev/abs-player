@@ -119,7 +119,7 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                 val audioFrac = if (p != null && dur > 0) p.currentTime / dur else null
                 val readFrac = p?.ebookProgress
                 val syncHint: @Composable () -> Unit = {
-                    if (hasEpub && hasAudio && audioFrac != null && audioFrac > 0 && p?.ebookLocation != null && readFrac != null &&
+                    if (hasEpub && hasAudio && p != null && !p.isFinished && audioFrac != null && audioFrac > 0 && !p.ebookLocation.isNullOrBlank() && readFrac != null &&
                         kotlin.math.abs(audioFrac - readFrac) > 0.02
                     ) {
                         Column(
@@ -160,7 +160,7 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                                 else -> formatLeft(dur)
                             }
                             if (hasAudio) Text(line, color = C.Muted, fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp))
-                            if (hasEpub && (readFrac ?: 0.0) > 0) {
+                            if (hasEpub && p?.isFinished != true && (readFrac ?: 0.0) > 0) {
                                 Text(tr("readPct", "p" to ((readFrac ?: 0.0) * 100).toInt()), color = Color(0xFF8FB7E6), fontSize = 14.sp)
                             }
                         }
