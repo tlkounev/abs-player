@@ -389,8 +389,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** "local", "tv" or "pc". */
     fun targetKind(): String = (target.value as? cz.ondra.absplayer.remote.RemoteTarget)?.device?.kind ?: "local"
 
+    /** Book being handed to the chosen device: the player shows "loading", not "nothing playing". */
+    var handoffItem by mutableStateOf<String?>(null)
+
     fun switchTarget(t: PlaybackTarget) {
-        viewModelScope.launch { app.targets.switchTo(t) }
+        viewModelScope.launch {
+            val item = app.targets.switchTo(t) ?: return@launch
+            // the book continues there: show the player
+            handoffItem = item
+            if (stack.lastOrNull() != Screen.Player) push(Screen.Player)
+            kotlinx.coroutines.delay(15_000)
+            if (handoffItem == item) handoffItem = null
+        }
     }
 
     var pairBusy by mutableStateOf(false)

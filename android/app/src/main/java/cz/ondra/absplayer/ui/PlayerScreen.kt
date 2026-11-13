@@ -173,10 +173,18 @@ fun PlayerScreen(vm: MainViewModel) {
             }
         }
 
+        if (itemId == null && (s.isLoading || vm.handoffItem != null)) {
+            // the book is just being handed over / loaded here
+            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = C.Accent)
+            }
+            return@Column
+        }
         if (itemId == null) {
             NothingPlaying(vm, s)
             return@Column
         }
+        if (vm.handoffItem != null) LaunchedEffect(itemId) { vm.handoffItem = null }
 
         val pos = preview ?: s.positionSec
         val rate = s.speed.coerceAtLeast(0.1f)

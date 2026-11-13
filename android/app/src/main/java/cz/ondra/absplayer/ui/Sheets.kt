@@ -81,6 +81,24 @@ import kotlinx.coroutines.delay
 @Composable
 fun Sheets(vm: MainViewModel) {
     val sheet = vm.sheet ?: return
+    if (vm.app.isTv && (sheet == Sheet.Devices || sheet == Sheet.Pair)) {
+        // TV: a panel in the middle, as tall as its content (up to the whole screen) – a bottom sheet
+        // stayed half open and left a black bar after the keyboard
+        val screenH = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { vm.sheet = null },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            androidx.compose.material3.Surface(
+                color = C.Surface,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.width(620.dp).heightIn(max = (screenH - 32).dp),
+            ) {
+                Box(Modifier.padding(top = 14.dp)) { DevicesSheet(vm, pairInitially = sheet == Sheet.Pair) }
+            }
+        }
+        return
+    }
     // always fully open: on the TV a half-open sheet cut off the bottom (pairing code)
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
@@ -88,7 +106,6 @@ fun Sheets(vm: MainViewModel) {
         sheetState = state,
         containerColor = C.Surface,
         // TV: a narrower panel, not a sheet over the whole screen
-        sheetMaxWidth = if (vm.app.isTv) 620.dp else BottomSheetDefaults.SheetMaxWidth,
     ) {
         when (sheet) {
             Sheet.Chapters -> ChaptersSheet(vm)
@@ -226,7 +243,7 @@ private fun DevicesSheet(vm: MainViewModel, pairInitially: Boolean = false) {
         Modifier
             .padding(horizontal = 12.dp)
             .verticalScroll(scroll)
-            .imePadding(),
+            .then(if (vm.app.isTv) Modifier else Modifier.imePadding()),
     ) {
         Text(tr("playOn"), fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 8.dp, bottom = 6.dp))
         DeviceRow(

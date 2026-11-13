@@ -1,7 +1,7 @@
 # ABS Player pro Android
 
 Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.5.5.
+Verze 1.5.6.
 
 ## Co umí
 
@@ -57,6 +57,8 @@ Verze 1.5.5.
   (při dalším hledání / párování), název spárovaného zařízení platí jen tady.
 - Párování: *+ Spárovat zařízení* otevře formulář přímo v seznamu (jako ve Windows), zařízení ukáže šestimístný kód.
   IP | port | kód jsou v jednom řádku (hodnoty uprostřed), na TV i se Spárovat a ×; panel na TV je užší.
+  Přepnutí zařízení přesune knihu hned (i pozastavenou) a otevře přehrávač; na TV je Přehrávat na
+  panel uprostřed obrazovky.
   Aplikace si při spuštění řekne o „Zařízení v okolí“ – bez něj ji novější Android do domácí sítě nepustí.
   Zařízení se hledají přes mDNS a navíc dotazem na všechny adresy domácí sítě (porty 8765–8768),
   takže se najdou i tam, kde mDNS nefunguje. Po zadání IP si aplikace port najde sama.

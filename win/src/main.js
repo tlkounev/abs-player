@@ -397,12 +397,13 @@ async function selectTarget(id) {
   let hand = null;
   if (!from.remote) {
     const st = await localState();
-    if (st && st.item && st.isPlaying) hand = await localCmd('handoff');
+    // kniha se přesune i pozastavená – poslech pokračuje na novém zařízení
+    if (st && st.item) hand = await localCmd('handoff');
   } else if (!(lastState && lastState.remoteError)) { // vypnuté zařízení nezdržovat
     try {
       const d = pairedDevice(from.id);
       const np = await withTimeout(remote.remoteState(d), 1500);
-      if (np && np.itemId && np.isPlaying) {
+      if (np && np.itemId) {
         const after = await withTimeout(remote.remoteCmd(d, { action: 'pause' }), 3000);
         hand = { id: np.itemId, time: (after && after.positionSec) || np.positionSec };
       }
@@ -415,7 +416,7 @@ async function selectTarget(id) {
     return true;
   }
   const d = pairedDevice(id);
-  const online = await withTimeout(remote.remoteState(d), 1500).then(() => true, () => false);
+  const online = await withTimeout(remote.remoteState(d), 3000).then(() => true, () => false);
   if (online) {
     if (hand && hand.id) await remote.remoteCmd(d, { action: 'playItem', itemId: hand.id, value: hand.time }).catch(() => {});
   } else {

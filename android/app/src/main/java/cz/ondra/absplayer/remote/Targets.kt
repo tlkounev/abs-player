@@ -111,7 +111,7 @@ class LocalTarget(private val app: App) : PlaybackTarget {
     override suspend fun pauseForHandoff(): Double? {
         val e = PlaybackHub.engine ?: return null
         if (e.player.book == null) return null
-        return e.pauseAndSync()
+        return e.pauseNow()
     }
 }
 
@@ -268,21 +268,29 @@ class TargetManager(private val app: App) {
      * Moves playback to [target]. If something is playing, it is paused and synced where it is,
      * then started on the target from exactly that position.
      */
-    suspend fun switchTo(target: PlaybackTarget) {
+    /**
+     * Switches playback to [target] and moves the book there: it continues on the new device right
+     * away (also when it was paused). Returns the book id when one was handed over.
+     */
+    suspend fun switchTo(target: PlaybackTarget): String? {
         val cur = _current.value
-        if (cur.id == target.id) return
+        if (cur.id == target.id) return null
         val st = cur.state.value
         val itemId = st.itemId
-        val wasPlaying = st.isPlaying
-        val pos = if (itemId != null) cur.pauseForHandoff() else null
+        // do not wait long for the old device (off / slow): then the last known position is used
+        val pos = if (itemId != null) {
+            kotlinx.coroutines.withTimeoutOrNull(2_500) { cur.pauseForHandoff() } ?: st.positionSec
+        } else null
         cur.deactivate()
         _current.value = target
         target.activate()
-        if (itemId != null && pos != null && wasPlaying) {
+        if (itemId != null && pos != null) {
             target.playItem(itemId, pos)
             if (cur is LocalTarget) cur.stop()
             if (target is RemoteTarget) watchHandoff(target, cur, itemId, pos)
+            return itemId
         }
+        return null
     }
 
     private var handoffJob: kotlinx.coroutines.Job? = null

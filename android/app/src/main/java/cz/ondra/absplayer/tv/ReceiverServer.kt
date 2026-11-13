@@ -66,7 +66,8 @@ class ReceiverServer(
             get && s.uri == "/info" -> ok(InfoResponse.serializer(), info())
             post && s.uri == "/pair" -> pair(body(s))
             !authorized(s) -> error(NanoHTTPD.Response.Status.UNAUTHORIZED, tr("notPaired"))
-            get && s.uri == "/state" -> ok(NowPlaying.serializer(), onMain { PlaybackHub.state.value })
+            // a StateFlow value – no need to wait for the main thread (that made taking over control slow)
+            get && s.uri == "/state" -> ok(NowPlaying.serializer(), PlaybackHub.state.value)
             post && s.uri == "/cmd" -> ok(NowPlaying.serializer(), command(json.decodeFromString(Command.serializer(), body(s))))
             else -> error(NanoHTTPD.Response.Status.NOT_FOUND, tr("unknownRequest"))
         }
@@ -129,7 +130,7 @@ class ReceiverServer(
         val v = cmd.value
         when (cmd.action) {
             "play" -> { engine.play(); MainActivity.bringToFront(app) }
-            "pause" -> engine.pauseAndSync()
+            "pause" -> engine.pauseNow() // the server sync must not hold up a handoff to another device
             "toggle" -> engine.toggle()
             "seek" -> if (v != null) engine.seekTo(v)
             "skip" -> if (v != null) engine.skip(v)

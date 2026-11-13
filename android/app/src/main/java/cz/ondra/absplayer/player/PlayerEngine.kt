@@ -218,6 +218,13 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
     }
 
     /** Pause, push the position to the server and wait for it (used before handing off to another device). */
+    /** Pause right away (handing playback to another device); the position goes to the server in the background. */
+    fun pauseNow(): Double {
+        player.pause()
+        scope.launch { runCatching { sync.syncNow() } }
+        return player.globalMs() / 1000.0
+    }
+
     suspend fun pauseAndSync(): Double {
         player.pause()
         sync.syncNow()
