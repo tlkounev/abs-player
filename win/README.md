@@ -29,6 +29,9 @@ Webový klient Audiobookshelf jako samostatná aplikace v oznamovací oblasti Wi
 - **Přepnutí:** když něco hraje, pozastaví se, pozice se uloží na server a přehrávání pokračuje
   na vybraném zařízení přesně odtud. Minipřehrávač pak ovládá to zařízení (pruhy, kapitoly,
   rychlost, hlasitost) a pod autorem ukazuje jeho jméno. Zpět se přepne výběrem tohoto PC.
+- **Hledání přijímače:** když na zadaném portu nic neodpovídá, zkusí se porty 8765–8774 (TV bere
+  první volný). Spárované zařízení, které přešlo na jiný port, se najde samo.
+- Panel *Přehrávat na* je vysoký přesně podle obsahu; rozbalené párování okno protáhne.
 - **Přejmenování:** tužka u zařízení změní řádek na pole (Enter uloží, Esc zruší). Název tohoto
   PC se posílá i ostatním zařízením, název spárovaného zařízení platí jen tady.
 - **Párování:** tlačítko „+ Spárovat zařízení (TV nebo PC)“ otevře formulář (křížek / Esc ho zavře).

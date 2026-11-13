@@ -179,7 +179,11 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                         color = C.Muted, fontSize = 14.sp, lineHeight = 20.sp,
                         maxLines = if (descOpen) Int.MAX_VALUE else 5,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(vertical = 12.dp).clickable { descOpen = !descOpen },
+                        modifier = Modifier
+                            .padding(vertical = 12.dp)
+                            // remote: Up to the main button, not to the button nearest the middle
+                            .focusProperties { if (playShown) up = playFocus }
+                            .clickable { descOpen = !descOpen },
                     )
                 }
             }
@@ -194,6 +198,9 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                             .padding(top = 8.dp, bottom = 8.dp)
                             .fillMaxWidth()
                             .focusRequester(chRowFocus)
+                            .focusProperties {
+                                if (playShown && b?.media?.metadata?.description.isNullOrBlank()) up = playFocus
+                            }
                             .clip(RoundedCornerShape(10.dp))
                             .background(C.Surface)
                             .clickable { chOpen = !chOpen }

@@ -873,15 +873,39 @@ async function setDevOpen(open) {
     $('chPanel').classList.add('hidden');
   }
   devOpen = true;
-  const dir = await window.abs.list(true);
+  // okno naroste přesně o obsah panelu: nejdřív obsah, pak změřit, pak zvětšit okno
+  $('pErr').classList.add('hidden');
+  $('devPanel').classList.remove('hidden');
+  await loadDevices();
+  const dir = await window.abs.list(true, devPanelExtra());
   document.querySelector('.card').classList.toggle('down', dir === 'down');
   $('devCloseIcon').style.transform = dir === 'down' ? 'rotate(180deg)' : '';
-  $('devPanel').classList.remove('hidden');
-  $('pErr').classList.add('hidden');
   render();
-  await loadDevices();
+  fitDevPanel();
   devTimer = setInterval(loadDevices, 4000);
 }
+
+/** O kolik má okno narůst, aby se panel „Přehrávat na“ vešel bez prázdného místa. */
+function devPanelExtra() {
+  const panel = $('devPanel'), items = $('devItems');
+  const down = document.querySelector('.card').classList.contains('down');
+  const pr = panel.getBoundingClientRect(), ir = items.getBoundingClientRect();
+  const content = $('myCode').getBoundingClientRect().bottom - ir.top + items.scrollTop + 4;
+  // panel nahoře: dole padding 10 + čára 1; dole: nahoře čára + padding (už v ir.top - pr.top)
+  const h = (ir.top - pr.top) + content + (down ? 0 : 11);
+  const extra = Math.min(Math.ceil(h) + 10, 560); // + mezera k minipřehrávači; víc už se posouvá
+  panel.style.setProperty('--list-h', extra + 'px');
+  return extra;
+}
+
+let fitFrame = 0;
+function fitDevPanel() {
+  if (!devOpen) return;
+  cancelAnimationFrame(fitFrame);
+  fitFrame = requestAnimationFrame(() => { if (devOpen) window.abs.list(true, devPanelExtra()); });
+}
+// obsah panelu se mění (párování rozbalené, nápověda, chyba, zařízení) → okno se přizpůsobí
+new MutationObserver(() => fitDevPanel()).observe(document.getElementById('devItems'), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class'] });
 
 async function loadDevices() {
   devData = await window.abs.devices();
@@ -1022,6 +1046,7 @@ function checkPairTarget() {
     const info = await window.abs.deviceInfo(host, port);
     if ($('pHost').value.trim() !== host) return;
     pairInfo = info;
+    if (info.ok && info.port && String(info.port) !== $('pPort').value) $('pPort').value = String(info.port); // přijímač běží na jiném portu
     $('pHint').textContent = info.ok ? info.name + (info.needsPassword ? ' · ' + tr('needPass') : '') : tr('noResponse');
     updatePairBtn();
   }, 400);
@@ -1046,7 +1071,7 @@ $('pBtn').onclick = async () => {
   }
   const err = res && res.error;
   if (err === 'needPassword') { pairInfo = Object.assign({}, pairInfo, { needsPassword: true }); }
-  $('pErr').textContent = err === 'needPassword' ? tr('needPass') : err === 'badPassword' ? tr('badPassword') : err === 'login' ? tr('login') : (err || tr('noResponse'));
+  $('pErr').textContent = err === 'needPassword' ? tr('needPass') : err === 'badPassword' ? tr('badPassword') : err === 'login' ? tr('login') : err === 'noResponse' ? tr('noResponse') : (err || tr('noResponse'));
   $('pErr').classList.remove('hidden');
   updatePairBtn();
 };

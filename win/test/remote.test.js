@@ -133,3 +133,31 @@ test('discovery without bonjour is a no-op', () => {
   assert.deepEqual(d.list(), []);
   d.stop();
 });
+
+test('receiver on the next port (8765 taken by something else) is found, pair returns the name', async () => {
+  const http = require('node:http');
+  // na 8765 běží něco cizího, přijímač až na 8766
+  const other = http.createServer((q, s) => { s.writeHead(404); s.end('nope'); });
+  await new Promise((ok, ko) => other.once('error', ko).listen(remote.DEFAULT_PORT, '0.0.0.0', ok)).catch(() => null);
+  const secrets = [];
+  const r = remote.createReceiver({
+    deviceId: 'tv-9', name: () => 'Obývák', code: () => '123456',
+    getSecrets: () => secrets, addSecret: (s) => secrets.push(s),
+    info: async () => ({ loggedIn: true, server: 'https://abs.example', username: 'ondra' }),
+    state: fakePlayer().state, command: fakePlayer().command
+  });
+  const port = await r.listen(remote.DEFAULT_PORT + 1);
+  try {
+    assert.equal(port, remote.DEFAULT_PORT + 1);
+    const hit = await remote.locate('127.0.0.1', remote.DEFAULT_PORT);
+    assert.equal(hit.port, remote.DEFAULT_PORT + 1);
+    assert.equal(hit.info.name, 'Obývák');
+    assert.equal(await remote.locate('127.0.0.1', remote.DEFAULT_PORT, 'jine-id'), null);
+    const d = await remote.pair({ host: '127.0.0.1', port: remote.DEFAULT_PORT, code: '123456', serverUrl: 'https://abs.example', username: 'ondra', myName: 't' });
+    assert.equal(d.port, remote.DEFAULT_PORT + 1);
+    assert.equal(d.name, 'Obývák');
+  } finally {
+    r.close && r.close();
+    other.close();
+  }
+});

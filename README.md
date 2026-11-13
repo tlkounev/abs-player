@@ -5,8 +5,8 @@ a společnou synchronizací pozice.
 
 | Složka | Aplikace | Verze |
 |---|---|---|
-| [`android/`](android/README.md) | telefon, Android Auto, Google TV (jedno APK) | 1.5.2 |
-| [`win/`](win/README.md) | Windows 11, minipřehrávač v oznamovací oblasti | 1.2.7 |
+| [`android/`](android/README.md) | telefon, Android Auto, Google TV (jedno APK) | 1.5.3 |
+| [`win/`](win/README.md) | Windows 11, minipřehrávač v oznamovací oblasti | 1.2.8 |
 
 ## Co mají společné
 

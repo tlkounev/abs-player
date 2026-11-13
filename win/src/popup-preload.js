@@ -6,7 +6,7 @@ contextBridge.exposeInMainWorld('abs', {
   openMain: () => ipcRenderer.send('popup:open-main'),
   hide: () => ipcRenderer.send('popup:hide'),
   cursor: () => ipcRenderer.invoke('popup:cursor'),
-  list: (open) => ipcRenderer.invoke('popup:list', open),
+  list: (open, h) => ipcRenderer.invoke('popup:list', open, h),
   listHeight: 300,
   onShown: (cb) => ipcRenderer.on('popup-shown', () => cb()),
   lang: () => ipcRenderer.sendSync('i18n:get'),

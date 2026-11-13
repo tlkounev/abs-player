@@ -368,15 +368,12 @@ private fun PairSection(vm: MainViewModel, onCancel: () -> Unit) {
         val p = port.toIntOrNull() ?: return@LaunchedEffect
         if (host.isBlank()) return@LaunchedEffect
         delay(400)
-        try {
-            info = targets.info(host, p)
-        } catch (e: Exception) {
-            // nothing on that port: the TV may be on the next one (8766 when 8765 is taken)
-            val other = cz.ondra.absplayer.remote.Discovery.SCAN_PORTS.filter { it != p }.firstNotNullOfOrNull { q ->
-                runCatching { q to targets.info(host, q) }.getOrNull()
-            }
-            if (other != null) port = other.first.toString() // runs this again and fills info
-            else infoError = tr("noResponseAt", "h" to "$host:$p")
+        // the receiver may answer on another port than typed / announced (8766 when 8765 is taken)
+        val hit = targets.discovery.locate(host.trim(), p)
+        when {
+            hit == null -> infoError = tr("noResponseAt", "h" to "$host:$p")
+            hit.first != p -> port = hit.first.toString() // runs this again
+            else -> info = hit.second
         }
     }
     val needPassword = info?.let { targets.needsPassword(it) } ?: false

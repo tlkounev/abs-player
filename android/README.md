@@ -1,7 +1,7 @@
 # ABS Player pro Android
 
 Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.5.2.
+Verze 1.5.3.
 
 ## Co umí
 
@@ -58,6 +58,8 @@ Verze 1.5.2.
 - Párování: *+ Spárovat zařízení* otevře formulář přímo v seznamu (jako ve Windows), zařízení ukáže šestimístný kód.
   Zařízení se hledají přes mDNS a navíc dotazem na všechny adresy domácí sítě (porty 8765–8768),
   takže se najdou i tam, kde mDNS nefunguje. Po zadání IP si aplikace port najde sama.
+  Když přijímač přejde na jiný port (8765 drží na TV něco jiného → 8766), spárovaná zařízení ho
+  najdou sama; záznamy mDNS se před použitím ověří.
   Heslo k ABS je potřeba jen pro TV, která ještě není přihlášená k tvému účtu.
 
 **Google TV (stejné APK)**

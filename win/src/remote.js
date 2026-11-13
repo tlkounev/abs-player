@@ -149,7 +149,7 @@ function createReceiver(opts) {
         failed = 0;
         const secret = crypto.randomBytes(24).toString('hex');
         opts.addSecret(secret, body.phoneName || '');
-        return send(res, 200, { secret, deviceId: opts.deviceId, name: opts.name });
+        return send(res, 200, { secret, deviceId: opts.deviceId, name: typeof opts.name === 'function' ? opts.name() : opts.name });
       }
       if (!authorized(req)) return send(res, 401, { error: 'Zařízení není spárované' });
       if (req.method === 'GET' && url === '/state') return send(res, 200, await opts.state());
@@ -220,7 +220,25 @@ function deviceUrl(d, path) {
 
 const remoteState = (d) => request('GET', deviceUrl(d, '/state'), null, d.secret, 3000);
 const remoteCmd = (d, cmd) => request('POST', deviceUrl(d, '/cmd'), cmd, d.secret, 10000);
-const remoteInfo = (host, port) => request('GET', deviceUrl({ host, port }, '/info'), null, null, 3000);
+const remoteInfo = (host, port, timeoutMs) => request('GET', deviceUrl({ host, port }, '/info'), null, null, timeoutMs || 3000);
+
+/** Porty, na kterých může přijímač běžet (bere první volný od 8765 – na TV občas 8765 drží něco jiného). */
+const RECEIVER_PORTS = Array.from({ length: 10 }, (_, i) => DEFAULT_PORT + i);
+
+/**
+ * Najde přijímač na adrese: nejdřív zadaný port, pak ostatní porty přijímače. S deviceId platí jen
+ * to zařízení. Vrací { port, info } nebo null.
+ */
+async function locate(host, port, deviceId) {
+  const ok = (i) => i && i.deviceId && (!deviceId || i.deviceId === deviceId);
+  try {
+    const info = await remoteInfo(host, port);
+    if (ok(info)) return { port: Number(port), info };
+  } catch (e) {}
+  const tries = RECEIVER_PORTS.filter((p) => p !== Number(port)).map((p) =>
+    remoteInfo(host, p, 2000).then((info) => (ok(info) ? { port: p, info } : null), () => null));
+  return (await Promise.all(tries)).find(Boolean) || null;
+}
 
 function sameServer(a, b) {
   const n = (u) => String(u || '').trim().replace(/\/+$/, '').toLowerCase();
@@ -237,7 +255,11 @@ function needsPassword(info, serverUrl, username) {
  * přihlásíme se znovu heslem (refresh tokeny rotují, zařízení nesmí sdílet jeden).
  */
 async function pair({ host, port, code, password, serverUrl, username, userId, myName }) {
-  const info = await remoteInfo(host, port);
+  // zadaný / nalezený port může být starý: vzít ten, na kterém přijímač opravdu odpovídá
+  const hit = await locate(host, port);
+  if (!hit) { const e = new Error('noResponse'); e.code = 'noResponse'; throw e; }
+  port = hit.port;
+  const info = hit.info;
   const req = { code: String(code).trim(), server: serverUrl, username, userId: userId || null, phoneName: myName };
   if (needsPassword(info, serverUrl, username)) {
     if (!password) {
@@ -337,6 +359,8 @@ module.exports = {
   remoteState,
   remoteCmd,
   remoteInfo,
+  locate,
+  RECEIVER_PORTS,
   needsPassword,
   pair,
   newCode

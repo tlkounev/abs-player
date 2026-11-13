@@ -149,11 +149,22 @@ class RemoteTarget(private val app: App, device: PairedDevice) : PlaybackTarget 
         pollJob = null
     }
 
+    private var lastLocate = 0L
+
     suspend fun refresh() {
         try {
             _state.value = request("/state", null)
             online.value = true
         } catch (e: Exception) {
+            // not on its port any more? (the receiver moved to the next port) – look, at most every 20 s
+            if (e !is ApiException && System.currentTimeMillis() - lastLocate > 20_000) {
+                lastLocate = System.currentTimeMillis()
+                val hit = app.targets.discovery.locate(device.host, device.port, device.deviceId)
+                if (hit != null && hit.first != device.port) {
+                    app.targets.moved(device.copy(port = hit.first))
+                    runCatching { _state.value = request("/state", null); online.value = true; return }
+                }
+            }
             online.value = false
         }
     }
@@ -334,7 +345,10 @@ class TargetManager(private val app: App) {
     suspend fun pair(host: String, port: Int, code: String, password: String?): PairedDevice {
         val server = app.settings.serverUrl ?: throw IOException(tr("notSignedIn"))
         val user = app.settings.username ?: throw IOException(tr("notSignedIn"))
-        val info = info(host, port)
+        // the typed / found port may be old: take the port the receiver really answers on
+        val (realPort, info) = discovery.locate(host.trim(), port) ?: throw IOException(tr("noResponseAt", "h" to "$host:$port"))
+        @Suppress("NAME_SHADOWING") val port = realPort
+        @Suppress("NAME_SHADOWING") val host = host.trim()
         var req = PairRequest(code.trim(), server, user, app.settings.userId, phoneName = local.name)
         if (needsPassword(info)) {
             if (password.isNullOrEmpty()) throw IOException(tr("needPassword"))
@@ -361,6 +375,13 @@ class TargetManager(private val app: App) {
         app.settings.upsertPaired(d)
         _paired.value = app.settings.pairedDevices
         return d
+    }
+
+    /** A paired receiver answers on another port now. */
+    fun moved(d: PairedDevice) {
+        app.settings.upsertPaired(d)
+        remotes[d.deviceId]?.device = d
+        _paired.value = app.settings.pairedDevices
     }
 
     /** Local name for a paired device (only on this device). */

@@ -56,6 +56,7 @@ let clickTimer = null;
 let lastState = null;
 let savePosTimer = null;
 let listDir = null;      // null = sbaleno, 'up' / 'down' = směr, kterým okno naroslo
+let listExtra = 0;      // o kolik je okno teď vyšší (seznam kapitol / Přehrávat na)
 
 app.on('second-instance', () => showMain());
 
@@ -185,7 +186,7 @@ function createPopup() {
       if (!popupWin || popupWin.isDestroyed()) return;
       const [x, y] = popupWin.getPosition();
       // ukládá se vždy pozice sbaleného okna
-      config.popupPos = { x, y: listDir === 'up' ? y + LIST_H : y };
+      config.popupPos = { x, y: listDir === 'up' ? y + (listExtra || LIST_H) : y };
       saveConfig(config);
     }, 300);
   });
@@ -234,6 +235,7 @@ function showPopup() {
   if (!popupWin || popupWin.isDestroyed()) createPopup();
   const pos = savedPopupPosValid() ? config.popupPos : iconPopupPos();
   listDir = null;
+  listExtra = 0;
   popupWin.setBounds({ x: pos.x, y: pos.y, width: POPUP_W, height: POPUP_H });
   popupWin.webContents.send('popup-shown');
   popupWin.show();
@@ -576,17 +578,32 @@ const discovery = remote.createDiscovery({
     let changed = false;
     for (const f of discovery.list()) {
       const p = config.paired.find((d) => d.deviceId && d.deviceId === f.deviceId);
-      if (p && f.host && (p.host !== f.host || p.port !== f.port)) { p.host = f.host; p.port = f.port; changed = true; }
+      if (p && f.host && (p.host !== f.host || p.port !== f.port)) {
+        // záznam mDNS může být starý (jiný port) – převzít jen to, co opravdu odpovídá
+        remote.locate(f.host, f.port, p.deviceId).then((hit) => {
+          if (hit && (p.host !== f.host || p.port !== hit.port)) { p.host = f.host; p.port = hit.port; saveConfig(config); }
+        });
+      }
     }
-    if (changed) saveConfig(config);
   }
 });
+
+const lastLocate = new Map();
 
 ipcMain.handle('devices:get', async () => {
   discovery.refresh();
   const paired = await Promise.all(config.paired.map(async (d) => {
     try {
-      const np = await remote.remoteState(d);
+      const np = await remote.remoteState(d).catch(async (e) => {
+        // přijímač mohl přejít na jiný port (8766, když 8765 drží něco jiného)
+        if (e.status || Date.now() - (lastLocate.get(d.deviceId) || 0) < 20000) throw e;
+        lastLocate.set(d.deviceId, Date.now());
+        const hit = await remote.locate(d.host, d.port, d.deviceId);
+        if (!hit || hit.port === d.port) throw e;
+        d.port = hit.port;
+        saveConfig(config);
+        return remote.remoteState(d);
+      });
       return { id: d.deviceId, name: d.name, kind: d.kind || 'tv', host: d.host, online: true, title: np.itemId ? np.title : null, isPlaying: !!np.isPlaying };
     } catch (e) {
       return { id: d.deviceId, name: d.name, kind: d.kind || 'tv', host: d.host, online: false };
@@ -602,9 +619,11 @@ ipcMain.handle('devices:select', (_e, id) => selectTarget(id));
 
 ipcMain.handle('devices:info', async (_e, host, port) => {
   try {
-    const info = await remote.remoteInfo(host, port);
+    const hit = await remote.locate(host, port);
+    if (!hit) return { ok: false };
+    const info = hit.info;
     const u = await localCmd('user');
-    return { ok: true, name: info.name, kind: info.kind || 'tv', needsPassword: remote.needsPassword(info, config.serverUrl, u && u.username) };
+    return { ok: true, port: hit.port, name: info.name, kind: info.kind || 'tv', needsPassword: remote.needsPassword(info, config.serverUrl, u && u.username) };
   } catch (e) {
     return { ok: false };
   }
@@ -650,16 +669,24 @@ ipcMain.on('popup:open-main', () => showMain());
 ipcMain.on('popup:hide', () => hidePopup());
 
 // seznam kapitol: okno naroste nahoru (pokud je nad ním místo), jinak dolů; sbalení vrátí původní polohu
-ipcMain.handle('popup:list', (_e, open) => {
+// h = o kolik okno naroste (seznam kapitol pevně LIST_H, „Přehrávat na“ podle obsahu)
+ipcMain.handle('popup:list', (_e, open, h) => {
   if (!popupWin || popupWin.isDestroyed()) return null;
   const b = popupWin.getBounds();
+  const want = Math.round(Math.max(80, Math.min(Number(h) || LIST_H, 560)));
   if (open && !listDir) {
     const wa = screen.getDisplayMatching(b).workArea;
-    listDir = b.y - LIST_H >= wa.y ? 'up' : 'down';
-    popupWin.setBounds({ x: b.x, y: listDir === 'up' ? b.y - LIST_H : b.y, width: POPUP_W, height: POPUP_H + LIST_H });
+    listDir = b.y - want >= wa.y ? 'up' : 'down';
+    listExtra = want;
+    popupWin.setBounds({ x: b.x, y: listDir === 'up' ? b.y - want : b.y, width: POPUP_W, height: POPUP_H + want });
+  } else if (open && listDir && want !== listExtra) {
+    // už otevřené, jen jiná výška (rozbalené párování): okraj u minipřehrávače zůstane na místě
+    popupWin.setBounds({ x: b.x, y: listDir === 'up' ? b.y + listExtra - want : b.y, width: POPUP_W, height: POPUP_H + want });
+    listExtra = want;
   } else if (!open && listDir) {
-    popupWin.setBounds({ x: b.x, y: listDir === 'up' ? b.y + LIST_H : b.y, width: POPUP_W, height: POPUP_H });
+    popupWin.setBounds({ x: b.x, y: listDir === 'up' ? b.y + listExtra : b.y, width: POPUP_W, height: POPUP_H });
     listDir = null;
+    listExtra = 0;
   }
   return listDir;
 });

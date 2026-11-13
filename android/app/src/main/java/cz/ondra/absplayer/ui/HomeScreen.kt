@@ -57,6 +57,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.foundation.pager.HorizontalPager
@@ -145,6 +147,20 @@ fun HomeScreen(vm: MainViewModel) {
             TabRow(
                 selectedTabIndex = vm.tab, containerColor = C.Bg, contentColor = C.Accent,
                 divider = { HorizontalDivider(color = C.Line) },
+                // without the slide animation: the line moves together with the remote's focus
+                indicator = { positions ->
+                    positions.getOrNull(vm.tab)?.let { pos ->
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .wrapContentSize(Alignment.BottomStart)
+                                .offset(x = pos.left)
+                                .width(pos.width)
+                                .height(3.dp)
+                                .background(C.Accent),
+                        )
+                    }
+                },
                 modifier = Modifier.onFocusChanged { vm.tabsFocused = it.hasFocus }.focusProperties { enter = { tabFocus[vm.tab] } }.focusGroup(),
             ) {
                 listOf(tr("tabContinue"), tr("tabAdded"), tr("tabLibrary"), tr("tabSeries"), tr("tabAuthors")).forEachIndexed { i, t ->

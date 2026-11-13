@@ -89,9 +89,12 @@ app.whenReady().then(async () => {
   let fakeCursor = { x: -100, y: -100 };
   ipcMain.handle('popup:cursor', () => fakeCursor);
   let listDir = null;
-  ipcMain.handle('popup:list', (_e, open) => {
+  ipcMain.handle('popup:list', (_e, open, h) => {
     const b = popup.getBounds();
-    if (open && !listDir) { listDir = global.__dir || 'up'; popup.setBounds({ x: b.x, y: b.y, width: 380, height: 236 + 300 }); }
+    const want = Math.round(Math.max(80, Math.min(Number(h) || 300, 560)));
+    global.__listH = open ? want : 0;
+    if (open && !listDir) { listDir = global.__dir || 'up'; popup.setBounds({ x: b.x, y: b.y, width: 380, height: 236 + want }); }
+    else if (open && listDir) popup.setBounds({ x: b.x, y: b.y, width: 380, height: 236 + want });
     else if (!open && listDir) { listDir = null; popup.setBounds({ x: b.x, y: b.y, width: 380, height: 236 }); }
     return listDir;
   });
@@ -216,7 +219,7 @@ app.whenReady().then(async () => {
   await jsP("document.querySelector('#player [data-act=devices]').click()");
   await wait(900);
   check('devices panel open', await jsP("!document.getElementById('devPanel').classList.contains('hidden')"));
-  check('devices window expanded', popup.getBounds().height === 536);
+  check('devices window expanded', popup.getBounds().height > 236 + 80 && popup.getBounds().height === 236 + global.__listH);
   check('device rows (this PC + 2 paired)', await jsP("document.querySelectorAll('#devRows .dev-row').length") === 3);
   check('offline device dimmed', await jsP("document.querySelectorAll('#devRows .dev-row.off').length") === 1);
   check('playing subtitle', (await jsP("document.querySelectorAll('#devRows .dev-row')[1].querySelector('.sb').textContent")) === 'Hraje: Duna');
@@ -224,6 +227,8 @@ app.whenReady().then(async () => {
   check('pair form hidden behind button', await jsP("document.getElementById('pairSection').classList.contains('hidden') && !document.getElementById('pairOpen').classList.contains('hidden')"));
   check('pair button label', (await jsP("document.getElementById('pairOpen').textContent")) === 'Spárovat zařízení (TV nebo PC)');
   await shot(popup, 'p-devices.png');
+  const hClosed = global.__listH;
+  check('devices panel fits its content (no big empty space)', hClosed > 100 && hClosed < 300);
   await jsP("document.querySelectorAll('#devRows .dev-row')[1].querySelector('.dev-tools .icon-btn').click()");
   await wait(150);
   check('rename turns the row into a field', await jsP("!!document.querySelector('#devRows .dev-row input.dev-name')"));
@@ -240,7 +245,10 @@ app.whenReady().then(async () => {
   check('pair form cancel', await jsP("document.getElementById('pairSection').classList.contains('hidden')"));
   await jsP("document.getElementById('pairOpen').click()");
   await wait(200);
+  await wait(200);
   await shot(popup, 'p-pair-open.png');
+  check('window grows when pairing opens', global.__listH > hClosed + 60);
+  check('pairing form fully visible', await jsP("(() => { const b = document.getElementById('myCode').getBoundingClientRect(); return b.bottom <= window.innerHeight; })()"));
   await jsP("document.querySelector('#devFound .dev-row').click()");
   await wait(700);
   check('found device fills IP', await jsP("document.getElementById('pHost').value") === '10.0.0.7');

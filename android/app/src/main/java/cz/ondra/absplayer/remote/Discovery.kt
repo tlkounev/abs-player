@@ -71,12 +71,7 @@ class Discovery(context: Context) {
                     async {
                         gate.withPermit {
                             if (!open(host, port)) return@withPermit
-                            val info = runCatching {
-                                scanHttp.newCall(Request.Builder().url("http://$host:$port/info").build()).execute().use { r ->
-                                    if (!r.isSuccessful) null
-                                    else RemoteHttp.json.decodeFromString(InfoResponse.serializer(), r.body?.string() ?: "")
-                                }
-                            }.getOrNull() ?: return@withPermit
+                            val info = fetchInfo(host, port) ?: return@withPermit
                             if (info.deviceId == app.settings.deviceId) return@withPermit
                             main.post {
                                 // one entry per device: mDNS and scan may both find it
@@ -89,6 +84,28 @@ class Discovery(context: Context) {
                 }.awaitAll()
         }
     }
+
+    private fun fetchInfo(host: String, port: Int): InfoResponse? = runCatching {
+        scanHttp.newCall(Request.Builder().url("http://$host:$port/info").build()).execute().use { r ->
+            if (!r.isSuccessful) null
+            else RemoteHttp.json.decodeFromString(InfoResponse.serializer(), r.body?.string() ?: "")
+        }
+    }.getOrNull()
+
+    /**
+     * Finds the receiver on [host]: [port] first, then the other receiver ports. Something else may
+     * hold 8765 on a TV – then our receiver runs on 8766 and old addresses / mDNS records still say
+     * 8765. With [deviceId] only that device counts. Returns the working port and its /info.
+     */
+    suspend fun locate(host: String, port: Int, deviceId: String? = null): Pair<Int, InfoResponse>? =
+        kotlinx.coroutines.withContext(Dispatchers.IO) {
+            fun ok(i: InfoResponse?) = i != null && (deviceId == null || i.deviceId == deviceId)
+            fetchInfo(host, port)?.takeIf { ok(it) }?.let { return@withContext port to it }
+            SCAN_PORTS.filter { it != port }
+                .map { q -> async { if (open(host, q)) fetchInfo(host, q)?.takeIf { ok(it) }?.let { q to it } else null } }
+                .awaitAll()
+                .firstOrNull { it != null }
+        }
 
     private fun open(host: String, port: Int): Boolean = try {
         Socket().use { it.connect(InetSocketAddress(host, port), 400); true }
@@ -160,8 +177,15 @@ class Discovery(context: Context) {
                             val name = attrs["name"]?.let { String(it, Charsets.UTF_8) } ?: si.serviceName
                             val kind = attrs["kind"]?.let { String(it, Charsets.UTF_8) } ?: "tv"
                             if (id != app.settings.deviceId) {
-                                val rest = if (id == null) _found.value else _found.value.filterValues { it.deviceId != id }
-                                _found.value = rest + (si.serviceName to Discovered(si.serviceName, id, name, host, si.port, kind))
+                                val sn = si.serviceName
+                                scope.launch {
+                                    // an mDNS record can be old (other port) – take only what really answers
+                                    val (port, info) = locate(host, si.port, id) ?: return@launch
+                                    main.post {
+                                        val rest = _found.value.filterValues { it.deviceId != info.deviceId }
+                                        _found.value = rest + (sn to Discovered(sn, info.deviceId, info.name.ifBlank { name }, host, port, info.kind.ifBlank { kind }))
+                                    }
+                                }
                             }
                         }
                         resolving = false
@@ -184,8 +208,8 @@ class Discovery(context: Context) {
     }
 
     companion object {
-        /** The TV takes the first free one from 8765 (8766 when something else holds 8765). */
-        val SCAN_PORTS = (DEFAULT_PORT until DEFAULT_PORT + 4).toList()
+        /** The receiver takes the first free port from 8765 (8766 when something else holds 8765, …). */
+        val SCAN_PORTS = (DEFAULT_PORT until DEFAULT_PORT + 10).toList()
 
         /** This device's IPv4 address in the home network. */
         fun ownAddress(): String? = runCatching {
