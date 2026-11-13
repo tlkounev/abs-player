@@ -231,6 +231,7 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
                                 val locFile = vm.ebookLocationsFile(screen.itemId)
                                 return buildJsonObject {
                                     put("bookUrl", "https://reader.local/book.epub")
+                                    put("noSpinner", true)
                                     put("mode", screen.mode)
                                     p?.ebookLocation?.let { put("startCfi", it) }
                                     put("audioTime", screen.audioTime ?: p?.currentTime ?: 0.0)

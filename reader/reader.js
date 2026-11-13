@@ -46,6 +46,8 @@
 
   const wait = document.getElementById('wait');
   const showWait = (on) => wait.classList.toggle('hidden', !on);
+  // Android shows its own loading indicator (with text): no second one here
+  if (cfg.noSpinner) showWait(false);
 
   function norm(s) {
     return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
