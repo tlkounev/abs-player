@@ -285,6 +285,16 @@ private fun AddedTab(vm: MainViewModel) {
             (want ?: r.books.firstOrNull()?.id ?: r.series.firstOrNull()?.id)?.let { id -> runCatching { requesters[id]?.requestFocus() } }
         }
     }
+    // remote, between the two rows: back to the book / series you were on (else the first one
+    // visible) – not to whatever is geometrically nearest
+    val seriesRow = rememberLazyListState()
+    var lastBook by remember { mutableStateOf<String?>(null) }
+    var lastSeries by remember { mutableStateOf<String?>(null) }
+    fun target(row: androidx.compose.foundation.lazy.LazyListState, last: String?): FocusRequester {
+        val visible = row.layoutInfo.visibleItemsInfo.map { it.key }
+        val id = (last?.takeIf { it in visible } ?: visible.firstOrNull()) as? String
+        return id?.let { requesters[it] } ?: FocusRequester.Default
+    }
     LazyColumn(contentPadding = PaddingValues(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         if (r.books.isNotEmpty()) {
             item { SectionTitle(tr("recentlyAdded")) }
@@ -298,7 +308,10 @@ private fun AddedTab(vm: MainViewModel) {
                         BookCard(
                             vm, li, false,
                             if (vm.app.isTv) requesters.getOrPut(li.id) { FocusRequester() } else null,
-                            Modifier.width(140.dp),
+                            Modifier
+                                .width(140.dp)
+                                .onFocusChanged { if (it.isFocused) lastBook = li.id }
+                                .focusProperties { if (vm.app.isTv && r.series.isNotEmpty()) down = target(seriesRow, lastSeries) },
                         )
                     }
                 }
@@ -308,11 +321,17 @@ private fun AddedTab(vm: MainViewModel) {
             item { SectionTitle(tr("recentSeries")) }
             item {
                 LazyRow(
+                    state = seriesRow,
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(18.dp),
                 ) {
                     items(r.series, key = { it.id }) { se ->
-                        SeriesCard(vm, se, if (vm.app.isTv) requesters.getOrPut(se.id) { FocusRequester() } else null)
+                        SeriesCard(
+                            vm, se, if (vm.app.isTv) requesters.getOrPut(se.id) { FocusRequester() } else null,
+                            Modifier
+                                .onFocusChanged { if (it.isFocused) lastSeries = se.id }
+                                .focusProperties { if (vm.app.isTv && r.books.isNotEmpty()) up = target(bookRow, lastBook) },
+                        )
                     }
                 }
             }
@@ -327,11 +346,11 @@ private fun SectionTitle(t: String) {
 
 /** Series tile: up to three covers fanned out, the name under them. */
 @Composable
-private fun SeriesCard(vm: MainViewModel, se: cz.ondra.absplayer.data.Series, focus: FocusRequester?) {
+private fun SeriesCard(vm: MainViewModel, se: cz.ondra.absplayer.data.Series, focus: FocusRequester?, modifier: Modifier = Modifier) {
     val src = remember { MutableInteractionSource() }
     val focused by src.collectIsFocusedAsState()
     Column(
-        Modifier
+        modifier
             .width(184.dp)
             .then(if (focus != null) Modifier.focusRequester(focus) else Modifier)
             .clickable(interactionSource = src, indication = null) { vm.openSeries(se) },
