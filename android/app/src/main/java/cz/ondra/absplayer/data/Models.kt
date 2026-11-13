@@ -37,6 +37,9 @@ data class MediaProgress(
     val isFinished: Boolean = false,
     val hideFromContinueListening: Boolean = false,
     val lastUpdate: Long = 0,
+    /** E-book: CFI of the page start (as the ABS web reader stores it) and 0..1. */
+    val ebookLocation: String? = null,
+    val ebookProgress: Double? = null,
 )
 
 @Serializable
@@ -99,7 +102,20 @@ data class Media(
     val chapters: List<Chapter> = emptyList(),
     val numChapters: Int? = null,
     val coverPath: String? = null,
-)
+    /** Minified items: "epub" / "pdf" …; expanded items: the file object. */
+    val ebookFormat: String? = null,
+    val ebookFile: JsonElement? = null,
+) {
+    val ebookExt: String?
+        get() = ebookFormat?.lowercase()
+            ?: ((ebookFile as? JsonObject)?.get("ebookFormat") as? JsonPrimitive)?.contentOrNull?.lowercase()
+            ?: (((ebookFile as? JsonObject)?.get("metadata") as? JsonObject)?.get("ext") as? JsonPrimitive)?.contentOrNull
+                ?.trimStart('.')?.lowercase()
+
+    /** Our reader handles EPUB. */
+    val hasEpub: Boolean get() = ebookExt == "epub"
+    val hasAudio: Boolean get() = (duration ?: 0.0) > 0.0
+}
 
 @Serializable
 data class LibraryItem(

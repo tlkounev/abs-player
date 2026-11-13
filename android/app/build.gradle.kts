@@ -13,8 +13,8 @@ android {
         applicationId = "cz.ondra.absplayer"
         minSdk = 26
         targetSdk = 35
-        versionCode = 23
-        versionName = "1.5.9"
+        versionCode = 24
+        versionName = "1.6.0"
     }
 
     // One fixed release key (GitHub secret, decoded by CI into ABS_KEYSTORE), so every new APK
@@ -94,3 +94,12 @@ dependencies {
     }
     implementation("org.nanohttpd:nanohttpd:2.3.1")
 }
+
+// The e-book reader (epub.js page, shared with the Windows app) lives in /reader at the repo root.
+val readerAssets = layout.buildDirectory.dir("generated/readerAssets")
+val syncReader by tasks.registering(Sync::class) {
+    from(rootProject.file("../reader")) { exclude("test/**") }
+    into(readerAssets.map { it.dir("reader") })
+}
+android.sourceSets.getByName("main").assets.srcDir(readerAssets)
+tasks.named("preBuild") { dependsOn(syncReader) }

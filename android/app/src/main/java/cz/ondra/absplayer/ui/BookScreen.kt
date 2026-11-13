@@ -111,6 +111,39 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                     if (p?.isFinished == true) vm.play(screen.id, 0.0) else vm.play(screen.id)
                     vm.push(Screen.Player)
                 }
+                val hasEpub = b?.media?.hasEpub == true
+                val hasAudio = b?.media?.hasAudio != false
+                val onRead = { vm.push(Screen.Reader(screen.id, b?.title ?: screen.title)) }
+                // listening and reading are in different places: offer to continue one from the other
+                val dur = b?.media?.duration ?: 0.0
+                val audioFrac = if (p != null && dur > 0) p.currentTime / dur else null
+                val readFrac = p?.ebookProgress
+                val syncHint: @Composable () -> Unit = {
+                    if (hasEpub && hasAudio && audioFrac != null && audioFrac > 0 && p?.ebookLocation != null && readFrac != null &&
+                        kotlin.math.abs(audioFrac - readFrac) > 0.02
+                    ) {
+                        Column(
+                            Modifier
+                                .padding(top = 12.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(C.Accent.copy(alpha = 0.10f))
+                                .padding(horizontal = 6.dp, vertical = 4.dp),
+                        ) {
+                            Text(
+                                tr(if (audioFrac > readFrac) "listenAhead" else "readAhead"),
+                                color = C.Muted, fontSize = 12.sp, modifier = Modifier.padding(start = 6.dp, top = 4.dp),
+                            )
+                            Row {
+                                TextButton(onClick = { vm.push(Screen.Reader(screen.id, b?.title ?: screen.title, "fromAudio", p.currentTime)) }) {
+                                    Text(tr("readFromListening"), color = C.Accent, fontSize = 13.sp)
+                                }
+                                TextButton(onClick = { vm.push(Screen.Reader(screen.id, b?.title ?: screen.title, "toAudio")) }) {
+                                    Text(tr("listenFromReading"), color = C.Accent, fontSize = 13.sp)
+                                }
+                            }
+                        }
+                    }
+                }
                 val info: @Composable (Alignment.Horizontal) -> Unit = { align ->
                     Column(horizontalAlignment = align, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(b?.title ?: screen.title, fontSize = 22.sp, fontWeight = FontWeight.Bold)
@@ -126,7 +159,10 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                                 p != null && p.currentTime > 0 -> tr("pctLeft", "p" to (p.progress * 100).toInt(), "t" to formatLeft(dur - p.currentTime))
                                 else -> formatLeft(dur)
                             }
-                            Text(line, color = C.Muted, fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp))
+                            if (hasAudio) Text(line, color = C.Muted, fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp))
+                            if (hasEpub && (readFrac ?: 0.0) > 0) {
+                                Text(tr("readPct", "p" to ((readFrac ?: 0.0) * 100).toInt()), color = Color(0xFF8FB7E6), fontSize = 14.sp)
+                            }
                         }
                     }
                 }
@@ -141,7 +177,12 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                PlayPill(label, Modifier.focusRequester(playFocus).focusProperties { left = FocusRequester.Cancel }, onPlay)
+                                if (hasAudio) {
+                                    PlayPill(label, Modifier.focusRequester(playFocus).focusProperties { left = FocusRequester.Cancel }, onPlay)
+                                    if (hasEpub) OutlinePill("📖  " + tr("read")) { onRead() }
+                                } else {
+                                    PlayPill("📖  " + tr("read"), Modifier.focusRequester(playFocus).focusProperties { left = FocusRequester.Cancel }, onRead)
+                                }
                                 DisposableEffect(Unit) { playShown = true; onDispose { playShown = false } }
                                 OutlinePill(tr("playOn") + ": " + target.name) { vm.sheet = Sheet.Devices }
                                 if (b != null) {
@@ -150,6 +191,7 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                                     }
                                 }
                             }
+                            syncHint()
                         }
                     }
                 } else {
@@ -158,8 +200,15 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                         Spacer(Modifier.height(14.dp))
                         info(Alignment.CenterHorizontally)
                         Spacer(Modifier.height(14.dp))
-                        PlayPill(label, Modifier.fillMaxWidth().focusRequester(playFocus), onPlay)
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            if (hasAudio) PlayPill(label, Modifier.weight(1f).focusRequester(playFocus), onPlay)
+                            if (hasEpub) {
+                                if (hasAudio) OutlinePill("📖  " + tr("read"), Modifier.weight(1f)) { onRead() }
+                                else PlayPill("📖  " + tr("read"), Modifier.weight(1f).focusRequester(playFocus), onRead)
+                            }
+                        }
                         DisposableEffect(Unit) { playShown = true; onDispose { playShown = false } }
+                        syncHint()
                         Text(
                             tr("playOn") + ": " + target.name, color = C.Muted, fontSize = 13.sp,
                             modifier = Modifier.padding(top = 6.dp).clip(RoundedCornerShape(6.dp)).clickable { vm.sheet = Sheet.Devices }.padding(4.dp),
@@ -313,9 +362,9 @@ fun PlayPill(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) 
 }
 
 @Composable
-private fun OutlinePill(label: String, onClick: () -> Unit) {
+private fun OutlinePill(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Box(
-        Modifier
+        modifier
             .height(44.dp)
             .clip(RoundedCornerShape(22.dp))
             .border(1.dp, C.Outline, RoundedCornerShape(22.dp))

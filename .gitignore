@@ -14,3 +14,4 @@ dist/
 win/test/out/
 *.log
 __pycache__/
+reader/test/out-*.png

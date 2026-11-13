@@ -285,6 +285,25 @@ class AbsApi(private val settings: Settings) {
     fun authorImageUrl(authorId: String, width: Int = 300): String? =
         settings.serverUrl?.let { "$it/api/authors/$authorId/image?width=$width" }
 
+    /** Downloads the book's e-book file to [target] (with the login). */
+    suspend fun downloadEbook(itemId: String, target: java.io.File) = withContext(Dispatchers.IO) {
+        val url = (settings.serverUrl ?: throw IOException("not signed in")) + "/api/items/$itemId/ebook"
+        http.newCall(Request.Builder().url(url).build()).execute().use { resp ->
+            if (!resp.isSuccessful) throw ApiException(resp.code, "HTTP ${resp.code}")
+            val tmp = java.io.File(target.parentFile, target.name + ".part")
+            resp.body!!.byteStream().use { input -> tmp.outputStream().use { input.copyTo(it) } }
+            if (!tmp.renameTo(target)) throw IOException("cannot save e-book")
+        }
+    }
+
+    /** Reading position, the same fields the ABS web reader writes. */
+    suspend fun saveEbookProgress(itemId: String, cfi: String, progress: Double?) {
+        patch("/api/me/progress/$itemId", buildJsonObject {
+            put("ebookLocation", cfi)
+            if (progress != null && progress > 0) put("ebookProgress", progress)
+        })
+    }
+
     /** The original cover file (when the server cannot make the resized one). */
     fun coverRawUrl(itemId: String): String? =
         settings.serverUrl?.let { "$it/api/items/$itemId/cover?raw=1" }

@@ -36,6 +36,12 @@ sealed interface Screen {
     data class Book(val id: String, val title: String) : Screen
     data class SeriesBooks(val libraryId: String, val seriesId: String, val name: String) : Screen
     data class AuthorBooks(val libraryId: String, val authorId: String, val name: String) : Screen
+
+    /**
+     * E-book reader. [mode]: "saved" (where reading ended), "fromAudio" (where listening ended,
+     * [audioTime]) or "toAudio" (find the time of the reading position and play from there).
+     */
+    data class Reader(val itemId: String, val title: String, val mode: String = "saved", val audioTime: Double? = null) : Screen
     data object Player : Screen
 }
 
@@ -384,6 +390,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun play(itemId: String, startSec: Double? = null) {
         target.value.playItem(itemId, startSec)
+    }
+
+    // ------------------------------------------------------------------ e-book
+
+    /** The book's EPUB in the cache (downloaded once). */
+    suspend fun ebookFile(itemId: String): java.io.File {
+        val dir = java.io.File(app.cacheDir, "ebooks").apply { mkdirs() }
+        val f = java.io.File(dir, "$itemId.epub")
+        if (!f.exists() || f.length() == 0L) api.downloadEbook(itemId, f)
+        return f
+    }
+
+    fun ebookLocationsFile(itemId: String) = java.io.File(java.io.File(app.cacheDir, "ebooks").apply { mkdirs() }, "$itemId.loc.json")
+
+    private var ebookSaveJob: kotlinx.coroutines.Job? = null
+
+    /** Reading position: at once into the local state, to the server 2 s after the last page turn. */
+    fun saveEbookPosition(itemId: String, cfi: String, prog: Double?) {
+        val old = progress[itemId]
+        if (old?.ebookLocation == cfi) return
+        progress = progress + (itemId to (old ?: MediaProgress(libraryItemId = itemId)).copy(ebookLocation = cfi, ebookProgress = prog ?: old?.ebookProgress))
+        ebookSaveJob?.cancel()
+        ebookSaveJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(2_000)
+            runCatching { api.saveEbookProgress(itemId, cfi, prog) }
+        }
+    }
+
+    /** From the reader: listen from [seconds] – the player replaces the reader. */
+    fun listenFrom(itemId: String, seconds: Double) {
+        play(itemId, seconds)
+        if (stack.lastOrNull() is Screen.Reader) pop()
+        if (stack.lastOrNull() != Screen.Player) push(Screen.Player)
     }
 
     /** "local", "tv" or "pc". */

@@ -61,6 +61,20 @@ class Settings(context: Context) {
         get() = prefs.getFloat("speed", 1.0f)
         set(v) = prefs.edit().putFloat("speed", v).apply()
 
+    // --- e-book reader (this device only) ---
+    var readerTheme: String
+        get() = prefs.getString("readerTheme", "dark") ?: "dark"
+        set(v) = prefs.edit().putString("readerTheme", v).apply()
+    var readerFontSize: Int
+        get() = prefs.getInt("readerFontSize", 100)
+        set(v) = prefs.edit().putInt("readerFontSize", v).apply()
+    var readerFont: String
+        get() = prefs.getString("readerFont", "serif") ?: "serif"
+        set(v) = prefs.edit().putString("readerFont", v).apply()
+    var readerLineHeight: Float
+        get() = prefs.getFloat("readerLineHeight", 1.6f)
+        set(v) = prefs.edit().putFloat("readerLineHeight", v).apply()
+
     var volume: Float
         get() = prefs.getFloat("volume", 1.0f)
         set(v) = prefs.edit().putFloat("volume", v).apply()
