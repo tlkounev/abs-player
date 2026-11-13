@@ -56,7 +56,7 @@ class Discovery(context: Context) {
     private var scanJob: Job? = null
     private val scanHttp = OkHttpClient.Builder()
         .connectTimeout(1500, TimeUnit.MILLISECONDS)
-        .readTimeout(2, TimeUnit.SECONDS)
+        .readTimeout(4, TimeUnit.SECONDS) // the PC answers /info after asking its ABS window
         .build()
 
     /** Scans the home network (/24 of this device) for receivers; results go to [found]. */
@@ -65,8 +65,11 @@ class Discovery(context: Context) {
         scanJob = scope.launch {
             val me = ownAddress() ?: return@launch
             val prefix = me.substringBeforeLast('.') + "."
-            val gate = Semaphore(64)
-            (1..254).map { "$prefix$it" }.filter { it != me }.flatMap { host -> SCAN_PORTS.map { host to it } }
+            val gate = Semaphore(128)
+            // all addresses on 8765 first (that is where a receiver usually is), then the next ports;
+            // results show up as they come
+            val hosts = (1..254).map { "$prefix$it" }.filter { it != me }
+            SCAN_PORTS.flatMap { port -> hosts.map { it to port } }
                 .map { (host, port) ->
                     async {
                         gate.withPermit {

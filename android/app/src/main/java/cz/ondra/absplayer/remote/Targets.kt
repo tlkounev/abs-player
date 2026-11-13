@@ -134,6 +134,11 @@ class RemoteTarget(private val app: App, device: PairedDevice) : PlaybackTarget 
 
     private fun base() = "http://${device.host}:${device.port}"
 
+    /** What we know before the device answers (the book just handed over) – no empty player meanwhile. */
+    fun seed(np: NowPlaying) {
+        _state.value = np
+    }
+
     override fun activate() {
         if (pollJob?.isActive == true) return
         pollJob = scope.launch {
@@ -282,6 +287,10 @@ class TargetManager(private val app: App) {
             kotlinx.coroutines.withTimeoutOrNull(2_500) { cur.pauseForHandoff() } ?: st.positionSec
         } else null
         cur.deactivate()
+        // the new device shows the handed book at once (it answers with its real state a moment later)
+        if (itemId != null && pos != null && target is RemoteTarget) {
+            target.seed(st.copy(positionSec = pos, isPlaying = true, isLoading = true, error = null, info = null))
+        }
         _current.value = target
         target.activate()
         if (itemId != null && pos != null) {

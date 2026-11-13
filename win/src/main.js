@@ -416,12 +416,11 @@ async function selectTarget(id) {
     return true;
   }
   const d = pairedDevice(id);
-  const online = await withTimeout(remote.remoteState(d), 3000).then(() => true, () => false);
-  if (online) {
-    if (hand && hand.id) await remote.remoteCmd(d, { action: 'playItem', itemId: hand.id, value: hand.time }).catch(() => {});
-  } else {
-    startWaking(d, hand, from.id);
-  }
+  // knihu poslat rovnou (bez předchozí kontroly stavu); neodpoví-li zařízení, budí se / vrací se sem
+  const ok = hand && hand.id
+    ? await withTimeout(remote.remoteCmd(d, { action: 'playItem', itemId: hand.id, value: hand.time }), 4000).then(() => true, () => false)
+    : await withTimeout(remote.remoteState(d), 3000).then(() => true, () => false);
+  if (!ok) startWaking(d, hand, from.id);
   return true;
 }
 
@@ -591,6 +590,16 @@ const discovery = remote.createDiscovery({
 
 const lastLocate = new Map();
 
+/** Adresa tohoto PC v domácí síti (pro ruční párování z telefonu / TV). */
+function lanAddress() {
+  const nets = require('os').networkInterfaces();
+  const all = Object.entries(nets).flatMap(([name, list]) => (list || []).map((a) => ({ name, ...a })))
+    .filter((a) => a.family === 'IPv4' && !a.internal && /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a.address))
+    // virtuální adaptéry (Hyper-V, VirtualBox, VPN) až nakonec
+    .sort((a, b) => (/vEthernet|VirtualBox|VMware|WSL|Loopback|vpn|tap/i.test(a.name) ? 1 : 0) - (/vEthernet|VirtualBox|VMware|WSL|Loopback|vpn|tap/i.test(b.name) ? 1 : 0));
+  return all.length ? all[0].address : null;
+}
+
 ipcMain.handle('devices:get', async () => {
   discovery.refresh();
   const paired = await Promise.all(config.paired.map(async (d) => {
@@ -613,7 +622,7 @@ ipcMain.handle('devices:get', async () => {
   const discovered = discovery.list()
     .filter((f) => !config.paired.some((p) => p.deviceId && p.deviceId === f.deviceId))
     .map((f) => ({ name: f.name, kind: f.kind, host: f.host, port: f.port }));
-  return { current: currentTarget, local: { id: 'local', name: deviceName() }, paired, discovered, code: pairingCode, port: receiver.port };
+  return { current: currentTarget, local: { id: 'local', name: deviceName() }, paired, discovered, code: pairingCode, port: receiver.port, addr: lanAddress() };
 });
 
 ipcMain.handle('devices:select', (_e, id) => selectTarget(id));

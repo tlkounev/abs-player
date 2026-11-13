@@ -319,12 +319,15 @@
           if (!vm.streamLibraryItem) return null;
           const id = vm.streamLibraryItem.id;
           if (vm.isPlaying) vm.playPause();
-          await new Promise((r) => setTimeout(r, 250));
-          await syncNow(vm);
           const time = currentTime(vm);
           watch.playing = false;
-          try { vm.closePlayer(); } catch (e) {}
-          inProgressCache.at = 0;
+          // druhé zařízení může začít hned; uložení pozice a zavření relace doběhne tady na pozadí
+          (async () => {
+            await new Promise((r) => setTimeout(r, 250));
+            try { await syncNow(vm); } catch (e) {}
+            try { vm.closePlayer(); } catch (e) {}
+            inProgressCache.at = 0;
+          })();
           return { id, time };
         })();
       case 'jumpBack':

@@ -1008,6 +1008,7 @@ function buildDevices() {
   const b = document.createElement('b');
   b.textContent = code.slice(0, 3) + ' ' + code.slice(3);
   $('myCode').append(span, b);
+  if (devData.addr && devData.port) $('myCode').append(document.createTextNode(' · ' + devData.addr + ':' + devData.port));
 }
 
 function setPairOpen(open) {

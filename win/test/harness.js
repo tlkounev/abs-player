@@ -310,7 +310,10 @@ app.whenReady().then(async () => {
   await exec("window.__storeProgress = null; window.__absPlayer.cmd('playPause')");
   await wait(300);
   await exec("window.__net.length = 0");
+  const t0 = Date.now();
   const h = await exec("window.__absPlayer.cmd('handoff')");
+  check('handoff returns at once (sync in the background)', Date.now() - t0 < 200);
+  await wait(700);
   const n2 = await net();
   check('handoff ' + JSON.stringify(h) + ' ' + JSON.stringify(n2), h && h.id === 'li1' && Math.round(h.time) === 7000 && n2.some((x) => x.startsWith('post:/api/session/sess1/sync:7000:')) && n2.includes('closePlayer'));
   await exec("window.__absPlayer.cmd('playItem', { id: 'li2', startTime: 42 })");

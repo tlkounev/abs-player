@@ -394,7 +394,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun switchTarget(t: PlaybackTarget) {
         viewModelScope.launch {
-            val item = app.targets.switchTo(t) ?: return@launch
+            // set before switching: the player must not show "nothing playing" for a moment
+            val moving = app.targets.current.value.state.value.itemId
+            if (moving != null) handoffItem = moving
+            val item = app.targets.switchTo(t)
+            if (item == null) {
+                handoffItem = null
+                return@launch
+            }
             // the book continues there: show the player
             handoffItem = item
             if (stack.lastOrNull() != Screen.Player) push(Screen.Player)
