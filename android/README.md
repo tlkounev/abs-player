@@ -1,7 +1,7 @@
 # ABS Player pro Android
 
 Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.5.9.
+Verze 1.6.0.
 
 ## Co umí
 
@@ -10,6 +10,14 @@ Verze 1.5.9.
   - *Přidané* = Nedávno přidané knihy a Nedávné série (stejné police jako na Homu Audiobookshelfu);
   - Knihovna, Série i Autoři mají hledání;
   - v mřížkách je pod názvem série s pořadím (např. „Duna #2“).
+- **Čtení e-knih (EPUB):** v detailu knihy je vedle *Poslouchat* tlačítko *Číst* (jen u knih s e-knihou v ABS).
+  - Čtečka: epub.js ve WebView (stejná stránka `/reader` jako ve Windows). Nahoře kapitola, *Aa*
+    (velikost, písmo, motiv tmavý/sépie/světlý, řádkování) a obsah; dole průběh, strana a
+    *Poslouchat od této strany*. Na TV ←/→ listuje, OK ukáže lištu.
+  - Pozice čtení se ukládá do ABS (`ebookLocation`, `ebookProgress`) jako ve webové čtečce.
+  - Poslech ↔ četba: % uplynulé audio kapitoly = stejné % textu kapitoly (podle znaků). Kapitoly
+    se přiřadí podle názvu / čísla, jinak podle pořadí, jinak poměr přes celou knihu.
+  - Když je poslech jinde než četba, detail nabídne *Číst od místa poslechu* / *Poslouchat od místa četby*.
 - Detail knihy a přehrávač: autor a série jsou odkazy. Autor otevře své knihy, série své knihy v pořadí.
 - Přehrávač je rozložený jako minipřehrávač ABS Player pro Windows (varianta B):
   - nahoře velký obal;

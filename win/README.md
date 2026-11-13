@@ -96,3 +96,10 @@ npm test           # automatické testy proti maketě přehrávače ABS (screens
 ```
 
 Instalátor pro Windows lze sestavit i na Linuxu (electron-builder potřebuje Wine).
+
+## Čtení e-knih (EPUB)
+
+Okno čtečky se stejnou stránkou `/reader` jako Android (epub.js): obsah vlevo, nahoře kapitola,
+*Aa* a *Poslouchat od této strany*, dole průběh a strana. Listuje se šipkami, PageUp/PageDown
+nebo kolečkem. Pozice se ukládá do ABS jako ve webové čtečce. Kde se čtení otevírá, se ještě
+rozhoduje (návrh: 📖 Číst v seznamu Pokračovat v poslechu).
