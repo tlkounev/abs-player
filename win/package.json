@@ -7,8 +7,8 @@
   "author": "Ondra",
   "license": "MIT",
   "scripts": {
-    "start": "electron .",
-    "dist": "node scripts/gen-icons.js && node scripts/gen-flags.js && electron-builder --win --x64 --publish never",
+    "start": "node scripts/sync-reader.js && electron .",
+    "dist": "node scripts/sync-reader.js && node scripts/gen-icons.js && node scripts/gen-flags.js && electron-builder --win --x64 --publish never",
     "flags": "node scripts/gen-flags.js",
     "icons": "node scripts/gen-icons.js",
     "test": "node --test test/remote.test.js",

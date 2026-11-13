@@ -512,6 +512,105 @@ ipcMain.handle('devices:playHere', async () => {
 ipcMain.handle('abs:state', () => getState());
 ipcMain.handle('abs:cmd', (_e, name, arg) => routedCmd(name, arg));
 
+// ---------- čtečka e-knih (EPUB) ----------
+// Okno s epub.js (sdílená stránka /reader jako na Androidu). Pozice čtení se ukládá do ABS
+// (ebookLocation / ebookProgress) stejně jako webová čtečka; „Poslouchat od této strany“ spustí
+// audioknihu od odpovídajícího času (podíl kapitoly).
+const readers = new Map(); // webContents.id -> { id, info, mode, audioTime, file, win, saveTimer }
+const ebookDir = () => path.join(app.getPath('userData'), 'ebooks');
+
+async function openReader(id, mode, audioTime) {
+  for (const r of readers.values()) {
+    if (r.id === id && !r.win.isDestroyed()) { r.win.show(); r.win.focus(); return true; }
+  }
+  const info = await localCmd('readerInfo', { id });
+  if (!info || info.ext !== 'epub') return false;
+  fs.mkdirSync(ebookDir(), { recursive: true });
+  const file = path.join(ebookDir(), id + '.epub');
+  if (!fs.existsSync(file) || fs.statSync(file).size === 0) {
+    const res = await fetch(info.url, { headers: info.token ? { Authorization: 'Bearer ' + info.token } : {} });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    fs.writeFileSync(file + '.part', Buffer.from(await res.arrayBuffer()));
+    fs.renameSync(file + '.part', file);
+  }
+  const b = config.readerBounds || {};
+  const win = new BrowserWindow({
+    width: b.width || 1000, height: b.height || 700, x: b.x, y: b.y,
+    minWidth: 520, minHeight: 400, backgroundColor: '#1e1e1e', autoHideMenuBar: true, show: false,
+    icon: path.join(__dirname, '..', 'assets', 'icon.ico'),
+    webPreferences: { preload: path.join(__dirname, 'reader-preload.js'), contextIsolation: true, sandbox: true }
+  });
+  win.setMenu(null);
+  const r = { id, info, mode: mode || 'saved', audioTime, file, win, saveTimer: null };
+  readers.set(win.webContents.id, r);
+  const wcId = win.webContents.id;
+  win.on('close', () => { config.readerBounds = win.getBounds(); saveConfig(config); });
+  win.on('closed', () => {
+    const rr = readers.get(wcId);
+    if (rr && rr.saveTimer) { clearTimeout(rr.saveTimer); rr.flush && rr.flush(); }
+    readers.delete(wcId);
+  });
+  win.once('ready-to-show', () => win.show());
+  win.loadFile(path.join(__dirname, 'reader-window.html'));
+  return true;
+}
+
+ipcMain.handle('reader:open', async (_e, id, mode, audioTime) => {
+  try { return await openReader(id, mode, audioTime); } catch (e) { return false; }
+});
+
+ipcMain.on('reader:config', (e) => {
+  const r = readers.get(e.sender.id);
+  if (!r) { e.returnValue = '{}'; return; }
+  const locFile = path.join(ebookDir(), r.id + '.loc.json');
+  e.returnValue = JSON.stringify({
+    title: r.info.title,
+    hasAudio: r.info.duration > 0,
+    mode: r.mode,
+    startCfi: r.info.ebookLocation,
+    audioTime: r.audioTime != null ? r.audioTime : r.info.currentTime,
+    audioDuration: r.info.duration,
+    audioChapters: r.info.chapters,
+    settings: config.reader || {},
+    locations: fs.existsSync(locFile) ? fs.readFileSync(locFile, 'utf8') : null
+  });
+});
+
+ipcMain.handle('reader:book', (e) => {
+  const r = readers.get(e.sender.id);
+  return r ? new Uint8Array(fs.readFileSync(r.file)) : null;
+});
+
+ipcMain.on('reader:relocated', (e, json) => {
+  const r = readers.get(e.sender.id);
+  if (!r) return;
+  let pos;
+  try { pos = JSON.parse(json); } catch (err) { return; }
+  if (!pos.cfi || pos.cfi === r.info.ebookLocation) return;
+  r.info.ebookLocation = pos.cfi;
+  // na server až 2 s po posledním otočení stránky
+  clearTimeout(r.saveTimer);
+  r.flush = () => localCmd('saveEbook', { id: r.id, cfi: pos.cfi, progress: pos.progress });
+  r.saveTimer = setTimeout(() => { r.saveTimer = null; r.flush(); }, 2000);
+});
+
+ipcMain.on('reader:locations', (e, json) => {
+  const r = readers.get(e.sender.id);
+  if (r) try { fs.writeFileSync(path.join(ebookDir(), r.id + '.loc.json'), json); } catch (err) { /* jen mezipaměť */ }
+});
+
+ipcMain.on('reader:settings', (_e, json) => {
+  try { config.reader = JSON.parse(json); saveConfig(config); } catch (err) { /* ignorovat */ }
+});
+
+ipcMain.on('reader:listen', async (e, seconds) => {
+  const r = readers.get(e.sender.id);
+  if (!r) return;
+  await routedCmd('playItem', { id: r.id, startTime: Number(seconds) || 0 });
+  r.win.close();
+  showPopup();
+});
+
 // ---------- přijímač: telefon (nebo jiné PC) může přehrávání poslat sem ----------
 const pairingCode = remote.newCode();
 

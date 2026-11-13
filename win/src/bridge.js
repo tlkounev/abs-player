@@ -108,6 +108,8 @@
           title: li.recentEpisode ? li.recentEpisode.title : md.title,
           author: md.authorName || md.author || '',
           left: leftOf(li),
+          ebook: !!(li.media && (String(li.media.ebookFormat || '').toLowerCase() === 'epub' ||
+            (li.media.ebookFile && /epub/i.test(li.media.ebookFile.ebookFormat || '')))),
           cover: await coverData(coverSrc(li))
         });
       }
@@ -379,6 +381,30 @@
       }
       case 'recent':
         return inProgress();
+      case 'readerInfo':
+        // čtečka e-knih: kapitoly audia (pro synchronizaci), pozice poslechu a čtení, přihlášení pro stažení
+        return (async () => {
+          const li = await axios().$get('/api/items/' + arg.id + '?expanded=1');
+          let p = null;
+          try { p = await axios().$get('/api/me/progress/' + arg.id); } catch (e) { p = null; }
+          const m = li.media || {};
+          const ext = String((m.ebookFile && (m.ebookFile.ebookFormat || (m.ebookFile.metadata && m.ebookFile.metadata.ext))) || m.ebookFormat || '').replace(/^\./, '').toLowerCase();
+          return {
+            id: li.id,
+            title: (m.metadata && m.metadata.title) || '',
+            ext,
+            duration: m.duration || 0,
+            chapters: (m.chapters || []).map((c) => ({ start: c.start, end: c.end, title: c.title })),
+            currentTime: p ? p.currentTime || 0 : 0,
+            ebookLocation: p ? p.ebookLocation || null : null,
+            ebookProgress: p ? p.ebookProgress || null : null,
+            url: new URL(basePath() + '/api/items/' + li.id + '/ebook', location.origin).href,
+            token: token()
+          };
+        })();
+      case 'saveEbook':
+        return axios().$patch('/api/me/progress/' + arg.id, Object.assign({ ebookLocation: arg.cfi }, arg.progress ? { ebookProgress: arg.progress } : {}))
+          .then(() => true, () => false);
       case 'chapters':
         return (vm.chapters || []).map((c, i) => ({ n: i + 1, title: c.title, start: c.start, end: c.end }));
       case 'playItem': {

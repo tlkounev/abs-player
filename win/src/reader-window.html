@@ -1,0 +1,183 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ABS Player</title>
+<style>
+  :root { --bar: #272727; --line: rgba(255,255,255,.08); --fg: #f2f2f2; --muted: #b5b5b5; --accent: #e3a54d; --read: #8fb7e6; --bg: #1e1e1e; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--fg); font: 13px "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+  button { font: inherit; color: inherit; background: transparent; border: 0; cursor: pointer; }
+  .top { position: absolute; left: 0; right: 0; top: 0; height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 12px; background: var(--bar); border-bottom: 1px solid var(--line); }
+  .top .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
+  .top .c { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .ib { height: 28px; min-width: 32px; padding: 0 8px; border-radius: 4px; color: var(--muted); }
+  .ib:hover, .ib.on { background: rgba(255,255,255,.08); color: var(--fg); }
+  .listen { height: 28px; padding: 0 14px; border-radius: 14px; background: var(--accent); color: #1b1b1b; font-weight: 600; }
+  .listen:disabled { opacity: .5; cursor: default; }
+  .side { position: absolute; top: 44px; bottom: 34px; left: 0; width: 230px; padding: 10px 8px; overflow-y: auto; background: var(--bar); border-right: 1px solid var(--line); }
+  .side h2 { font-size: 11px; font-weight: 400; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 6px 10px; }
+  .ch { display: flex; gap: 8px; align-items: center; width: 100%; min-height: 30px; padding: 4px 10px; border-radius: 4px; text-align: left; font-size: 12px; }
+  .ch:hover { background: rgba(255,255,255,.06); }
+  .ch .n { width: 22px; color: #8a8a8a; flex: none; }
+  .ch.cur { background: rgba(143,183,230,.15); color: var(--read); }
+  #viewer { position: absolute; top: 44px; bottom: 34px; left: 230px; right: 0; }
+  body.noside .side { display: none; }
+  body.noside #viewer { left: 0; }
+  #wait { position: absolute; top: 44px; bottom: 34px; left: 230px; right: 0; display: flex; flex-direction: column; gap: 12px; align-items: center; justify-content: center; color: var(--muted); }
+  body.noside #wait { left: 0; }
+  #wait div { width: 30px; height: 30px; border-radius: 50%; border: 3px solid rgba(227,165,77,.25); border-top-color: var(--accent); animation: spin .9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .bottom { position: absolute; left: 0; right: 0; bottom: 0; height: 34px; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: var(--bar); border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+  .track { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.15); }
+  .track div { height: 4px; border-radius: 2px; background: var(--read); width: 0; }
+  .aa { position: absolute; top: 48px; right: 12px; width: 300px; padding: 14px 16px 16px; background: #2f2f2f; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.35); z-index: 5; }
+  .aa label { display: block; color: var(--muted); font-size: 11px; margin: 10px 0 6px; }
+  .aa label:first-child { margin-top: 0; }
+  .seg { display: flex; border: 1px solid rgba(255,255,255,.2); border-radius: 6px; overflow: hidden; }
+  .seg button { flex: 1; height: 28px; font-size: 12px; }
+  .seg button.on { background: rgba(227,165,77,.18); color: var(--accent); font-weight: 600; }
+  .themes { display: flex; gap: 8px; }
+  .themes button { flex: 1; height: 34px; border-radius: 6px; border: 1px solid rgba(255,255,255,.2); font-size: 12px; }
+  .themes button.on { border: 2px solid var(--accent); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .err { color: #e5534b; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="top">
+  <span class="t" id="title"></span>
+  <span class="c" id="chapter"></span>
+  <button class="ib" id="tocBtn" title="">≡</button>
+  <button class="ib" id="aaBtn">Aa</button>
+  <button class="listen hidden" id="listen" disabled></button>
+</div>
+<div class="side" id="side"><h2 id="tocTitle"></h2><div id="toc"></div></div>
+<div id="viewer"></div>
+<div id="wait"><div></div><span id="waitTxt"></span></div>
+<div class="bottom"><span id="chNo"></span><div class="track"><div id="bar"></div></div><span id="pct"></span></div>
+
+<div class="aa hidden" id="aa">
+  <label id="lSize"></label><input type="range" id="size" min="70" max="200" step="10">
+  <label id="lFont"></label><div class="seg" id="font"></div>
+  <label id="lTheme"></label><div class="themes" id="theme"></div>
+  <label id="lLine"></label><div class="seg" id="line"></div>
+</div>
+
+<script src="i18n.js"></script>
+<script>
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const lang = window.absReader.lang();
+  const tr = (k, v) => I18N.tr(lang, k, v);
+  const cfg = JSON.parse(window.absReader.config());
+  const BG = { dark: '#1e1e1e', sepia: '#f4ecd8', light: '#fafafa' };
+  let settings = Object.assign({ theme: 'dark', fontSize: 100, font: 'serif', lineHeight: 1.6 }, cfg.settings || {});
+  let curChapter = -1;
+
+  document.title = cfg.title + ' – ABS Player';
+  $('title').textContent = cfg.title;
+  $('tocTitle').textContent = tr('contents');
+  $('tocBtn').title = tr('contents');
+  $('waitTxt').textContent = tr('ebookLoading');
+  $('listen').textContent = '🎧 ' + tr('listenFromPage');
+  $('listen').classList.toggle('hidden', !cfg.hasAudio);
+  $('lSize').textContent = tr('fontSize'); $('lFont').textContent = tr('font'); $('lTheme').textContent = tr('theme'); $('lLine').textContent = tr('lineHeight');
+
+  function bg() { document.documentElement.style.setProperty('--bg', BG[settings.theme] || BG.dark); }
+  bg();
+
+  function seg(el, options, key, parse) {
+    el.innerHTML = '';
+    options.forEach(([v, label]) => {
+      const b = document.createElement('button');
+      b.textContent = label;
+      b.className = String(settings[key]) === String(v) ? 'on' : '';
+      b.onclick = () => { settings[key] = parse ? parse(v) : v; apply(); };
+      el.append(b);
+    });
+  }
+  function buildAa() {
+    $('size').value = settings.fontSize;
+    seg($('font'), [['serif', tr('fontSerif')], ['sans', tr('fontSans')], ['original', tr('fontOriginal')]], 'font');
+    seg($('line'), [['1.35', tr('lhTight')], ['1.6', tr('lhNormal')], ['1.9', tr('lhLoose')]], 'lineHeight', Number);
+    const th = $('theme'); th.innerHTML = '';
+    [['dark', tr('themeDark'), '#e6e1d8'], ['sepia', tr('themeSepia'), '#4a3f2c'], ['light', tr('themeLight'), '#222']].forEach(([k, label, fg]) => {
+      const b = document.createElement('button');
+      b.textContent = label; b.style.background = BG[k]; b.style.color = fg;
+      b.className = settings.theme === k ? 'on' : '';
+      b.onclick = () => { settings.theme = k; apply(); };
+      th.append(b);
+    });
+  }
+  function apply() {
+    buildAa(); bg();
+    window.absReader.saveSettings(JSON.stringify(settings));
+    if (window.reader) window.reader.applySettings(JSON.stringify(settings));
+  }
+  $('size').oninput = () => { settings.fontSize = Number($('size').value); apply(); };
+  $('aaBtn').onclick = (e) => { e.stopPropagation(); buildAa(); $('aa').classList.toggle('hidden'); $('aaBtn').classList.toggle('on'); };
+  $('aa').onclick = (e) => e.stopPropagation();
+  document.addEventListener('click', () => { $('aa').classList.add('hidden'); $('aaBtn').classList.remove('on'); });
+  $('tocBtn').onclick = () => { document.body.classList.toggle('noside'); setTimeout(() => window.dispatchEvent(new Event('resize')), 0); };
+  $('listen').onclick = () => { $('listen').disabled = true; window.reader.listenHere(); };
+
+  function markToc() {
+    document.querySelectorAll('.ch').forEach((el, i) => el.classList.toggle('cur', i === curChapter));
+    const cur = document.querySelector('.ch.cur');
+    if (cur) cur.scrollIntoView({ block: 'nearest' });
+  }
+
+  // hostitel pro sdílenou čtečku (reader.js)
+  window.AbsHost = {
+    config: () => JSON.stringify(Object.assign({}, cfg, { settings, spread: 'auto' })),
+    bookData: () => window.absReader.bookData(),
+    relocated(json) {
+      const r = JSON.parse(json);
+      $('chapter').textContent = r.chapter ? '· ' + r.chapter : '';
+      $('chNo').textContent = r.chapterIndex >= 0 ? tr('chShort') + ' ' + (r.chapterIndex + 1) + '/' + r.chapterCount : '';
+      $('bar').style.width = r.progress != null ? Math.round(r.progress * 100) + '%' : '0';
+      $('pct').textContent = (r.progress != null ? Math.round(r.progress * 100) + ' %' : '') +
+        (r.page != null ? ' · ' + tr('pageShort') + ' ' + r.page + '/' + r.pages : '');
+      if (r.chapterIndex !== curChapter) { curChapter = r.chapterIndex; markToc(); }
+      window.absReader.relocated(json);
+    },
+    toc(json) {
+      const list = JSON.parse(json);
+      const box = $('toc'); box.innerHTML = '';
+      list.forEach((t, i) => {
+        const b = document.createElement('button');
+        b.className = 'ch';
+        b.innerHTML = '<span class="n"></span><span></span>';
+        b.children[0].textContent = i + 1;
+        b.children[1].textContent = t.label;
+        b.onclick = () => window.reader.goto(t.href);
+        box.append(b);
+      });
+      markToc();
+    },
+    tap() {},
+    listen(seconds) { window.absReader.listen(Number(seconds)); },
+    saveLocations(json) { window.absReader.saveLocations(json); },
+    ready() { $('wait').classList.add('hidden'); $('listen').disabled = false; },
+    error(text) { $('waitTxt').textContent = tr('ebookError') + ' (' + text + ')'; $('waitTxt').className = 'err'; document.querySelector('#wait div').remove(); }
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.target instanceof HTMLInputElement) return;
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { window.reader && window.reader.prev(); e.preventDefault(); }
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { window.reader && window.reader.next(); e.preventDefault(); }
+  });
+  let lastWheel = 0;
+  document.addEventListener('wheel', (e) => {
+    if (e.target.closest && e.target.closest('.side, .aa')) return;
+    if (!window.reader || Date.now() - lastWheel < 350 || Math.abs(e.deltaY) < 4) return;
+    lastWheel = Date.now();
+    if (e.deltaY > 0) window.reader.next(); else window.reader.prev();
+  }, { passive: true });
+</script>
+<script src="reader/vendor/jszip.min.js"></script>
+<script src="reader/vendor/epub.min.js"></script>
+<script src="reader/reader.js"></script>
+</body>
+</html>

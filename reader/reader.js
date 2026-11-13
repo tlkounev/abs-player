@@ -1,6 +1,7 @@
 // ABS Player – EPUB čtečka (epub.js), sdílená Androidem (WebView) a Windows (Electron).
 //
 // Hostitel (window.AbsHost) dodá konfiguraci a dostává zprávy:
+//   bookData()          -> (volitelně, Windows) Promise<ArrayBuffer> se souborem knihy místo bookUrl
 //   config()            -> JSON: { bookUrl, startCfi, mode: 'saved'|'fromAudio'|'toAudio', audioTime,
 //                                  audioDuration, audioChapters: [{start,end,title}], settings, locations }
 //   relocated(json)     <- { cfi, progress, chapter, chapterIndex, chapterCount, page, pages }
@@ -256,7 +257,13 @@
 
   async function start() {
     try {
-      book = ePub(cfg.bookUrl || 'book.epub', { openAs: 'epub' });
+      // Windows: the host hands the file over directly; Android: a URL served by the WebView
+      let source = cfg.bookUrl || 'book.epub';
+      if (typeof host.bookData === 'function') {
+        const data = await host.bookData();
+        if (data) source = data instanceof ArrayBuffer ? data : (data.buffer ? data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) : data);
+      }
+      book = typeof source === 'string' ? ePub(source, { openAs: 'epub' }) : ePub(source);
       rendition = book.renderTo('viewer', {
         width: '100%', height: '100%', spread: cfg.spread || 'none', flow: 'paginated',
         manager: 'continuous', snap: true, allowScriptedContent: false

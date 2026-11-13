@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "win/**"
+      - "reader/**"
       - ".github/workflows/win.yml"
   workflow_dispatch:
 
