@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const SRC = path.join(__dirname, '..', 'src');
 const OUT = path.join(__dirname, 'out');
+const readerOpened = [];
 fs.mkdirSync(OUT, { recursive: true });
 const MOCK = path.join(__dirname, 'mock.html');
 const BRIDGE = fs.readFileSync(path.join(SRC, 'bridge.js'), 'utf8');
@@ -81,6 +82,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('devices:pair', (_e, p) => { devCalls.push('pair:' + p.host + ':' + p.port + ':' + p.code); return { ok: true, id: 'pc2' }; });
   ipcMain.handle('devices:select', (_e, id) => { devCalls.push('select:' + id); return true; });
   ipcMain.handle('devices:unpair', (_e, id) => { devCalls.push('unpair:' + id); return true; });
+  ipcMain.handle('reader:open', (_e, id) => { readerOpened.push(id); return true; });
   ipcMain.handle('devices:rename', (_e, id, name) => { devCalls.push('rename:' + id + ':' + name); return true; });
   ipcMain.handle('devices:playHere', () => { devCalls.push('playHere'); return true; });
   ipcMain.handle('abs:cmd', (_e, n, a) => exec(`window.__absPlayer.cmd(${JSON.stringify(n)}, ${JSON.stringify(a ?? null)})`));
@@ -120,7 +122,7 @@ app.whenReady().then(async () => {
   // Pokračovat v poslechu při přehrávání (tlačítko nahoře)
   await exec(`(() => { const orig = window.$nuxt.$axios.$get; window.$nuxt.$axios.$get = async (url) => url.includes('items-in-progress') ? ({ libraryItems: [
       { id: 'li1', updatedAt: 1, media: { coverPath: '/c', metadata: { title: 'Stopařův průvodce po Galaxii', authorName: 'Douglas Adams' } } },
-      { id: 'li3', updatedAt: 1, media: { coverPath: null, metadata: { title: 'Saturnin', authorName: 'Zdeněk Jirotka' } } } ] }) : orig(url); })()`);
+      { id: 'li3', updatedAt: 1, media: { coverPath: null, ebookFormat: 'epub', metadata: { title: 'Saturnin', authorName: 'Zdeněk Jirotka' } } } ] }) : orig(url); })()`);
   check('home button visible', await jsP("getComputedStyle(document.getElementById('homeBtn')).display !== 'none' && document.getElementById('homeBtn').title === 'Zpět'"));
   await jsP("document.getElementById('homeBtn').click()");
   await wait(900);
@@ -128,7 +130,12 @@ app.whenReady().then(async () => {
   check('home rows', await jsP("document.querySelectorAll('#list .row').length") === 2);
   check('home current first', await jsP("document.querySelector('#list .row').classList.contains('cur') && document.querySelector('#list .row.cur .a').textContent === 'Přehrává se'"));
   check('home window size', popup.getBounds().height === 236);
+  check('read button only on the e-book', await jsP("document.querySelectorAll('#list .row .read-btn').length === 1 && !!document.querySelectorAll('#list .row')[1].querySelector('.read-btn')"));
+  check('list title Pokračovat', await jsP("document.querySelector('[data-txt=continue]').textContent") === 'Pokračovat');
   await shot(popup, 'p-home.png');
+  await jsP("document.querySelectorAll('#list .row')[1].querySelector('.read-btn').click()");
+  await wait(300);
+  check('read opens the reader (not playback)', readerOpened.length === 1 && readerOpened[0] === 'li3', readerOpened);
   await jsP("document.querySelector('#list .row.cur .t').click()");
   await wait(700);
   check('home back to player', await jsP("document.getElementById('empty').classList.contains('hidden') && !document.getElementById('player').classList.contains('hidden')"));

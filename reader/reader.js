@@ -240,7 +240,9 @@
   }
 
   // klepnutí: okraje listují, střed ukáže / schová lištu
+  let lastSwipe = 0;
   function onTap(ev) {
+    if (Date.now() - lastSwipe < 400) return; // the end of a swipe is not a tap
     let x = ev.clientX;
     try { if (ev.view && ev.view.frameElement) x += ev.view.frameElement.getBoundingClientRect().left; } catch (e) {}
     const w = window.innerWidth || 1;
@@ -264,9 +266,26 @@
         if (data) source = data instanceof ArrayBuffer ? data : (data.buffer ? data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) : data);
       }
       book = typeof source === 'string' ? ePub(source, { openAs: 'epub' }) : ePub(source);
+      // Android WebView: the page can start before the view has its size – wait for it
+      for (let i = 0; i < 100 && (window.innerWidth < 50 || window.innerHeight < 50); i++) await new Promise((r) => setTimeout(r, 50));
+      // one section at a time; swipes and taps are handled here (the "continuous" manager with snapping
+      // did not turn pages on touch screens)
       rendition = book.renderTo('viewer', {
         width: '100%', height: '100%', spread: cfg.spread || 'none', flow: 'paginated',
-        manager: 'continuous', snap: true, allowScriptedContent: false
+        manager: 'default', allowScriptedContent: false
+      });
+      rendition.hooks.content.register((contents) => {
+        const doc = contents.document;
+        let sx = 0, sy = 0;
+        doc.addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
+        doc.addEventListener('touchend', (e) => {
+          const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            lastSwipe = Date.now();
+            if (dx < 0) api.next(); else api.prev();
+          }
+        }, { passive: true });
+        doc.addEventListener('keyup', onKey);
       });
       applySettings();
       rendition.on('relocated', report);
@@ -304,6 +323,7 @@
         await rendition.display(start);
       }
       showWait(false);
+      try { rendition.resize(); } catch (e) { /* ignore */ }
       ready = true;
       call('ready', '');
       if (cfg.mode === 'toAudio') api.listenHere();
@@ -313,5 +333,7 @@
     }
   }
 
+  window.addEventListener('error', (e) => call('log', 'error: ' + (e.message || e.type)));
+  window.addEventListener('unhandledrejection', (e) => call('log', 'rejection: ' + ((e.reason && e.reason.message) || e.reason)));
   start();
 })();

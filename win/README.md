@@ -101,5 +101,5 @@ Instalátor pro Windows lze sestavit i na Linuxu (electron-builder potřebuje Wi
 
 Okno čtečky se stejnou stránkou `/reader` jako Android (epub.js): obsah vlevo, nahoře kapitola,
 *Aa* a *Poslouchat od této strany*, dole průběh a strana. Listuje se šipkami, PageUp/PageDown
-nebo kolečkem. Pozice se ukládá do ABS jako ve webové čtečce. Kde se čtení otevírá, se ještě
-rozhoduje (návrh: 📖 Číst v seznamu Pokračovat v poslechu).
+nebo kolečkem. Pozice se ukládá do ABS jako ve webové čtečce. Otevírá se ikonou knihy před ▶ v seznamu
+*Pokračovat* (jen u knih s e-knihou EPUB).

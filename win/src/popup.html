@@ -210,6 +210,8 @@
   .empty-head h1 { font-size: 14px; font-weight: 600; }
   .list { display: flex; flex-direction: column; gap: 2px; }
   .row { display: flex; align-items: center; gap: 10px; padding: 4px; border-radius: 4px; }
+  .row .read-btn { margin-right: -6px; }
+  .row .read-btn:disabled { opacity: .45; }
   .row:hover { background: var(--hover); }
   .row img { width: 40px; height: 40px; border-radius: 3px; object-fit: cover; background: var(--track); flex: none; }
   .row img:not([src]) { visibility: hidden; }
@@ -568,8 +570,23 @@ function buildItemRows(list, items, curId) {
     btn.title = isCur ? tr('backToPlayer') : tr('play');
     btn.innerHTML = '<svg viewBox="0 0 20 20">' + PLAY + '</svg>';
     btn.onclick = isCur ? () => setHomeOpen(false) : () => playFromRecent(it);
-    row.onclick = (e) => { if (!(e.target instanceof HTMLButtonElement)) btn.onclick(); }; // celá plocha knihy
-    row.append(img, t, btn);
+    row.onclick = (e) => { if (!(e.target.closest && e.target.closest('button'))) btn.onclick(); }; // celá plocha knihy
+    row.append(img, t);
+    if (it.ebook) {
+      // e-kniha: otevře okno čtečky
+      const rd = document.createElement('button');
+      rd.className = 'icon-btn read-btn';
+      rd.title = tr('read');
+      rd.innerHTML = '<svg viewBox="0 0 20 20" style="fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round"><path d="M2.5 4.6c2.5-1.1 5-1 7.5.6 2.5-1.6 5-1.7 7.5-.6v11c-2.5-1.1-5-1-7.5.6-2.5-1.6-5-1.7-7.5-.6z"/><path d="M10 5.2v11"/></svg>';
+      rd.onclick = async (e) => {
+        e.stopPropagation();
+        rd.disabled = true;
+        await window.abs.openReader(it.id);
+        rd.disabled = false;
+      };
+      row.append(rd);
+    }
+    row.append(btn);
     list.append(row);
   }
 }
