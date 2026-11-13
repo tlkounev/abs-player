@@ -16,9 +16,28 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cz.ondra.absplayer.App
 import cz.ondra.absplayer.player.PlaybackHub
 import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.activity.result.contract.ActivityResultContracts
 
 class MainActivity : ComponentActivity() {
     private val vm: MainViewModel by viewModels()
+
+    /**
+     * Local network (TV / PC on the home Wi-Fi). Newer Android versions keep the app off the local
+     * network until this permission ("Nearby devices") is granted – then nothing on the LAN answers
+     * although Chrome reaches it. Asked for when the system has the permission.
+     */
+    private val localNetLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        vm.localNetworkOk = ok
+        if (ok) (application as App).targets.discovery.let { it.stop(); it.start() }
+    }
+
+    fun ensureLocalNetwork(ask: Boolean) {
+        val defined = runCatching { packageManager.getPermissionInfo(LOCAL_NETWORK, 0) }.isSuccess
+        val ok = !defined || checkSelfPermission(LOCAL_NETWORK) == PackageManager.PERMISSION_GRANTED
+        vm.localNetworkOk = ok
+        if (!ok && ask) localNetLauncher.launch(LOCAL_NETWORK)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // The same screen runs on the TV; there it also receives playback from phones / PCs
@@ -32,6 +51,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         handleOpenPlayer(intent)
+        ensureLocalNetwork(ask = true)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -64,6 +84,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_OPEN_PLAYER = "openPlayer"
+        const val LOCAL_NETWORK = "android.permission.ACCESS_LOCAL_NETWORK"
 
         /**
          * Brings the app to the front on the TV (playback sent from a phone / PC). Android allows this

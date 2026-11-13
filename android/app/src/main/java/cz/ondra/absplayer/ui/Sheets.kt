@@ -371,7 +371,12 @@ private fun PairSection(vm: MainViewModel, onCancel: () -> Unit) {
         // the receiver may answer on another port than typed / announced (8766 when 8765 is taken)
         val hit = targets.discovery.locate(host.trim(), p)
         when {
-            hit == null -> infoError = tr("noResponseAt", "h" to "$host:$p")
+            hit == null -> {
+                // say why (timeout, refused, blocked by the system…) – helps to find network problems
+                val why = runCatching { targets.info(host.trim(), p) }.exceptionOrNull()?.let { it.cause ?: it }
+                infoError = tr("noResponseAt", "h" to "$host:$p") +
+                    (why?.let { " (" + it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "") + ")" } ?: "")
+            }
             hit.first != p -> port = hit.first.toString() // runs this again
             else -> info = hit.second
         }
@@ -379,7 +384,24 @@ private fun PairSection(vm: MainViewModel, onCancel: () -> Unit) {
     val needPassword = info?.let { targets.needsPassword(it) } ?: false
     val isPc = info?.kind == "pc"
 
+    val activity = androidx.compose.ui.platform.LocalContext.current as? MainActivity
+    LaunchedEffect(Unit) { activity?.ensureLocalNetwork(ask = false) }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (!vm.localNetworkOk) {
+            // without "Nearby devices" Android keeps the app off the home network (Chrome still works)
+            Text(tr("localNetNeeded"), color = C.Error, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 8.dp))
+            OutlinedButton(onClick = {
+                activity?.let { a ->
+                    a.ensureLocalNetwork(ask = true)
+                    if (!a.shouldShowRequestPermissionRationale(MainActivity.LOCAL_NETWORK)) {
+                        a.startActivity(
+                            android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                .setData(android.net.Uri.fromParts("package", a.packageName, null)),
+                        )
+                    }
+                }
+            }) { Text(tr("localNetAllow")) }
+        }
         Row(Modifier.padding(start = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(tr("pairTitle"), fontWeight = FontWeight.SemiBold, fontSize = 15.sp, modifier = Modifier.weight(1f))
             IconButton(onClick = { vm.pairError = null; onCancel() }) { Icon(Ic.Close, tr("close"), tint = C.Muted, modifier = Modifier.size(20.dp)) }

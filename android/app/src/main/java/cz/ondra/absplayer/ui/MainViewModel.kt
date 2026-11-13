@@ -87,6 +87,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     var listEntry: (() -> Boolean)? = null
 
+    /** Local network permission granted (or not needed on this Android). */
+    var localNetworkOk by mutableStateOf(true)
+
     /** The remote is on the home tabs (lists then don't pull the focus to themselves). */
     var tabsFocused = false
     var refreshing by mutableStateOf(false)
