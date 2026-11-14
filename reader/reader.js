@@ -79,7 +79,7 @@
     });
   }
 
-  // ------------------------------------------------------------------ kapitoly a pozice
+  // ------------------------------------------------------------------ chapters and locations
 
   function flatToc(items, out) {
     (items || []).forEach((it) => { out.push(it); if (it.subitems && it.subitems.length) flatToc(it.subitems, out); });

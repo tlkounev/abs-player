@@ -704,8 +704,12 @@ async function volCheck() {
     volChecking = false;
   }
 }
-$('volBtn').addEventListener('pointerenter', () => { if (!volWrap.classList.contains('open')) volOpen(); });
-$('volBtn').addEventListener('mousedown', (e) => e.preventDefault()); // klik nebere fokus
+// pointermove too: when the cursor left over the drag area, the page got no pointerleave, and coming back
+// to the button then brings no pointerenter (Chromium thinks the pointer never left)
+const volHover = () => { if (!volWrap.classList.contains('open')) volOpen(); };
+$('volBtn').addEventListener('pointerenter', volHover);
+$('volBtn').addEventListener('pointermove', volHover);
+$('volBtn').addEventListener('mousedown', (e) => e.preventDefault()); // a click does not take the focus
 volWrap.addEventListener('focusin', () => { if (document.activeElement.matches(':focus-visible')) volOpen(); });
 $('volBtn').onclick = () => { volOpen(); cmd('mute'); };
 $('volRange').addEventListener('pointerdown', () => { volDragging = true; });
@@ -730,7 +734,7 @@ volWrap.addEventListener('wheel', (e) => {
   cmd('volume', v);
 }, { passive: false });
 
-// --- posuv: pruh kapitoly a pruh knihy ---
+// --- seeking: chapter bar and book bar ---
 function attachSeek(bar, kind) {
   function timeAt(clientX) {
     const r = bar.getBoundingClientRect();

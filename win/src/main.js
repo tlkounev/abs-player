@@ -524,7 +524,7 @@ ipcMain.handle('devices:playHere', async () => {
   cancelWaking();
   const it = lastRemoteItem;
   currentTarget = 'local';
-  if (it && it.id) await localCmd('playItem', { id: it.id }); // pozice ze serveru
+  if (it && it.id) await localCmd('playItem', { id: it.id }); // position from the server
   return true;
 });
 

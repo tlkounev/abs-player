@@ -48,7 +48,7 @@
 | | Platform | Version | Download |
 |---|---|---|---|
 | [**Android**](android/README.md) | Phone, Android Auto, Android TV / Google TV – one APK | 1.6.6 | [ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk) |
-| [**Windows**](win/README.md) | Windows 10 / 11, tray mini player + the full Audiobookshelf web app | 1.3.4 | [ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe) |
+| [**Windows**](win/README.md) | Windows 10 / 11, tray mini player + the full Audiobookshelf web app | 1.3.5 | [ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe) |
 
 You need your own Audiobookshelf server; the apps sign in with your usual Audiobookshelf account.
 
