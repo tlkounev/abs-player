@@ -645,6 +645,8 @@ async function poll() {
     st = await window.abs.state();
     if (pendingSeek != null && st && Math.abs(st.currentTime - pendingSeek) < 3) pendingSeek = null;
     render();
+    // no panel open: the window must have the player's size (the main process fixes it if not)
+    if (!devOpen && !listOpen) window.abs.list(false);
   } finally {
     busy = false;
   }
@@ -860,6 +862,7 @@ async function setListOpen(open) {
   if (open) {
     if (devOpen) closeDevPanel(true);
     const dir = await window.abs.list(true);
+    if (!listOpen) return; // closed again while the window was growing
     document.querySelector('.card').classList.toggle('down', dir === 'down');
     $('chCloseIcon').style.transform = dir === 'down' ? 'rotate(180deg)' : '';
     $('chPanel').classList.remove('hidden');
@@ -876,6 +879,7 @@ async function setListOpen(open) {
 
 // --- play on (devices) ---
 let devOpen = false;
+let devGen = 0;
 let devTimer = null;
 let devData = null;
 let pairInfo = null;
@@ -912,8 +916,13 @@ async function setDevOpen(open) {
   // the window grows exactly by the panel's content: content first, then measure, then resize
   $('pErr').classList.add('hidden');
   $('devPanel').classList.remove('hidden');
+  const gen = ++devGen;
   await loadDevices();
+  // closed (or opened again) while the devices were loading – a slow / switched-off TV takes seconds:
+  // growing the window now would leave it tall with the panel hidden
+  if (!devOpen || gen !== devGen) return;
   const dir = await window.abs.list(true, devPanelExtra());
+  if (!devOpen || gen !== devGen) return;
   document.querySelector('.card').classList.toggle('down', dir === 'down');
   $('devCloseIcon').style.transform = dir === 'down' ? 'rotate(180deg)' : '';
   render();

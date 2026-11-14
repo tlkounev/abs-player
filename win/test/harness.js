@@ -11,6 +11,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const MOCK = path.join(__dirname, 'mock.html');
 const BRIDGE = fs.readFileSync(path.join(SRC, 'bridge.js'), 'utf8');
 const I18N = require(path.join(SRC, 'i18n.js'));
+const popupSize = require(path.join(SRC, 'popup-size.js'));
 let authSeen = null;
 let lang = 'cs';
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -71,7 +72,7 @@ app.whenReady().then(async () => {
     return st;
   });
   const devCalls = [];
-  ipcMain.handle('devices:get', () => ({
+  ipcMain.handle('devices:get', async () => (global.__slowDevices && await wait(global.__slowDevices), {
     current: 'local', local: { id: 'local', name: 'NB-2026' },
     paired: [{ id: 'tv1', name: 'Obývák TV', kind: 'tv', host: '10.0.0.5', online: true, title: 'Duna', isPlaying: true },
       { id: 'tv2', name: 'Ložnice TV', kind: 'tv', host: '10.0.0.6', online: false }],
@@ -93,13 +94,17 @@ app.whenReady().then(async () => {
   let fakeCursor = { x: -100, y: -100 };
   ipcMain.handle('popup:cursor', () => fakeCursor);
   let listDir = null;
+  // the real sizing of main.js (popup-size.js); the work area decides up / down (global.__dir)
+  let listExtra = 0;
   ipcMain.handle('popup:list', (_e, open, h) => {
     const b = popup.getBounds();
     const want = Math.round(Math.max(80, Math.min(Number(h) || 300, 560)));
     global.__listH = open ? want : 0;
-    if (open && !listDir) { listDir = global.__dir || 'up'; popup.setBounds({ x: b.x, y: b.y, width: 380, height: 236 + want }); }
-    else if (open && listDir) popup.setBounds({ x: b.x, y: b.y, width: 380, height: 236 + want });
-    else if (!open && listDir) { listDir = null; popup.setBounds({ x: b.x, y: b.y, width: 380, height: 236 }); }
+    const wa = (global.__dir || 'up') === 'up' ? { x: 0, y: b.y - 2000, width: 3000, height: 4000 } : { x: 0, y: b.y, width: 3000, height: 4000 };
+    const r = popupSize.listBounds({ dir: listDir, extra: listExtra }, b, open, want, wa);
+    if (r.bounds) popup.setBounds({ ...r.bounds, x: b.x, y: b.y });
+    listDir = r.s.dir;
+    listExtra = r.s.extra;
     return listDir;
   });
   ipcMain.on('i18n:get', (e) => { e.returnValue = lang; });
@@ -292,6 +297,21 @@ app.whenReady().then(async () => {
   check('remote target line', await jsP("!document.getElementById('target').classList.contains('hidden') && document.getElementById('targetTxt').textContent") === 'Obývák TV' && await jsP("document.getElementById('target').title") === 'Přehrává se na: Obývák TV');
   await shot(popup, 'p-remote.png');
   targetOverride = null;
+
+  // Play on opened and closed again while a slow (switched-off) TV keeps the device list loading:
+  // the window must not grow afterwards
+  await wait(600);
+  global.__slowDevices = 700;
+  await jsP("document.querySelector('#player [data-act=devices]').click()");
+  await wait(100);
+  await jsP("document.getElementById('devClose').click()");
+  await wait(1200);
+  global.__slowDevices = 0;
+  check('quick open + close of Play on keeps the player size', popup.getBounds().height === 236 && await jsP("document.getElementById('devPanel').classList.contains('hidden')"));
+  // a window left bigger (whatever the cause) is brought back to the player's size
+  popup.setBounds({ ...popup.getBounds(), height: 320 });
+  await wait(1200);
+  check('a too tall window is fixed', popup.getBounds().height === 236);
 
   // --- web player sync ---
   const net = () => exec('window.__net.slice()');

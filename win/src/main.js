@@ -10,8 +10,8 @@ const APP_NAME = 'ABS Player';
 const ASSETS = path.join(__dirname, '..', 'assets');
 const BRIDGE = fs.readFileSync(path.join(__dirname, 'bridge.js'), 'utf8');
 const CLICK_DELAY = 280; // ms – tells a single click from a double click
-const POPUP_W = 380;
-const POPUP_H = 236;
+const popupSize = require('./popup-size');
+const { POPUP_W, POPUP_H } = popupSize;
 const LIST_H = 300;      // height of the chapter list (must match listHeight in popup-preload.js)
 
 app.setAppUserModelId('local.abs-player');
@@ -858,20 +858,10 @@ ipcMain.handle('popup:list', (_e, open, h) => {
   if (!popupWin || popupWin.isDestroyed()) return null;
   const b = popupWin.getBounds();
   const want = Math.round(Math.max(80, Math.min(Number(h) || LIST_H, 560)));
-  if (open && !listDir) {
-    const wa = screen.getDisplayMatching(b).workArea;
-    listDir = b.y - want >= wa.y ? 'up' : 'down';
-    listExtra = want;
-    popupWin.setBounds({ x: b.x, y: listDir === 'up' ? b.y - want : b.y, width: POPUP_W, height: POPUP_H + want });
-  } else if (open && listDir && want !== listExtra) {
-    // already open, only another height (pairing expanded): the edge at the mini player stays in place
-    popupWin.setBounds({ x: b.x, y: listDir === 'up' ? b.y + listExtra - want : b.y, width: POPUP_W, height: POPUP_H + want });
-    listExtra = want;
-  } else if (!open && listDir) {
-    popupWin.setBounds({ x: b.x, y: listDir === 'up' ? b.y + listExtra : b.y, width: POPUP_W, height: POPUP_H });
-    listDir = null;
-    listExtra = 0;
-  }
+  const r = popupSize.listBounds({ dir: listDir, extra: listExtra }, b, open, want, screen.getDisplayMatching(b).workArea);
+  if (r.bounds) popupWin.setBounds(r.bounds);
+  listDir = r.s.dir;
+  listExtra = r.s.extra;
   return listDir;
 });
 // cursor position relative to the mini player's content (DIP = CSS px)
