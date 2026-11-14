@@ -12,6 +12,10 @@ const BRIDGE = fs.readFileSync(path.join(__dirname, 'bridge.js'), 'utf8');
 const CLICK_DELAY = 280; // ms – tells a single click from a double click
 const popupSize = require('./popup-size');
 const { POPUP_W, POPUP_H } = popupSize;
+// the mini player can be made bigger by dragging its edges (100–200 %, the aspect ratio stays)
+let popupScale = 1;
+const PW = () => Math.round(POPUP_W * popupScale);
+const PH = () => Math.round(POPUP_H * popupScale);
 const LIST_H = 300;      // height of the chapter list (must match listHeight in popup-preload.js)
 
 app.setAppUserModelId('local.abs-player');
@@ -178,9 +182,10 @@ function showMain() {
 // Stays open until the user hides it (click on the tray icon or the "_" button).
 // Can be dragged anywhere; the position is remembered.
 function createPopup() {
+  popupScale = Math.min(Math.max(Number(config.popupScale) || 1, 1), 2);
   popupWin = new BrowserWindow({
-    width: POPUP_W,
-    height: POPUP_H,
+    width: PW(),
+    height: PH(),
     show: false,
     frame: false,
     resizable: false,
@@ -199,13 +204,15 @@ function createPopup() {
     }
   });
   popupWin.loadFile(path.join(__dirname, 'popup.html'));
+  // the whole player scales (texts, buttons, panels): CSS stays in the 380 × 236 design
+  popupWin.webContents.on('did-finish-load', () => popupWin.webContents.setZoomFactor(popupScale));
   popupWin.on('moved', () => {
     clearTimeout(savePosTimer);
     savePosTimer = setTimeout(() => {
       if (!popupWin || popupWin.isDestroyed()) return;
       const [x, y] = popupWin.getPosition();
       // the position of the collapsed window is what gets saved
-      config.popupPos = { x, y: listDir === 'up' ? y + (listExtra || LIST_H) : y };
+      config.popupPos = { x, y: listDir === 'up' ? y + (listExtra || Math.round(LIST_H * popupScale)) : y };
       saveConfig(config);
     }, 300);
   });
@@ -219,7 +226,7 @@ function savedPopupPosValid() {
   const p = config.popupPos;
   if (!p || typeof p.x !== 'number' || typeof p.y !== 'number') return false;
   // at least the window's centre must be on one of the connected monitors
-  const cx = p.x + POPUP_W / 2, cy = p.y + POPUP_H / 2;
+  const cx = p.x + PW() / 2, cy = p.y + PH() / 2;
   return screen.getAllDisplays().some(({ workArea: w }) => cx >= w.x && cx < w.x + w.width && cy >= w.y && cy < w.y + w.height);
 }
 
@@ -232,20 +239,20 @@ function iconPopupPos() {
   const gap = 10;
   let x, y;
   if (wa.y + wa.height < b.y + b.height) {        // taskbar at the bottom
-    x = pt.x - POPUP_W / 2;
-    y = wa.y + wa.height - POPUP_H - gap;
+    x = pt.x - PW() / 2;
+    y = wa.y + wa.height - PH() - gap;
   } else if (wa.y > b.y) {                          // at the top
-    x = pt.x - POPUP_W / 2;
+    x = pt.x - PW() / 2;
     y = wa.y + gap;
   } else if (wa.x > b.x) {                          // vlevo
     x = wa.x + gap;
-    y = pt.y - POPUP_H / 2;
+    y = pt.y - PH() / 2;
   } else {                                          // on the right / hidden taskbar
-    x = wa.x + wa.width - POPUP_W - gap;
-    y = (pt.y > wa.y + wa.height / 2) ? wa.y + wa.height - POPUP_H - gap : pt.y - POPUP_H / 2;
+    x = wa.x + wa.width - PW() - gap;
+    y = (pt.y > wa.y + wa.height / 2) ? wa.y + wa.height - PH() - gap : pt.y - PH() / 2;
   }
-  x = Math.min(Math.max(x, wa.x + gap), wa.x + wa.width - POPUP_W - gap);
-  y = Math.min(Math.max(y, wa.y + gap), wa.y + wa.height - POPUP_H - gap);
+  x = Math.min(Math.max(x, wa.x + gap), wa.x + wa.width - PW() - gap);
+  y = Math.min(Math.max(y, wa.y + gap), wa.y + wa.height - PH() - gap);
   return { x: Math.round(x), y: Math.round(y) };
 }
 
@@ -255,7 +262,8 @@ function showPopup() {
   const pos = savedPopupPosValid() ? config.popupPos : iconPopupPos();
   listDir = null;
   listExtra = 0;
-  popupWin.setBounds({ x: pos.x, y: pos.y, width: POPUP_W, height: POPUP_H });
+  popupWin.setBounds({ x: pos.x, y: pos.y, width: PW(), height: PH() });
+  popupWin.webContents.setZoomFactor(popupScale);
   popupWin.webContents.send('popup-shown');
   popupWin.show();
   popupWin.focus();
@@ -858,7 +866,8 @@ ipcMain.handle('popup:list', (_e, open, h) => {
   if (!popupWin || popupWin.isDestroyed()) return null;
   const b = popupWin.getBounds();
   const want = Math.round(Math.max(80, Math.min(Number(h) || LIST_H, 560)));
-  const r = popupSize.listBounds({ dir: listDir, extra: listExtra }, b, open, want, screen.getDisplayMatching(b).workArea);
+  const r = popupSize.listBounds({ dir: listDir, extra: listExtra }, b, open, Math.round(want * popupScale),
+    screen.getDisplayMatching(b).workArea, { w: PW(), h: PH() });
   if (r.bounds) popupWin.setBounds(r.bounds);
   listDir = r.s.dir;
   listExtra = r.s.extra;
@@ -869,7 +878,29 @@ ipcMain.handle('popup:cursor', () => {
   if (!popupWin || popupWin.isDestroyed()) return null;
   const p = screen.getCursorScreenPoint();
   const b = popupWin.getContentBounds();
-  return { x: p.x - b.x, y: p.y - b.y };
+  return { x: (p.x - b.x) / popupScale, y: (p.y - b.y) / popupScale };
+});
+
+// dragging an edge / corner of the mini player (only without an open panel): the size follows the cursor
+let resizeStart = null;
+ipcMain.on('popup:resize-start', () => {
+  if (!popupWin || popupWin.isDestroyed() || listDir) return;
+  resizeStart = { bounds: popupWin.getBounds(), cursor: screen.getCursorScreenPoint() };
+});
+ipcMain.on('popup:resize', (_e, edge) => {
+  if (!resizeStart || !popupWin || popupWin.isDestroyed() || !/^(n|s|e|w|ne|nw|se|sw)$/.test(String(edge))) return;
+  const r = popupSize.resizeBounds(edge, resizeStart, screen.getCursorScreenPoint(), screen.getDisplayMatching(resizeStart.bounds).workArea);
+  popupScale = r.scale;
+  popupWin.setBounds(r.bounds);
+  popupWin.webContents.setZoomFactor(popupScale);
+});
+ipcMain.on('popup:resize-end', () => {
+  if (!resizeStart || !popupWin || popupWin.isDestroyed()) return;
+  resizeStart = null;
+  const b = popupWin.getBounds();
+  config.popupScale = popupScale;
+  config.popupPos = { x: b.x, y: b.y };
+  saveConfig(config);
 });
 
 // ---------- tray icon ----------

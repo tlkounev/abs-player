@@ -101,7 +101,8 @@ app.whenReady().then(async () => {
     const want = Math.round(Math.max(80, Math.min(Number(h) || 300, 560)));
     global.__listH = open ? want : 0;
     const wa = (global.__dir || 'up') === 'up' ? { x: 0, y: b.y - 2000, width: 3000, height: 4000 } : { x: 0, y: b.y, width: 3000, height: 4000 };
-    const r = popupSize.listBounds({ dir: listDir, extra: listExtra }, b, open, want, wa);
+    const k = global.__scale || 1;
+    const r = popupSize.listBounds({ dir: listDir, extra: listExtra }, b, open, Math.round(want * k), wa, { w: Math.round(380 * k), h: Math.round(236 * k) });
     if (r.bounds) popup.setBounds({ ...r.bounds, x: b.x, y: b.y });
     listDir = r.s.dir;
     listExtra = r.s.extra;
@@ -312,6 +313,27 @@ app.whenReady().then(async () => {
   popup.setBounds({ ...popup.getBounds(), height: 320 });
   await wait(1200);
   check('a too tall window is fixed', popup.getBounds().height === 236);
+
+  // bigger player: edges / corners to drag (hidden while a panel is open), everything scales with the zoom
+  check('8 resize grips', await jsP("document.querySelectorAll('.grip').length") === 8 &&
+    await jsP("getComputedStyle(document.querySelector('.grip.se')).cursor") === 'nwse-resize');
+  const b0 = popup.getBounds();
+  global.__scale = 1.5;
+  popup.setBounds({ ...b0, width: 570, height: 354 });
+  popup.webContents.setZoomFactor(1.5);
+  await wait(500);
+  const inner = await jsP("[window.innerWidth, window.innerHeight].join('x')");
+  check('scaled 1.5×: same layout in CSS px ' + inner, Math.abs(parseInt(inner) - 380) <= 1 && Math.abs(parseInt(inner.split('x')[1]) - 236) <= 1);
+  await shot(popup, 'p-scaled.png');
+  await jsP("document.querySelector('#player [data-act=devices]').click()");
+  await wait(600);
+  check('no resize grips while a panel is open', await jsP("getComputedStyle(document.querySelector('.grip.se')).display") === 'none');
+  await jsP("document.getElementById('devClose').click()");
+  await wait(600);
+  global.__scale = 1;
+  popup.webContents.setZoomFactor(1);
+  popup.setBounds({ ...b0, width: 380, height: 236 });
+  await wait(300);
 
   // --- web player sync ---
   const net = () => exec('window.__net.slice()');

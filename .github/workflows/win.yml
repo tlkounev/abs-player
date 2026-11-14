@@ -29,7 +29,7 @@ jobs:
         run: python3 ../i18n/gen.py --check
 
       - name: Protocol tests
-        run: node --test test/remote.test.js
+        run: node --test test/remote.test.js test/popup-size.test.js
 
   build:
     needs: test

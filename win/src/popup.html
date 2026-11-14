@@ -52,6 +52,15 @@
   /* control areas are not draggable at all, so hover works also in the gaps between buttons */
   button, input, .bar, .row, .vol-wrap, .rate, .controls, .progress, .side, .win-btns { -webkit-app-region: no-drag; }
   .hidden { display: none !important; }
+  /* edges and corners for making the player bigger / smaller (not while a panel is open) */
+  .grip { position: fixed; z-index: 50; -webkit-app-region: no-drag; }
+  .grip.n, .grip.s { left: 10px; right: 10px; height: 5px; cursor: ns-resize; }
+  .grip.e, .grip.w { top: 10px; bottom: 10px; width: 5px; cursor: ew-resize; }
+  .grip.n { top: 0; } .grip.s { bottom: 0; } .grip.e { right: 0; } .grip.w { left: 0; }
+  .grip.ne, .grip.nw, .grip.se, .grip.sw { width: 10px; height: 10px; }
+  .grip.ne { top: 0; right: 0; cursor: nesw-resize; } .grip.sw { bottom: 0; left: 0; cursor: nesw-resize; }
+  .grip.nw { top: 0; left: 0; cursor: nwse-resize; } .grip.se { bottom: 0; right: 0; cursor: nwse-resize; }
+  body.expanded .grip { display: none; }
 
   /* --- header --- */
   .head { display: flex; gap: 12px; align-items: flex-start; min-height: 72px; }
@@ -239,6 +248,10 @@
 </head>
 <body>
 <div class="card">
+  <div class="grip n" data-edge="n"></div><div class="grip s" data-edge="s"></div>
+  <div class="grip e" data-edge="e"></div><div class="grip w" data-edge="w"></div>
+  <div class="grip ne" data-edge="ne"></div><div class="grip nw" data-edge="nw"></div>
+  <div class="grip se" data-edge="se"></div><div class="grip sw" data-edge="sw"></div>
 
   <!-- play on -->
   <div id="devPanel" class="ch-panel hidden">
@@ -474,7 +487,30 @@ function renderVolume() {
   }
 }
 
+// dragging an edge / corner: the main process scales the window after the cursor (aspect ratio kept)
+for (const g of document.querySelectorAll('.grip')) {
+  g.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    g.setPointerCapture(e.pointerId);
+    window.abs.resizeStart();
+    let frame = 0;
+    const move = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; window.abs.resize(g.dataset.edge); }); };
+    const end = () => {
+      g.removeEventListener('pointermove', move);
+      g.removeEventListener('pointerup', end);
+      g.removeEventListener('lostpointercapture', end);
+      cancelAnimationFrame(frame);
+      window.abs.resizeEnd();
+    };
+    g.addEventListener('pointermove', move);
+    g.addEventListener('pointerup', end);
+    g.addEventListener('lostpointercapture', end);
+  });
+}
+
 function render() {
+  document.body.classList.toggle('expanded', devOpen || listOpen);
   $('playHere').classList.add('hidden');
   if (listOpen && !(st && st.item && st.hasChapters)) setListOpen(false);
   if (homeOpen && !(st && st.item)) homeOpen = false;
@@ -858,6 +894,7 @@ async function setListOpen(open) {
   if (open === listOpen) return;
   if (open && !(st && st.hasChapters)) return;
   listOpen = open;
+  document.body.classList.toggle('expanded', devOpen || listOpen);
   $('chBtn').classList.toggle('on', open);
   if (open) {
     if (devOpen) closeDevPanel(true);
@@ -893,6 +930,7 @@ const ICON_X = '<svg viewBox="0 0 16 16"><path d="M4.2 3.1 8 6.9l3.8-3.8 1.1 1.1
 
 function closeDevPanel(keepWindow) {
   devOpen = false;
+  document.body.classList.toggle('expanded', listOpen);
   setPairOpen(false);
   clearInterval(devTimer);
   devTimer = null;
@@ -913,6 +951,7 @@ async function setDevOpen(open) {
     $('chPanel').classList.add('hidden');
   }
   devOpen = true;
+  document.body.classList.add('expanded');
   // the window grows exactly by the panel's content: content first, then measure, then resize
   $('pErr').classList.add('hidden');
   $('devPanel').classList.remove('hidden');

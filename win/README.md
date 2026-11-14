@@ -1,7 +1,7 @@
 # ABS Player for Windows
 
 The Audiobookshelf web client as a desktop app with a mini player in the Windows notification area.
-Version 1.3.9.
+Version 1.3.10.
 
 **[⬇ Download ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)
@@ -29,6 +29,8 @@ On the first start enter the address of your Audiobookshelf server and sign in a
 
 - Stays open when you click elsewhere. Hide it with the tray icon, the `_` button or Esc.
 - Drag it anywhere outside the buttons; its position is remembered (also after a restart).
+- Drag an edge or a corner to make it bigger or smaller: everything scales together (100–200 %), the aspect
+  ratio stays. The size is remembered too.
 - Two progress bars: the top one = current chapter, the thin one = whole book. Both can be dragged.
   A book without chapters has one bar.
 - Volume: click = mute / unmute, hover or focus = vertical slider, mouse wheel = ±5 %.
