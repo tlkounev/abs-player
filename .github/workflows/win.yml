@@ -54,19 +54,24 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           TAG="win-v${VERSION}-build${{ github.run_number }}"
-          gh release create "$TAG" dist/*.exe dist/*.zip --title "ABS Player pro Windows ${VERSION} (build ${{ github.run_number }})" --notes "Commit ${{ github.sha }}" --latest
+          gh release create "$TAG" dist/*.exe dist/*.zip --title "ABS Player for Windows ${VERSION} (build ${{ github.run_number }})" --notes "Commit ${{ github.sha }}" --latest
 
-      # Fixed release "win-latest" = update feed for electron-updater (latest.yml + installer + blockmap).
-      - name: Update feed (win-latest)
+      # Fixed release "win-latest" = update feed for electron-updater (latest.yml + installer + blockmap)
+      # and the direct download link in the README (ABS-Player-Setup.exe, a copy under a fixed name).
+      - name: Update feed + direct download (win-latest)
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          VERSION=$(node -p "require('./package.json').version")
           gh release view win-latest >/dev/null 2>&1 || \
-            gh release create win-latest --title "ABS Player pro Windows – zdroj automatických aktualizací" \
-              --notes "Používá ho aplikace pro automatické aktualizace. Instalátor ke stažení je v nejnovějším vydání win-v…" --latest=false
-          NEW=$(ls dist/*.exe dist/*.exe.blockmap dist/latest.yml | xargs -n1 basename)
-          gh release upload win-latest dist/*.exe dist/*.exe.blockmap dist/latest.yml --clobber
+            gh release create win-latest --title "ABS Player for Windows – latest" \
+              --notes "Always the newest Windows installer under a fixed name: ABS-Player-Setup.exe. The app also uses this release for its automatic updates." --latest=false
+          gh release edit win-latest --title "ABS Player for Windows – latest (${VERSION})" \
+            --notes "Always the newest Windows installer under a fixed name: ABS-Player-Setup.exe. The app also uses this release for its automatic updates."
+          cp dist/ABS-Player-Setup-*.exe ABS-Player-Setup.exe
+          NEW=$( (ls dist/*.exe dist/*.exe.blockmap dist/latest.yml | xargs -n1 basename; echo ABS-Player-Setup.exe) )
+          gh release upload win-latest dist/*.exe dist/*.exe.blockmap dist/latest.yml ABS-Player-Setup.exe --clobber
           for a in $(gh release view win-latest --json assets -q '.assets[].name'); do
             echo "$NEW" | grep -qxF "$a" || gh release delete-asset win-latest "$a" -y
           done

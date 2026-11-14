@@ -74,4 +74,19 @@ jobs:
           VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
           TAG="android-v${VERSION}-build${{ github.run_number }}"
           cp app/build/outputs/apk/release/app-release.apk "abs-player-android-${VERSION}.apk"
-          gh release create "$TAG" "abs-player-android-${VERSION}.apk" --title "ABS Player pro Android ${VERSION} (build ${{ github.run_number }})" --notes "Commit ${{ github.sha }}" --latest
+          gh release create "$TAG" "abs-player-android-${VERSION}.apk" --title "ABS Player for Android ${VERSION} (build ${{ github.run_number }})" --notes "Commit ${{ github.sha }}" --latest
+
+      # Fixed release "android-latest" with a fixed file name = the direct download link in the README.
+      # (The in-app updater only looks at android-v… tags.)
+      - name: Direct download (android-latest)
+        if: env.SIGNED == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          cp app/build/outputs/apk/release/app-release.apk ABS-Player-Android.apk
+          gh release view android-latest >/dev/null 2>&1 || \
+            gh release create android-latest --title "ABS Player for Android – latest" \
+              --notes "Always the newest Android APK (phone, Android Auto, Android TV / Google TV) under a fixed name: ABS-Player-Android.apk" --latest=false
+          gh release edit android-latest --title "ABS Player for Android – latest (${VERSION})"
+          gh release upload android-latest ABS-Player-Android.apk --clobber

@@ -51,12 +51,42 @@ class MainActivity : ComponentActivity() {
             }
         }
         handleOpenPlayer(intent)
+        handleDemo(intent)
         ensureLocalNetwork(ask = true)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleOpenPlayer(intent)
+        handleDemo(intent)
+    }
+
+    /**
+     * Debug builds only: steering for the README screenshots taken in CI
+     * (`adb shell am start -n …/.ui.MainActivity --es demo book --es title Alice`).
+     */
+    private fun handleDemo(i: Intent?) {
+        if (!cz.ondra.absplayer.BuildConfig.DEBUG) return
+        val cmd = i?.getStringExtra("demo") ?: return
+        val title = i.getStringExtra("title").orEmpty()
+        fun find() = (vm.continueItems + vm.libItems + (vm.recent?.books ?: emptyList()))
+            .firstOrNull { it.title.contains(title, ignoreCase = true) }
+        when (cmd) {
+            "login" -> vm.login(i.getStringExtra("server").orEmpty(), i.getStringExtra("user").orEmpty(), i.getStringExtra("pass").orEmpty())
+            "home" -> {
+                vm.sheet = null
+                while (vm.stack.size > 1) vm.stack.removeAt(vm.stack.lastIndex)
+                vm.onTab(i.getIntExtra("tab", 0))
+            }
+            "book" -> find()?.let { vm.openBook(it.id, it.title) }
+            "play" -> find()?.let { vm.play(it.id, i.getStringExtra("at")?.toDoubleOrNull()) }
+            "pause" -> vm.target.value.pause()
+            "player" -> if (vm.stack.lastOrNull() != Screen.Player) vm.push(Screen.Player)
+            "reader" -> find()?.let { vm.push(Screen.Reader(it.id, it.title)) }
+            "devices" -> vm.sheet = Sheet.Devices
+            "lang" -> i.getStringExtra("code")?.let { cz.ondra.absplayer.L.set(this, it) }
+            "back" -> vm.pop()
+        }
     }
 
     /** "Přehrávat na" from a phone / PC brought the app to the front on the TV: show the player. */
