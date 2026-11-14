@@ -66,8 +66,22 @@ jobs:
           path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
-      - name: Publish release
+      # A release only for a new versionName: the in-app updater compares versions, so a build of an
+      # already released version would only add noise (bump versionName / versionCode to ship a fix).
+      - name: New version?
         if: env.SIGNED == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          if gh release list --limit 300 --json tagName -q '.[].tagName' | grep -q "^android-v${VERSION}-build"; then
+            echo "::notice::Android ${VERSION} is already released – no new release (bump the version to publish)"
+          else
+            echo "NEW_VERSION=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Publish release
+        if: env.SIGNED == '1' && env.NEW_VERSION == '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -79,7 +93,7 @@ jobs:
       # Fixed release "android-latest" with a fixed file name = the direct download link in the README.
       # (The in-app updater only looks at android-v… tags.)
       - name: Direct download (android-latest)
-        if: env.SIGNED == '1'
+        if: env.SIGNED == '1' && env.NEW_VERSION == '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

@@ -58,6 +58,11 @@ class ChapterPlayer(
     private var lastChapter = -1
     private var pendingAutoTransition = false
     private var playAfterLoad = false
+    /**
+     * Bumped by every pause / stop / book change. A play waits for the server check first; when the
+     * user paused meanwhile, the number differs and the late play is dropped.
+     */
+    private var playRequest = 0
 
     private val handler = Handler(exo.applicationLooper)
     private val ticker = object : Runnable {
@@ -107,6 +112,7 @@ class ChapterPlayer(
     }
 
     fun detach() {
+        playRequest++
         book = null
         playlist = emptyList()
         exo.stop()
@@ -273,6 +279,7 @@ class ChapterPlayer(
         }
         playAfterLoad = exo.playWhenReady
         isLoadingBook = true
+        playRequest++
         exo.pause()
         val start = if (startPositionMs == C.TIME_UNSET) null else startPositionMs
         return scope.future {
@@ -291,12 +298,15 @@ class ChapterPlayer(
             return Futures.immediateVoidFuture()
         }
         if (!playWhenReady) {
+            playRequest++
             exo.pause()
             return Futures.immediateVoidFuture()
         }
         if (book == null) return Futures.immediateVoidFuture()
+        val request = ++playRequest
         return scope.future {
             runCatching { host.beforePlay() }
+            if (request != playRequest) return@future // paused (or stopped) while asking the server
             if (exo.playbackState == Player.STATE_ENDED) exo.seekTo(0, 0)
             if (exo.playbackState == Player.STATE_IDLE) exo.prepare()
             exo.play()
@@ -309,6 +319,7 @@ class ChapterPlayer(
     }
 
     override fun handleStop(): ListenableFuture<*> {
+        playRequest++
         exo.stop()
         return Futures.immediateVoidFuture()
     }

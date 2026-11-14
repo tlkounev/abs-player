@@ -112,6 +112,19 @@ data class Media(
             ?: (((ebookFile as? JsonObject)?.get("metadata") as? JsonObject)?.get("ext") as? JsonPrimitive)?.contentOrNull
                 ?.trimStart('.')?.lowercase()
 
+    /**
+     * Identifies the e-book file's content (ino, size, mtime from Audiobookshelf), so a replaced EPUB
+     * on the server is downloaded again instead of read from the cache.
+     */
+    val ebookVersion: String
+        get() {
+            val f = ebookFile as? JsonObject ?: return "0"
+            val m = f["metadata"] as? JsonObject
+            fun v(o: JsonObject?, k: String) = (o?.get(k) as? JsonPrimitive)?.contentOrNull.orEmpty()
+            return listOf(v(f, "ino"), v(m, "size"), v(m, "mtimeMs")).joinToString("-")
+                .hashCode().toUInt().toString(16)
+        }
+
     /** Our reader handles EPUB. */
     val hasEpub: Boolean get() = ebookExt == "epub"
     val hasAudio: Boolean get() = (duration ?: 0.0) > 0.0

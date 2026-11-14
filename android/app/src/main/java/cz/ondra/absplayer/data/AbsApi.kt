@@ -106,11 +106,18 @@ class AbsApi(private val settings: Settings) {
             .post(ByteArray(0).toRequestBody(null))
             .build()
         val body: String = http.newCall(req).execute().use { resp ->
-            if (!resp.isSuccessful) null else resp.body?.string()
+            when {
+                resp.isSuccessful -> resp.body?.string()
+                // only a refused token means "sign in again"; 429 / 5xx (server restarting behind
+                // a reverse proxy) keep the sign-in and fail just this request
+                resp.code == 401 || resp.code == 403 -> null
+                else -> throw IOException("HTTP ${resp.code} from /auth/refresh")
+            }
         } ?: return false
+        // an unexpected answer (captive portal page, broken proxy) is not a refused token either
         val user = runCatching { json.decodeFromString(LoginResponse.serializer(), body).user }.getOrNull()
-            ?: return false
-        val access = user.accessToken ?: return false
+            ?: throw IOException("Unexpected answer from /auth/refresh")
+        val access = user.accessToken ?: throw IOException("No access token from /auth/refresh")
         settings.accessToken = access
         if (user.refreshToken != null) settings.refreshToken = user.refreshToken
         return true

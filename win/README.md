@@ -1,7 +1,7 @@
 # ABS Player for Windows
 
 The Audiobookshelf web client as a desktop app with a mini player in the Windows notification area.
-Version 1.3.2.
+Version 1.3.3.
 
 **[⬇ Download ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)

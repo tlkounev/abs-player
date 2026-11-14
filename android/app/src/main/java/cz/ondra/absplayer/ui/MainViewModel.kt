@@ -21,6 +21,7 @@ import cz.ondra.absplayer.data.Author
 import cz.ondra.absplayer.data.Recent
 import cz.ondra.absplayer.player.NowPlaying
 import cz.ondra.absplayer.remote.PlaybackTarget
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.IOException
 
 sealed interface Screen {
@@ -395,14 +397,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // ------------------------------------------------------------------ e-book
 
     /** The book's EPUB in the cache (downloaded once). */
-    suspend fun ebookFile(itemId: String): java.io.File {
-        val dir = java.io.File(app.cacheDir, "ebooks").apply { mkdirs() }
-        val f = java.io.File(dir, "$itemId.epub")
-        if (!f.exists() || f.length() == 0L) api.downloadEbook(itemId, f)
-        return f
+    private fun ebookDir() = java.io.File(app.cacheDir, "ebooks").apply { mkdirs() }
+
+    /** Cache name of the book's current e-book file: a replaced EPUB on the server gets a new name. */
+    private fun ebookBase(itemId: String) = "$itemId-" + (books[itemId]?.media?.ebookVersion ?: "0")
+
+    suspend fun ebookFile(itemId: String): java.io.File = withContext(Dispatchers.IO) {
+        val base = ebookBase(itemId)
+        val dir = ebookDir()
+        // older versions of this book, and books not opened for 90 days
+        val old = System.currentTimeMillis() - 90L * 24 * 3600 * 1000
+        dir.listFiles()?.forEach {
+            val other = it.name.startsWith("$itemId.") || (it.name.startsWith("$itemId-") && !it.name.startsWith("$base."))
+            if (other || it.lastModified() < old) it.delete()
+        }
+        val f = java.io.File(dir, "$base.epub")
+        if (!f.exists() || f.length() == 0L) api.downloadEbook(itemId, f) else f.setLastModified(System.currentTimeMillis())
+        f
     }
 
-    fun ebookLocationsFile(itemId: String) = java.io.File(java.io.File(app.cacheDir, "ebooks").apply { mkdirs() }, "$itemId.loc.json")
+    fun ebookLocationsFile(itemId: String) = java.io.File(ebookDir(), ebookBase(itemId) + ".loc.json")
 
     private var ebookSaveJob: kotlinx.coroutines.Job? = null
 

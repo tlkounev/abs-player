@@ -78,6 +78,11 @@ function setLang(code) {
 ipcMain.on('i18n:get', (e) => { e.returnValue = lang(); });
 ipcMain.on('i18n:set', (_e, code) => setLang(code));
 
+/** Is the URL on the configured server? Compares origins, so https://abs.example.com.evil.tld does not pass. */
+function isServerUrl(url) {
+  try { return new URL(url).origin === new URL(config.serverUrl).origin; } catch { return false; }
+}
+
 // ---------- main window (the full ABS web app) ----------
 function createMain(showOnReady) {
   const b = config.bounds || {};
@@ -116,13 +121,12 @@ function createMain(showOnReady) {
   });
 
   // Links outside the server open in the default browser
-  const serverOrigin = new URL(config.serverUrl).origin;
   mainWin.webContents.setWindowOpenHandler(({ url }) => {
-    if (!url.startsWith(serverOrigin)) shell.openExternal(url);
+    if (!isServerUrl(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
   mainWin.webContents.on('will-navigate', (e, url) => {
-    if (!url.startsWith(serverOrigin) && !url.startsWith('file:')) {
+    if (!isServerUrl(url) && !url.startsWith('file:')) {
       e.preventDefault();
       shell.openExternal(url);
     }
@@ -296,7 +300,7 @@ ipcMain.handle('setup:save', (_e, url) => {
 async function pageExec(code) {
   if (!mainWin || mainWin.isDestroyed()) return null;
   const wc = mainWin.webContents;
-  if (wc.isLoading() && !wc.getURL().startsWith(config.serverUrl)) return null;
+  if (wc.isLoading() && !isServerUrl(wc.getURL())) return null;
   try {
     await wc.executeJavaScript(BRIDGE, true);
     return await wc.executeJavaScript(code, true);
@@ -518,6 +522,20 @@ ipcMain.handle('abs:cmd', (_e, name, arg) => routedCmd(name, arg));
 // audiobook at the matching time (share of the chapter).
 const readers = new Map(); // webContents.id -> { id, info, mode, audioTime, file, win, saveTimer }
 const ebookDir = () => path.join(app.getPath('userData'), 'ebooks');
+/** Cache name of a book's e-book file: changes when the EPUB on the server is replaced. */
+const ebookBase = (id, version) => id + '-' + require('crypto').createHash('sha1').update(String(version || '0')).digest('hex').slice(0, 10);
+
+/** Removes older versions of this book and e-books not opened for 90 days. */
+function pruneEbooks(id, base) {
+  const old = Date.now() - 90 * 24 * 3600 * 1000;
+  for (const name of fs.readdirSync(ebookDir())) {
+    const f = path.join(ebookDir(), name);
+    try {
+      const other = name.startsWith(id + '.') || (name.startsWith(id + '-') && !name.startsWith(base + '.'));
+      if (other || fs.statSync(f).mtimeMs < old) fs.unlinkSync(f);
+    } catch (e) { /* in use / gone */ }
+  }
+}
 
 async function openReader(id, mode, audioTime) {
   for (const r of readers.values()) {
@@ -526,8 +544,12 @@ async function openReader(id, mode, audioTime) {
   const info = await localCmd('readerInfo', { id });
   if (!info || info.ext !== 'epub') return false;
   fs.mkdirSync(ebookDir(), { recursive: true });
-  const file = path.join(ebookDir(), id + '.epub');
-  if (!fs.existsSync(file) || fs.statSync(file).size === 0) {
+  const base = ebookBase(id, info.version);
+  pruneEbooks(id, base);
+  const file = path.join(ebookDir(), base + '.epub');
+  if (fs.existsSync(file) && fs.statSync(file).size > 0) {
+    const now = new Date(); try { fs.utimesSync(file, now, now); } catch (e) { /* only the age */ }
+  } else {
     const res = await fetch(info.url, { headers: info.token ? { Authorization: 'Bearer ' + info.token } : {} });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     fs.writeFileSync(file + '.part', Buffer.from(await res.arrayBuffer()));
@@ -541,7 +563,7 @@ async function openReader(id, mode, audioTime) {
     webPreferences: { preload: path.join(__dirname, 'reader-preload.js'), contextIsolation: true, sandbox: true }
   });
   win.setMenu(null);
-  const r = { id, info, mode: mode || 'saved', audioTime, file, win, saveTimer: null };
+  const r = { id, info, mode: mode || 'saved', audioTime, file, locFile: path.join(ebookDir(), base + '.loc.json'), win, saveTimer: null };
   readers.set(win.webContents.id, r);
   const wcId = win.webContents.id;
   win.on('close', () => { config.readerBounds = win.getBounds(); saveConfig(config); });
@@ -562,7 +584,7 @@ ipcMain.handle('reader:open', async (_e, id, mode, audioTime) => {
 ipcMain.on('reader:config', (e) => {
   const r = readers.get(e.sender.id);
   if (!r) { e.returnValue = '{}'; return; }
-  const locFile = path.join(ebookDir(), r.id + '.loc.json');
+  const locFile = r.locFile;
   e.returnValue = JSON.stringify({
     title: r.info.title,
     hasAudio: r.info.duration > 0,
@@ -596,7 +618,7 @@ ipcMain.on('reader:relocated', (e, json) => {
 
 ipcMain.on('reader:locations', (e, json) => {
   const r = readers.get(e.sender.id);
-  if (r) try { fs.writeFileSync(path.join(ebookDir(), r.id + '.loc.json'), json); } catch (err) { /* cache only */ }
+  if (r) try { fs.writeFileSync(r.locFile, json); } catch (err) { /* cache only */ }
 });
 
 ipcMain.on('reader:settings', (_e, json) => {
@@ -982,9 +1004,9 @@ function createNotifyIcon() {
 
 // ---------- start ----------
 app.whenReady().then(() => {
-  // allow audio playback and notifications for the ABS page
+  // the ABS page may show notifications, copy to the clipboard and go fullscreen; no microphone / camera
   session.fromPartition('persist:abs').setPermissionRequestHandler((_wc, perm, cb) => {
-    cb(['media', 'mediaKeySystem', 'notifications', 'clipboard-sanitized-write', 'fullscreen'].includes(perm));
+    cb(['notifications', 'clipboard-sanitized-write', 'fullscreen'].includes(perm));
   });
 
   createNotifyIcon();

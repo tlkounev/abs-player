@@ -392,6 +392,9 @@
             id: li.id,
             title: (m.metadata && m.metadata.title) || '',
             ext,
+            // identifies the file's content: a replaced EPUB on the server is downloaded again
+            version: m.ebookFile ? [m.ebookFile.ino, m.ebookFile.metadata && m.ebookFile.metadata.size,
+              m.ebookFile.metadata && m.ebookFile.metadata.mtimeMs].join('-') : '0',
             duration: m.duration || 0,
             chapters: (m.chapters || []).map((c) => ({ start: c.start, end: c.end, title: c.title })),
             currentTime: p ? p.currentTime || 0 : 0,

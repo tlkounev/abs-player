@@ -209,7 +209,7 @@ fun ReaderScreen(vm: MainViewModel, screen: Screen.Reader) {
                         setBackgroundColor((READER_BG[theme] ?: READER_BG.getValue("dark")).let {
                             android.graphics.Color.argb(255, (it.red * 255).toInt(), (it.green * 255).toInt(), (it.blue * 255).toInt())
                         })
-                        WebView.setWebContentsDebuggingEnabled(true)
+                        if (cz.ondra.absplayer.BuildConfig.DEBUG) WebView.setWebContentsDebuggingEnabled(true)
                         webChromeClient = object : android.webkit.WebChromeClient() {
                             override fun onConsoleMessage(m: android.webkit.ConsoleMessage): Boolean {
                                 if (m.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {
