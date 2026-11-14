@@ -89,6 +89,9 @@ jobs:
           TAG="android-v${VERSION}-build${{ github.run_number }}"
           cp app/build/outputs/apk/release/app-release.apk "abs-player-android-${VERSION}.apk"
           gh release create "$TAG" "abs-player-android-${VERSION}.apk" --title "ABS Player for Android ${VERSION} (build ${{ github.run_number }})" --notes "Commit ${{ github.sha }}" --latest
+          # keep the newest 10 releases of this app (the updater needs only the newest); older ones go with their tags
+          gh release list --limit 300 --json tagName,createdAt -q 'sort_by(.createdAt) | reverse | .[].tagName' |
+            grep "^android-v" | tail -n +11 | while read -r old; do gh release delete "$old" --cleanup-tag -y; done
 
       # Fixed release "android-latest" with a fixed file name = the direct download link in the README.
       # (The in-app updater only looks at android-v… tags.)
