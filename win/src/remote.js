@@ -107,7 +107,8 @@ function popupCmdToRemote(name, arg) {
 /**
  * HTTP server through which a paired phone (or another PC) controls playback in this app.
  * opts: { deviceId, name, info(), state() -> NowPlaying, command(cmd) -> NowPlaying,
- *         getLinks() -> [{ clientId, key }], addLink({ clientId, key, name }), removeLink(clientId), code() }
+ *         getLinks() -> [{ clientId, key }], addLink({ clientId, key, name, kind }), removeLink(clientId),
+ *         seen(clientId) (a verified request came), code() }
  */
 function createReceiver(opts) {
   let failed = 0;
@@ -165,7 +166,7 @@ function createReceiver(opts) {
     failed = 0;
     const payload = JSON.parse(L.open(keys.enc, 'client', body.box));
     const clientId = L.randomHex(8);
-    opts.addLink({ clientId, key: L.b64(keys.link), name: String(payload.name || '') });
+    opts.addLink({ clientId, key: L.b64(keys.link), name: String(payload.name || ''), kind: String(payload.kind || '') });
     return send(res, 200, {
       proof: L.proof(keys, 'receiver', opts.code()),
       box: L.seal(keys.enc, 'receiver', JSON.stringify({ clientId, deviceId: opts.deviceId, name: nameNow() }))
@@ -187,6 +188,7 @@ function createReceiver(opts) {
     const want = L.requestSig(L.unb64(link.key), req.method, req.url || '', time, nonce, body);
     if (!L.sameSig(h['x-sig'], want)) { send(res, 401, { error: 'Device is not paired' }); return null; }
     nonces.set(nonce, now + 2 * MAX_SKEW);
+    if (opts.seen) opts.seen(link.clientId);
     return { link, nonce };
   }
 
@@ -413,7 +415,7 @@ async function pair({ host, port, code, password, serverUrl, username, userId, m
   const info = hit.info;
   if (!(info.version >= 3)) throw codedError('peerUpdate', 'updateNeeded');
   if (Number.isFinite(info.time)) clockOffset.set(info.deviceId, info.time - Date.now());
-  const req = { server: serverUrl, username, userId: userId || null, name: myName };
+  const req = { server: serverUrl, username, userId: userId || null, name: myName, kind: 'pc' };
   if (needsPassword(info, serverUrl, username)) {
     if (!password) {
       const e = new Error('needPassword');

@@ -702,8 +702,17 @@ const receiver = remote.createReceiver({
   code: () => pairingCode,
   getLinks: () => config.receiverLinks,
   addLink: (l) => {
-    config.receiverLinks.push({ clientId: l.clientId, key: l.key, name: l.name || '', at: Date.now() });
+    config.receiverLinks.push({ clientId: l.clientId, key: l.key, name: l.name || '', kind: l.kind || '', at: Date.now() });
     saveConfig(config);
+  },
+  // "last used" in the list of controllers; saved at most every 10 minutes per controller
+  seen: (clientId) => {
+    const l = config.receiverLinks.find((x) => x.clientId === clientId);
+    if (!l) return;
+    const now = Date.now();
+    const before = l.lastSeen || 0;
+    l.lastSeen = now;
+    if (now - before > 600000) saveConfig(config);
   },
   removeLink: (clientId) => {
     config.receiverLinks = config.receiverLinks.filter((l) => l.clientId !== clientId);
@@ -773,7 +782,11 @@ ipcMain.handle('devices:get', async () => {
   const discovered = discovery.list()
     .filter((f) => !config.paired.some((p) => p.deviceId && p.deviceId === f.deviceId))
     .map((f) => ({ name: f.name, kind: f.kind, host: f.host, port: f.port }));
-  return { current: currentTarget, local: { id: 'local', name: deviceName() }, paired, discovered, code: pairingCode, port: receiver.port, addr: lanAddress() };
+  // phones / PCs allowed to control this PC (newest first)
+  const controllers = config.receiverLinks
+    .map((l) => ({ id: l.clientId, name: l.name || '?', kind: l.kind || '', at: l.at || 0, lastSeen: l.lastSeen || 0 }))
+    .sort((a, b) => Math.max(b.lastSeen, b.at) - Math.max(a.lastSeen, a.at));
+  return { current: currentTarget, local: { id: 'local', name: deviceName() }, paired, discovered, controllers, code: pairingCode, port: receiver.port, addr: lanAddress() };
 });
 
 ipcMain.handle('devices:select', (_e, id) => selectTarget(id));
@@ -816,6 +829,13 @@ ipcMain.handle('devices:rename', (_e, id, name) => {
     if (!d) return false;
     d.name = n;
   }
+  saveConfig(config);
+  return true;
+});
+
+// a controller loses access to this PC (it has to pair again)
+ipcMain.handle('devices:revoke', (_e, clientId) => {
+  config.receiverLinks = config.receiverLinks.filter((l) => l.clientId !== clientId);
   saveConfig(config);
   return true;
 });

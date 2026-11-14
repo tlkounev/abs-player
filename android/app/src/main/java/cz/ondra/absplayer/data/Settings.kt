@@ -32,7 +32,17 @@ data class PairedDevice(
 
 /** A phone / PC allowed to control this receiver (TV). */
 @Serializable
-data class ReceiverLink(val clientId: String, val key: String, val name: String = "", val at: Long = 0)
+data class ReceiverLink(
+    val clientId: String,
+    val key: String,
+    val name: String = "",
+    /** When it was paired (ms). */
+    val at: Long = 0,
+    /** "phone" | "tv" | "pc" ("" = paired by an older version). */
+    val kind: String = "",
+    /** Last verified request (ms, saved at most every 10 minutes). */
+    val lastSeen: Long = 0,
+)
 
 data class LocalProgress(val positionSec: Double, val updatedAt: Long, val synced: Boolean)
 
@@ -163,5 +173,17 @@ class Settings(context: Context) {
             prefs.edit().putString("rxLinks", json.encodeToString(migrated)).remove("rxSecrets").apply()
             return migrated
         }
-        set(v) = prefs.edit().putString("rxLinks", json.encodeToString(v)).apply()
+        set(v) {
+            prefs.edit().putString("rxLinks", json.encodeToString(v)).apply()
+            receiverLinksFlow.value = v
+        }
+
+    /** The same list for the UI ("Controlling this TV"). */
+    val receiverLinksFlow = kotlinx.coroutines.flow.MutableStateFlow(receiverLinks)
+
+    /** Changes the list atomically (the receiver's thread and the UI both write it). */
+    @Synchronized
+    fun updateReceiverLinks(change: (List<ReceiverLink>) -> List<ReceiverLink>) {
+        receiverLinks = change(receiverLinks)
+    }
 }

@@ -1,7 +1,7 @@
 # ABS Player for Android
 
 An Audiobookshelf client for the phone, Android Auto and Android TV / Google TV – all in one APK.
-Version 1.6.8.
+Version 1.6.9.
 
 **[⬇ Download ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)
@@ -66,7 +66,8 @@ Version 1.6.8.
   - moving across the tabs switches the content right away; ↓ from the tabs or search goes to the first visible item;
   - the keyboard opens only after pressing OK in a text field.
 - A **receiver** runs in the background (also after the TV is switched on). The TV's pairing code and
-  address are at the bottom of *Play on*.
+  address are at the bottom of *Play on*; below them *Controlling this TV* lists the paired phones / PCs
+  (last used, paired on) and × takes the access away (that device has to pair again).
 - When a book is sent to the TV, the app comes to the front with the player – also when it was only hidden
   behind the home screen. This needs *Display over other apps* (the *Allow* button in *Play on*; if the TV has
   no such setting: `adb shell appops set cz.ondra.absplayer SYSTEM_ALERT_WINDOW allow`).

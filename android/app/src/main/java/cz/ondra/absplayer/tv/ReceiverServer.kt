@@ -95,7 +95,7 @@ class ReceiverServer(
                         get && s.uri == "/state" -> ok(NowPlaying.serializer(), withoutKnownChapters(PlaybackHub.state.value, s.parameters["chapters"]?.firstOrNull()), auth)
                         post && s.uri == "/cmd" -> ok(NowPlaying.serializer(), command(json.decodeFromString(Command.serializer(), text)), auth)
                         delete && s.uri == "/pair" -> {
-                            onMain { app.settings.receiverLinks = app.settings.receiverLinks.filter { it.clientId != auth.link.clientId } }
+                            app.settings.updateReceiverLinks { l -> l.filter { it.clientId != auth.link.clientId } }
                             newJson(Status.OK, "{\"ok\":true}", auth)
                         }
                         else -> error(Status.NOT_FOUND, tr("unknownRequest"), sign = auth)
@@ -156,6 +156,10 @@ class ReceiverServer(
         val want = LinkCrypto.requestSig(LinkCrypto.unb64(link.key), s.method.name, path, time, nonce, body)
         if (!LinkCrypto.sameSig(h["x-sig"], want)) return error(Status.UNAUTHORIZED, tr("notPaired"))
         nonces[nonce] = now + 2 * MAX_SKEW_MS
+        // "last used" in the list of controllers (saved at most every 10 minutes)
+        if (now - link.lastSeen > 600_000) {
+            app.settings.updateReceiverLinks { l -> l.map { if (it.clientId == link.clientId) it.copy(lastSeen = now) else it } }
+        }
         return Signed(link, nonce)
     }
 
@@ -204,8 +208,10 @@ class ReceiverServer(
                 st.refreshToken = pay.refreshToken
             }
             // another account: the controllers of the previous one lose access
-            st.receiverLinks = (if (sameAccount) st.receiverLinks else emptyList()) +
-                ReceiverLink(clientId, LinkCrypto.b64(keys.link), pay.name, System.currentTimeMillis())
+            st.updateReceiverLinks { l ->
+                (if (sameAccount) l else emptyList()) +
+                    ReceiverLink(clientId, LinkCrypto.b64(keys.link), pay.name, System.currentTimeMillis(), kind = pay.kind)
+            }
             app.onCredentialsChanged()
         }
         val result = json.encodeToString(PairResult.serializer(), PairResult(clientId, deviceId, name()))

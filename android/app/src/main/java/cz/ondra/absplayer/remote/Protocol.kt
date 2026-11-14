@@ -63,6 +63,8 @@ data class PairPayload(
     val accessToken: String? = null,
     val refreshToken: String? = null,
     val name: String = "",
+    /** "phone" | "tv" | "pc" – the icon in the receiver's list of controllers. */
+    val kind: String = "",
 )
 
 /** Inside the receiver's box. */

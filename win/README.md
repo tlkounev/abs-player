@@ -1,7 +1,7 @@
 # ABS Player for Windows
 
 The Audiobookshelf web client as a desktop app with a mini player in the Windows notification area.
-Version 1.3.7.
+Version 1.3.8.
 
 **[⬇ Download ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)
@@ -64,6 +64,8 @@ On the first start enter the address of your Audiobookshelf server and sign in a
 - **This PC as a receiver:** a phone with ABS Player can send playback here. The pairing code and address
   (IP:port) of this PC are at the bottom of the device list and in the tray menu. Port 8765 – on the first
   start Windows asks whether to allow network access: allow it for private networks.
+  Under the code, *Controlling this PC* lists the phones / PCs paired with this PC (last used, paired on);
+  × takes the access away – that device has to pair again.
 - **TV switched off:** when the selected TV is unreachable, the mini player offers *Play on this device*
   (plays here from the position saved on the server). Selecting a TV that is off sends Wake-on-LAN (the app
   learns the TV's MAC address from ARP while the TV is on; the TV must have wake on network / Wi-Fi enabled)

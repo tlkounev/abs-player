@@ -1,5 +1,6 @@
 package cz.ondra.absplayer.ui
 
+import cz.ondra.absplayer.L
 import cz.ondra.absplayer.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
@@ -313,8 +314,44 @@ private fun DevicesSheet(vm: MainViewModel, pairInitially: Boolean = false) {
                 color = C.Muted, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
             )
             OverlayPermission()
+            Controllers(vm)
         }
         Spacer(Modifier.height(20.dp))
+    }
+}
+
+/** TV: phones / PCs allowed to control this TV; × takes the access away (the device has to pair again). */
+@Composable
+private fun Controllers(vm: MainViewModel) {
+    val links by vm.app.settings.receiverLinksFlow.collectAsStateWithLifecycle()
+    if (links.isEmpty()) return
+    HorizontalDivider(color = C.Line, modifier = Modifier.padding(top = 4.dp, bottom = 6.dp))
+    Text(
+        tr("ctrlThisTv", "n" to links.size), fontWeight = FontWeight.SemiBold, fontSize = 15.sp,
+        modifier = Modifier.padding(start = 8.dp, bottom = 2.dp),
+    )
+    val fmt = remember(L.lang) { java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM, java.util.Locale(L.lang)) }
+    links.sortedByDescending { maxOf(it.lastSeen, it.at) }.forEach { c ->
+        val sub = (if (c.lastSeen > 0) tr("lastUsedT", "t" to whenText(c.lastSeen)) else tr("notUsedYet")) +
+            (if (c.at > 0) " · " + tr("pairedOnT", "d" to fmt.format(java.util.Date(c.at))) else "")
+        DeviceRow(
+            when (c.kind) { "phone" -> Ic.Phone; "tv" -> Ic.Tv; else -> Ic.Computer },
+            c.name.ifBlank { "?" }, sub, selected = false, online = true, clickable = false,
+            removeLabel = tr("removeX", "name" to c.name),
+            onRemove = { vm.app.settings.updateReceiverLinks { l -> l.filter { it.clientId != c.clientId } } },
+        ) {}
+    }
+}
+
+/** "today 22:41" / "yesterday" / "9 days ago" */
+private fun whenText(ts: Long): String {
+    val zone = java.time.ZoneId.systemDefault()
+    val d = java.time.Instant.ofEpochMilli(ts).atZone(zone)
+    val days = java.time.temporal.ChronoUnit.DAYS.between(d.toLocalDate(), java.time.LocalDate.now(zone))
+    return when {
+        days <= 0 -> tr("todayT", "t" to "%02d:%02d".format(d.hour, d.minute))
+        days == 1L -> tr("yesterday")
+        else -> tr("daysAgo", "n" to days)
     }
 }
 
@@ -329,6 +366,8 @@ private fun DeviceRow(
     onRename: (() -> Unit)? = null,
     onRenamed: (String) -> Unit = {},
     onRemove: (() -> Unit)? = null,
+    clickable: Boolean = true,
+    removeLabel: String = tr("unpair"),
     onClick: () -> Unit,
 ) {
     Row(
@@ -342,7 +381,7 @@ private fun DeviceRow(
                 // accent bar on the left of the selected device (as in Windows)
                 if (selected) drawRect(C.Accent, size = androidx.compose.ui.geometry.Size(3.dp.toPx(), size.height))
             }
-            .then(if (renaming) Modifier else Modifier.clickable(enabled = online || selected, onClick = onClick))
+            .then(if (renaming || !clickable) Modifier else Modifier.clickable(enabled = online || selected, onClick = onClick))
             .padding(start = 12.dp, end = 2.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -368,7 +407,7 @@ private fun DeviceRow(
                 IconButton(onClick = onRename) { Icon(Ic.Edit, tr("rename"), tint = C.Muted, modifier = Modifier.size(18.dp)) }
             }
             if (onRemove != null) {
-                IconButton(onClick = onRemove) { Icon(Ic.Close, tr("unpair"), tint = C.Muted, modifier = Modifier.size(20.dp)) }
+                IconButton(onClick = onRemove) { Icon(Ic.Close, removeLabel, tint = C.Muted, modifier = Modifier.size(20.dp)) }
             }
         }
     }

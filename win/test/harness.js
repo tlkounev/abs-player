@@ -76,8 +76,10 @@ app.whenReady().then(async () => {
     paired: [{ id: 'tv1', name: 'Obývák TV', kind: 'tv', host: '10.0.0.5', online: true, title: 'Duna', isPlaying: true },
       { id: 'tv2', name: 'Ložnice TV', kind: 'tv', host: '10.0.0.6', online: false }],
     discovered: [{ name: 'Pracovna PC', kind: 'pc', host: '10.0.0.7', port: 8765 }],
+    controllers: [{ id: 'c1', name: 'Pixel 8', kind: 'phone', at: Date.now() - 5 * 86400000, lastSeen: Date.now() - 60000 }],
     code: '123456', port: 8765
   }));
+  ipcMain.handle('devices:revoke', (_e, id) => { devCalls.push('revoke:' + id); return true; });
   ipcMain.handle('devices:info', (_e, host, port) => ({ ok: host === '10.0.0.7', name: 'Pracovna PC', kind: 'pc', needsPassword: false }));
   ipcMain.handle('devices:pair', (_e, p) => { devCalls.push('pair:' + p.host + ':' + p.port + ':' + p.code); return { ok: true, id: 'pc2' }; });
   ipcMain.handle('devices:select', (_e, id) => { devCalls.push('select:' + id); return true; });
@@ -231,11 +233,17 @@ app.whenReady().then(async () => {
   check('offline device dimmed', await jsP("document.querySelectorAll('#devRows .dev-row.off').length") === 1);
   check('playing subtitle', (await jsP("document.querySelectorAll('#devRows .dev-row')[1].querySelector('.sb').textContent")) === 'Hraje: Duna');
   check('own pairing code', (await jsP("document.getElementById('myCode').textContent")).includes('123 456'));
+  check('controllers of this PC listed', await jsP("document.querySelectorAll('#ctrlRows .dev-row').length") === 1 &&
+    (await jsP("document.getElementById('ctrlTitle').textContent")) === 'Ovládají toto PC (1)');
+  check('controller: last used today, paired date', /^Naposledy dnes .* · spárováno /.test(await jsP("document.querySelector('#ctrlRows .sb').textContent")));
+  await jsP("document.querySelector('#ctrlRows .dev-tools .icon-btn').click()");
+  await wait(200);
+  check('controller removed with ×', devCalls.includes('revoke:c1'));
   check('pair form hidden behind button', await jsP("document.getElementById('pairSection').classList.contains('hidden') && !document.getElementById('pairOpen').classList.contains('hidden')"));
   check('pair button label', (await jsP("document.getElementById('pairOpen').textContent")) === 'Spárovat zařízení (TV nebo PC)');
   await shot(popup, 'p-devices.png');
   const hClosed = global.__listH;
-  check('devices panel fits its content (no big empty space)', hClosed > 100 && hClosed < 300);
+  check('devices panel fits its content (no big empty space)', hClosed > 100 && hClosed < 380);
   await jsP("document.querySelectorAll('#devRows .dev-row')[1].querySelector('.dev-tools .icon-btn').click()");
   await wait(150);
   check('rename turns the row into a field', await jsP("!!document.querySelector('#devRows .dev-row input.dev-name')"));
@@ -266,7 +274,7 @@ app.whenReady().then(async () => {
   await shot(popup, 'p-pair.png');
   await jsP("document.getElementById('pBtn').click()");
   await wait(900);
-  check('pair + select called', JSON.stringify(devCalls.filter((c) => !c.startsWith('rename:'))) === JSON.stringify(['pair:10.0.0.7:8765:123456', 'select:pc2']));
+  check('pair + select called', JSON.stringify(devCalls.filter((c) => !c.startsWith('rename:') && !c.startsWith('revoke:') && !c.startsWith('unpair:'))) === JSON.stringify(['pair:10.0.0.7:8765:123456', 'select:pc2']));
   check('panel closed after pairing', await jsP("document.getElementById('devPanel').classList.contains('hidden')") && popup.getBounds().height === 236);
   // switching from the devices panel to chapters keeps the window size
   await jsP("document.querySelector('#player [data-act=devices]').click()");
