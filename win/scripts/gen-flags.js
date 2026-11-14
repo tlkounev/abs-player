@@ -1,4 +1,4 @@
-// Vygeneruje PNG vlajky pro kontextové menu ikony v liště (assets/flags/xx.png, @1.5x, @2x).
+// Generates PNG flags for the tray icon's context menu (assets/flags/xx.png, @1.5x, @2x).
 const fs = require('fs');
 const path = require('path');
 const { Resvg } = require('@resvg/resvg-js');

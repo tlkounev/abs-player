@@ -1,5 +1,5 @@
 // xvfb-run electron test/reader-window.test.js <book.epub>
-// Okno čtečky: načtení EPUB, obsah, kapitola v liště, Aa, „Poslouchat od této strany“ (čas zpět hostiteli).
+// Reader window: loading the EPUB, contents, chapter in the bar, Aa, "Listen from this page" (time back to the host).
 'use strict';
 const { app, BrowserWindow, ipcMain } = require('electron');
 const fs = require('fs');
@@ -43,7 +43,7 @@ app.whenReady().then(async () => {
   check('progress + page in the bottom bar', /\d+ % · str\. \d+\/\d+/.test(await js("document.getElementById('pct').textContent")));
   check('listen button text', (await js("document.getElementById('listen').textContent")).includes('Poslouchat od této strany'));
   await (await win.webContents.capturePage()).toPNG && fs.writeFileSync(path.join(OUT, 'r-reader.png'), (await win.webContents.capturePage()).toPNG());
-  // Aa: sépie
+  // Aa: sepia
   await js("document.getElementById('aaBtn').click()");
   await wait(200);
   fs.writeFileSync(path.join(OUT, 'r-aa.png'), (await win.webContents.capturePage()).toPNG());
@@ -55,7 +55,7 @@ app.whenReady().then(async () => {
   await wait(700);
   check('contents click -> chapter 2', (got.relocated[got.relocated.length - 1] || {}).chapter === 'Kapitola 2');
   fs.writeFileSync(path.join(OUT, 'r-sepia.png'), (await win.webContents.capturePage()).toPNG());
-  // klik vlevo / šipka vlevo = právě jedna strana zpět (tam a zpět = stejné místo)
+  // click left / arrow left = exactly one page back (there and back = same place)
   const cfiNow = () => (got.relocated[got.relocated.length - 1] || {}).cfi;
   const key = async (k) => { win.webContents.sendInputEvent({ type: 'keyDown', keyCode: k }); win.webContents.sendInputEvent({ type: 'keyUp', keyCode: k }); await wait(600); };
   await js("window.reader.next()"); await wait(500);
@@ -78,14 +78,14 @@ app.whenReady().then(async () => {
   await click(0.9);
   check('click left = one page back, right = forward again', c1 !== c0 && cfiNow() === c0, { c0, c1, now: cfiNow() });
   check('page has book proportions (not wider than tall × 0.8)', vr.w <= vr.h * 0.8 + 70, vr);
-  // široké okno: dvě strany
+  // wide window: two pages
   win.setSize(1500, 800); await wait(1200);
   const vw = await js("(() => { const r = document.getElementById('viewer').getBoundingClientRect(); return { w: r.width, h: r.height }; })()");
   check('wide window: two pages', vw.w > vw.h * 1.2, vw);
   fs.writeFileSync(path.join(OUT, 'r-wide.png'), (await win.webContents.capturePage()).toPNG());
   win.setSize(1000, 700); await wait(800);
 
-  // poslouchat od této strany: začátek kapitoly 2
+  // listen from this page: start of chapter 2
   await js("document.getElementById('listen').click()");
   for (let i = 0; i < 30 && !got.listen.length; i++) await wait(100);
   check('listen from this page -> chapter 2', got.listen.length === 1 && got.listen[0] >= chapters[1].start && got.listen[0] < chapters[1].end, got.listen);

@@ -127,7 +127,7 @@ class ReceiverService : Service() {
         val listeningPort = MutableStateFlow(0)
         val port: StateFlow<Int> get() = listeningPort
 
-        /** Name shown to phones / PCs: the one chosen in "Přehrávat na", else the system name. */
+        /** Name shown to phones / PCs: the one chosen in "Play on", else the system name. */
         fun deviceName(ctx: Context): String = (ctx.applicationContext as App).settings.localName ?: systemName(ctx)
 
         fun systemName(ctx: Context): String =

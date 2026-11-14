@@ -1,4 +1,4 @@
-// Ikony aplikace a lišty z originálního loga Audiobookshelf (assets/abs-logo.svg, z repozitáře advplyr/audiobookshelf).
+// App and tray icons from the original Audiobookshelf logo (assets/abs-logo.svg, from the advplyr/audiobookshelf repository).
 const fs = require('fs');
 const path = require('path');
 const { Resvg } = require('@resvg/resvg-js');
@@ -6,7 +6,7 @@ const A = path.join(__dirname, '..', 'assets');
 const svg = fs.readFileSync(path.join(A, 'abs-logo.svg'), 'utf8');
 const png = (s) => new Resvg(svg, { fitTo: { mode: 'width', value: s } }).render().asPng();
 
-// ICO s PNG obrázky (podporováno od Windows Vista)
+// ICO with PNG images (supported since Windows Vista)
 function ico(sizes) {
   const imgs = sizes.map((s) => ({ s, d: png(s) }));
   const head = Buffer.alloc(6 + 16 * imgs.length);

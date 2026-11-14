@@ -1,6 +1,6 @@
 // node reader/test/reader.test.js <book.epub>
-// Spustí čtečku v Chromiu s falešným hostitelem a ověří: načtení, obsah, přiřazení kapitol,
-// skok z poslechu do textu a zpět (poměr v kapitole), uložení / načtení pozic, motivy.
+// Runs the reader in Chromium with a fake host and checks: loading, contents, chapter matching,
+// jumping from listening to text and back (ratio in the chapter), saving / loading locations, themes.
 'use strict';
 const http = require('http');
 const fs = require('fs');
@@ -12,7 +12,7 @@ const BOOK = process.argv[2];
 let fails = 0;
 const check = (name, ok, extra) => { console.log((ok ? 'PASS ' : 'FAIL ') + name + (extra !== undefined ? ' ' + JSON.stringify(extra) : '')); if (!ok) fails++; };
 
-// 6 kapitol, délka audia úměrná délce textu (3, 8, 5, 12, 4, 9 odstavců → 60 s na odstavec)
+// 6 chapters, audio length proportional to the text (3, 8, 5, 12, 4, 9 paragraphs → 60 s per paragraph)
 const lens = [3, 8, 5, 12, 4, 9];
 let t = 0;
 const chapters = lens.map((n, i) => { const c = { start: t, end: t + n * 60, title: 'Kapitola ' + (i + 1) }; t += n * 60; return c; });
@@ -59,7 +59,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const browser = await chromium.launch();
   const base = { bookUrl: 'book.epub', audioChapters: chapters, audioDuration: t, settings: { theme: 'dark', fontSize: 100, font: 'serif', lineHeight: 1.6 } };
 
-  // 1) normální otevření
+  // 1) normal open
   let { page, log } = await open(browser, Object.assign({ mode: 'saved' }, base));
   check('ready', (await until(log, 'ready')).length > 0, log.filter((x) => x[0] === 'error' || x[0] === 'pageerror'));
   const tocMsg = await until(log, 'toc');
@@ -78,32 +78,32 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   await wait(600);
   rel = JSON.parse(last(log, 'relocated'));
   check('audio 50 % of ch. 4 -> chapter 4', rel.chapter === 'Kapitola 4', rel);
-  // začátek stránky v CFI: /4/<2·(n+2)>/… = n-tý odstavec kapitoly (h1 je /2, první odstavec /4)
+  // page start in the CFI: /4/<2·(n+2)>/… = the chapter's n-th paragraph (h1 is /2, the first paragraph /4)
   const step = Number((rel.cfi.match(/!\/4\/(\d+)/) || [])[1]);
   const para = (step - 4) / 2;
   check('page starts in the middle of chapter 4 (paragraph 4–7 of 12)', para >= 4 && para <= 7, { cfi: rel.cfi, para });
 
-  // 3) text -> poslech: zpátky na čas (začátek stránky, tolerance 1 odstavec = 60 s)
+  // 3) text -> listening: back to a time (page start, tolerance 1 paragraph = 60 s)
   log.length = 0;
   await page.evaluate(() => window.reader.listenHere());
   const back = Number((await until(log, 'listen'))[0][1]);
   check('listen here -> back near the same time', Math.abs(back - t4) < 75 && back <= t4 + 5, { back, t4 });
 
-  // 4) motiv a písmo
+  // 4) theme and font
   await page.evaluate(() => window.reader.applySettings(JSON.stringify({ theme: 'sepia', fontSize: 130 })));
   await wait(400);
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   check('sepia background', bg === 'rgb(244, 236, 216)', bg);
   await page.screenshot({ path: path.join(__dirname, 'out-sepia.png') });
 
-  // 5) další strana
+  // 5) next page
   const before = rel.cfi;
   await page.evaluate(() => window.reader.next());
   await wait(500);
   check('next page moves', JSON.parse(last(log, 'relocated')).cfi !== before);
   await page.close();
 
-  // 6) otevření rovnou z místa poslechu, s uloženými pozicemi (bez generování)
+  // 6) open straight at the listening position, with stored locations (no generation)
   ({ page, log } = await open(browser, Object.assign({ mode: 'fromAudio', audioTime: chapters[5].start + 10, locations: savedLocs }, base)));
   await until(log, 'ready');
   await wait(400);
@@ -113,13 +113,13 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   await page.screenshot({ path: path.join(__dirname, 'out-dark.png') });
   await page.close();
 
-  // 7) toAudio: otevře se na uloženém místě a hned vrátí čas
+  // 7) toAudio: opens at the saved place and returns the time right away
   ({ page, log } = await open(browser, Object.assign({ mode: 'toAudio', startCfi: JSON.parse(savedLocs)[Math.floor(JSON.parse(savedLocs).length * 0.6)], locations: savedLocs }, base)));
   const l7 = await until(log, 'listen');
   check('toAudio reports a time', l7.length > 0 && Number(l7[0][1]) > 0, l7);
   await page.close();
 
-  // 8) jiné názvy, ale čísla kapitol (01, 02, …) – přiřazení podle čísla
+  // 8) other titles, but chapter numbers (01, 02, …) – matched by number
   const numbered = chapters.map((c, i) => Object.assign({}, c, { title: String(i + 1).padStart(2, '0') }));
   ({ page, log } = await open(browser, Object.assign({}, base, { mode: 'fromAudio', audioTime: numbered[2].start + 5, audioChapters: numbered, locations: savedLocs })));
   await until(log, 'ready');
@@ -127,7 +127,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   check('numbered audio chapters map by number', JSON.parse(last(log, 'relocated')).chapter === 'Kapitola 3');
   await page.close();
 
-  // 9) nesouhlasí nic (jiný počet, jiné názvy) – poměr přes celou knihu
+  // 9) nothing matches (other count, other titles) – ratio over the whole book
   const odd = [{ start: 0, end: t / 2, title: 'Část A' }, { start: t / 2, end: t, title: 'Část B' }, { start: t, end: t + 1, title: 'Titulky' }];
   ({ page, log } = await open(browser, Object.assign({}, base, { mode: 'fromAudio', audioTime: t * 0.5, audioChapters: odd, audioDuration: t + 1, locations: savedLocs })));
   await until(log, 'ready');
@@ -136,7 +136,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   check('no mapping: whole-book ratio (~50 % → ch. 4)', rel.chapter === 'Kapitola 4', rel);
   await page.close();
 
-  // 10) dvě strany vedle sebe (Windows)
+  // 10) two pages side by side (Windows)
   ({ page, log } = await open(browser, Object.assign({ mode: 'saved', spread: 'auto' }, base), { width: 1100, height: 700 }));
   await until(log, 'ready');
   await wait(500);

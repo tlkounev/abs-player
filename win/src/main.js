@@ -9,21 +9,21 @@ const remote = require('./remote.js');
 const APP_NAME = 'ABS Player';
 const ASSETS = path.join(__dirname, '..', 'assets');
 const BRIDGE = fs.readFileSync(path.join(__dirname, 'bridge.js'), 'utf8');
-const CLICK_DELAY = 280; // ms – odlišení jednoho kliknutí od dvojkliku
+const CLICK_DELAY = 280; // ms – tells a single click from a double click
 const POPUP_W = 380;
 const POPUP_H = 236;
-const LIST_H = 300;      // výška seznamu kapitol (musí odpovídat listHeight v popup-preload.js)
+const LIST_H = 300;      // height of the chapter list (must match listHeight in popup-preload.js)
 
 app.setAppUserModelId('local.abs-player');
 
-// ---------- jediná instance ----------
+// ---------- single instance ----------
 if (!app.requestSingleInstanceLock()) {
   app.quit();
   process.exit(0);
 }
 
 // ---------- konfigurace ----------
-// Přechod z dřívějšího názvu aplikace: převzít nastavení i přihlášení k ABS (cookies webu).
+// Migration from the app's former name: take over the settings and the ABS sign-in (web cookies).
 (function migrateOldData() {
   try {
     const newDir = app.getPath('userData');
@@ -33,7 +33,7 @@ if (!app.requestSingleInstanceLock()) {
     fs.copyFileSync(path.join(oldDir, 'config.json'), path.join(newDir, 'config.json'));
     const part = path.join(oldDir, 'Partitions');
     if (fs.existsSync(part)) fs.cpSync(part, path.join(newDir, 'Partitions'), { recursive: true });
-  } catch (e) { /* bez migrace – jen se znovu zadá server */ }
+  } catch (e) { /* no migration – the server is simply entered again */ }
 })();
 const configPath = path.join(app.getPath('userData'), 'config.json');
 function loadConfig() {
@@ -55,8 +55,8 @@ let setupWin = null;
 let clickTimer = null;
 let lastState = null;
 let savePosTimer = null;
-let listDir = null;      // null = sbaleno, 'up' / 'down' = směr, kterým okno naroslo
-let listExtra = 0;      // o kolik je okno teď vyšší (seznam kapitol / Přehrávat na)
+let listDir = null;      // null = collapsed, 'up' / 'down' = the direction the window grew
+let listExtra = 0;      // how much taller the window is now (chapter list / Play on)
 
 app.on('second-instance', () => showMain());
 
@@ -78,7 +78,7 @@ function setLang(code) {
 ipcMain.on('i18n:get', (e) => { e.returnValue = lang(); });
 ipcMain.on('i18n:set', (_e, code) => setLang(code));
 
-// ---------- hlavní okno (celý web ABS) ----------
+// ---------- main window (the full ABS web app) ----------
 function createMain(showOnReady) {
   const b = config.bounds || {};
   mainWin = new BrowserWindow({
@@ -96,8 +96,8 @@ function createMain(showOnReady) {
     webPreferences: {
       contextIsolation: true,
       sandbox: true,
-      backgroundThrottling: false, // přehrávání a synchronizace i se skrytým oknem
-      autoplayPolicy: 'no-user-gesture-required', // ovládání z lišty bez kliknutí do stránky
+      backgroundThrottling: false, // playback and sync also with the window hidden
+      autoplayPolicy: 'no-user-gesture-required', // control from the tray without clicking into the page
       partition: 'persist:abs'
     }
   });
@@ -111,11 +111,11 @@ function createMain(showOnReady) {
   mainWin.webContents.on('did-navigate-in-page', inject);
 
   mainWin.webContents.on('did-fail-load', (_e, code, desc, url, isMainFrame) => {
-    if (!isMainFrame || code === -3) return; // -3 = přerušeno (běžné při navigaci)
+    if (!isMainFrame || code === -3) return; // -3 = aborted (normal during navigation)
     mainWin.loadFile(path.join(__dirname, 'offline.html'), { query: { url: config.serverUrl, err: desc, lang: lang() } });
   });
 
-  // Odkazy mimo server otevírat ve výchozím prohlížeči
+  // Links outside the server open in the default browser
   const serverOrigin = new URL(config.serverUrl).origin;
   mainWin.webContents.setWindowOpenHandler(({ url }) => {
     if (!url.startsWith(serverOrigin)) shell.openExternal(url);
@@ -128,7 +128,7 @@ function createMain(showOnReady) {
     }
   });
 
-  // Zavření = schovat do lišty
+  // Close = hide to the tray
   mainWin.on('close', (e) => {
     saveBounds();
     if (!app.isQuitting) {
@@ -155,9 +155,9 @@ function showMain() {
   mainWin.focus();
 }
 
-// ---------- minipřehrávač ----------
-// Zůstává otevřený, dokud ho uživatel neschová (klik na ikonu v liště nebo tlačítko „_“).
-// Dá se přetáhnout kamkoliv, pozice se pamatuje.
+// ---------- mini player ----------
+// Stays open until the user hides it (click on the tray icon or the "_" button).
+// Can be dragged anywhere; the position is remembered.
 function createPopup() {
   popupWin = new BrowserWindow({
     width: POPUP_W,
@@ -185,12 +185,12 @@ function createPopup() {
     savePosTimer = setTimeout(() => {
       if (!popupWin || popupWin.isDestroyed()) return;
       const [x, y] = popupWin.getPosition();
-      // ukládá se vždy pozice sbaleného okna
+      // the position of the collapsed window is what gets saved
       config.popupPos = { x, y: listDir === 'up' ? y + (listExtra || LIST_H) : y };
       saveConfig(config);
     }, 300);
   });
-  // Zavření (např. Alt+F4) jen schová
+  // Closing (e.g. Alt+F4) only hides it
   popupWin.on('close', (e) => {
     if (!app.isQuitting) { e.preventDefault(); hidePopup(); }
   });
@@ -199,7 +199,7 @@ function createPopup() {
 function savedPopupPosValid() {
   const p = config.popupPos;
   if (!p || typeof p.x !== 'number' || typeof p.y !== 'number') return false;
-  // aspoň střed okna musí být na některém z připojených monitorů
+  // at least the window's centre must be on one of the connected monitors
   const cx = p.x + POPUP_W / 2, cy = p.y + POPUP_H / 2;
   return screen.getAllDisplays().some(({ workArea: w }) => cx >= w.x && cx < w.x + w.width && cy >= w.y && cy < w.y + w.height);
 }
@@ -212,16 +212,16 @@ function iconPopupPos() {
   const b = disp.bounds;
   const gap = 10;
   let x, y;
-  if (wa.y + wa.height < b.y + b.height) {        // lišta dole
+  if (wa.y + wa.height < b.y + b.height) {        // taskbar at the bottom
     x = pt.x - POPUP_W / 2;
     y = wa.y + wa.height - POPUP_H - gap;
-  } else if (wa.y > b.y) {                          // nahoře
+  } else if (wa.y > b.y) {                          // at the top
     x = pt.x - POPUP_W / 2;
     y = wa.y + gap;
   } else if (wa.x > b.x) {                          // vlevo
     x = wa.x + gap;
     y = pt.y - POPUP_H / 2;
-  } else {                                          // vpravo / skrytá lišta
+  } else {                                          // on the right / hidden taskbar
     x = wa.x + wa.width - POPUP_W - gap;
     y = (pt.y > wa.y + wa.height / 2) ? wa.y + wa.height - POPUP_H - gap : pt.y - POPUP_H / 2;
   }
@@ -251,7 +251,7 @@ function togglePopup() {
   else showPopup();
 }
 
-// ---------- nastavení serveru ----------
+// ---------- server settings ----------
 function showSetup() {
   if (setupWin && !setupWin.isDestroyed()) return setupWin.focus();
   setupWin = new BrowserWindow({
@@ -292,7 +292,7 @@ ipcMain.handle('setup:save', (_e, url) => {
   return { ok: true };
 });
 
-// ---------- komunikace popup ↔ stránka ABS ----------
+// ---------- popup ↔ ABS page communication ----------
 async function pageExec(code) {
   if (!mainWin || mainWin.isDestroyed()) return null;
   const wc = mainWin.webContents;
@@ -308,7 +308,7 @@ async function pageExec(code) {
 const localState = () => pageExec('window.__absPlayer ? window.__absPlayer.state() : null');
 const localCmd = (name, arg) => pageExec(`window.__absPlayer ? window.__absPlayer.cmd(${JSON.stringify(name)}, ${JSON.stringify(arg ?? null)}) : false`);
 
-// ---------- cíl přehrávání: toto PC nebo spárované zařízení ----------
+// ---------- playback target: this PC or a paired device ----------
 let currentTarget = 'local';
 let lastRemoteChapters = [];
 const remoteCovers = new Map();
@@ -370,7 +370,7 @@ async function getState() {
 }
 
 async function routedCmd(name, arg) {
-  if (name === 'recent') return localCmd('recent'); // seznam „Pokračovat v poslechu“ je vždy z účtu ABS
+  if (name === 'recent') return localCmd('recent'); // the "Continue" list always comes from the ABS account
   const target = targetInfo();
   if (!target.remote) return localCmd(name, arg);
   const d = pairedDevice(target.id);
@@ -387,8 +387,8 @@ async function routedCmd(name, arg) {
 }
 
 /**
- * Přepnutí cíle. Když se něco přehrává, pozastaví se, pozice se uloží na server a přehrávání
- * pokračuje na novém cíli přesně odtud (stejně jako v aplikaci ABS Player).
+ * Switches the target. When something plays, it is paused, the position is saved to the server and
+ * playback continues on the new target from exactly there (same as in the ABS Player app).
  */
 async function selectTarget(id) {
   if (id !== 'local' && !pairedDevice(id)) return false;
@@ -397,9 +397,9 @@ async function selectTarget(id) {
   let hand = null;
   if (!from.remote) {
     const st = await localState();
-    // kniha se přesune i pozastavená – poslech pokračuje na novém zařízení
+    // the book moves also when paused – listening continues on the new device
     if (st && st.item) hand = await localCmd('handoff');
-  } else if (!(lastState && lastState.remoteError)) { // vypnuté zařízení nezdržovat
+  } else if (!(lastState && lastState.remoteError)) { // do not wait for a device that is off
     try {
       const d = pairedDevice(from.id);
       const np = await withTimeout(remote.remoteState(d), 1500);
@@ -407,7 +407,7 @@ async function selectTarget(id) {
         const after = await withTimeout(remote.remoteCmd(d, { action: 'pause' }), 3000);
         hand = { id: np.itemId, time: (after && after.positionSec) || np.positionSec };
       }
-    } catch (e) { /* zdroj nedostupný – jen přepnout */ }
+    } catch (e) { /* source unreachable – just switch */ }
   }
   cancelWaking();
   currentTarget = id;
@@ -416,7 +416,7 @@ async function selectTarget(id) {
     return true;
   }
   const d = pairedDevice(id);
-  // knihu poslat rovnou (bez předchozí kontroly stavu); neodpoví-li zařízení, budí se / vrací se sem
+  // send the book right away (no state check first); if the device does not answer, wake it / come back here
   const ok = hand && hand.id
     ? await withTimeout(remote.remoteCmd(d, { action: 'playItem', itemId: hand.id, value: hand.time }), 4000).then(() => true, () => false)
     : await withTimeout(remote.remoteState(d), 3000).then(() => true, () => false);
@@ -428,7 +428,7 @@ function withTimeout(p, ms) {
   return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 }
 
-// ---------- vypnutá TV: probuzení (Wake-on-LAN) a návrat sem, když se nezapne ----------
+// ---------- TV switched off: wake it up (Wake-on-LAN), come back here if it stays off ----------
 const WAKE_MS = 30000;
 let waking = null; // { id, until, hand, back, timer }
 let lastRemoteItem = null;
@@ -466,7 +466,7 @@ function cancelWaking() {
   waking = null;
 }
 
-/** Magic packet na MAC adresu zařízení (zjištěnou z ARP, když bylo zapnuté). */
+/** Magic packet to the device's MAC address (learned from ARP while it was on). */
 function sendWakeOnLan(d) {
   if (!d || !d.mac) return;
   try {
@@ -483,10 +483,10 @@ function sendWakeOnLan(d) {
       const done = () => { if (--left <= 0) sock.close(); };
       for (const h of targets) for (const port of [9, 7]) sock.send(pkt, port, h, done);
     });
-  } catch (e) { /* bez probuzení */ }
+  } catch (e) { /* no wake-up */ }
 }
 
-/** MAC adresa z ARP tabulky Windows – jen jednou za běh pro každé zařízení. */
+/** MAC address from the Windows ARP table – once per run for each device. */
 const macTried = new Set();
 function learnMac(d) {
   if (!d || process.platform !== 'win32' || macTried.has(d.deviceId)) return;
@@ -512,10 +512,10 @@ ipcMain.handle('devices:playHere', async () => {
 ipcMain.handle('abs:state', () => getState());
 ipcMain.handle('abs:cmd', (_e, name, arg) => routedCmd(name, arg));
 
-// ---------- čtečka e-knih (EPUB) ----------
-// Okno s epub.js (sdílená stránka /reader jako na Androidu). Pozice čtení se ukládá do ABS
-// (ebookLocation / ebookProgress) stejně jako webová čtečka; „Poslouchat od této strany“ spustí
-// audioknihu od odpovídajícího času (podíl kapitoly).
+// ---------- e-book reader (EPUB) ----------
+// A window with epub.js (the shared /reader page, as on Android). The reading position is saved to ABS
+// (ebookLocation / ebookProgress) like the web reader does; "Listen from this page" starts the
+// audiobook at the matching time (share of the chapter).
 const readers = new Map(); // webContents.id -> { id, info, mode, audioTime, file, win, saveTimer }
 const ebookDir = () => path.join(app.getPath('userData'), 'ebooks');
 
@@ -588,7 +588,7 @@ ipcMain.on('reader:relocated', (e, json) => {
   try { pos = JSON.parse(json); } catch (err) { return; }
   if (!pos.cfi || pos.cfi === r.info.ebookLocation) return;
   r.info.ebookLocation = pos.cfi;
-  // na server až 2 s po posledním otočení stránky
+  // to the server 2 s after the last page turn
   clearTimeout(r.saveTimer);
   r.flush = () => localCmd('saveEbook', { id: r.id, cfi: pos.cfi, progress: pos.progress });
   r.saveTimer = setTimeout(() => { r.saveTimer = null; r.flush(); }, 2000);
@@ -596,7 +596,7 @@ ipcMain.on('reader:relocated', (e, json) => {
 
 ipcMain.on('reader:locations', (e, json) => {
   const r = readers.get(e.sender.id);
-  if (r) try { fs.writeFileSync(path.join(ebookDir(), r.id + '.loc.json'), json); } catch (err) { /* jen mezipaměť */ }
+  if (r) try { fs.writeFileSync(path.join(ebookDir(), r.id + '.loc.json'), json); } catch (err) { /* cache only */ }
 });
 
 ipcMain.on('reader:settings', (_e, json) => {
@@ -612,7 +612,7 @@ ipcMain.on('reader:listen', async (e, seconds) => {
   if (!r.win.isDestroyed()) r.win.focus();
 });
 
-// ---------- přijímač: telefon (nebo jiné PC) může přehrávání poslat sem ----------
+// ---------- receiver: a phone (or another PC) can send playback here ----------
 const pairingCode = remote.newCode();
 
 async function localNowPlaying() {
@@ -640,14 +640,14 @@ async function receiverCommand(c) {
     case 'speed': if (v != null) await localCmd('rate', v); break;
     case 'volume': if (v != null) await localCmd('volume', v); break;
     case 'mute': await localCmd('mute'); break;
-    case 'sleep': break; // časovač webového přehrávače se odsud nastavit nedá
+    case 'sleep': break; // the web player's sleep timer cannot be set from here
     case 'playItem':
       if (!c.itemId) break;
-      currentTarget = 'local'; // přehrávání se přesunulo sem
+      currentTarget = 'local'; // playback moved here
       await localCmd('playItem', { id: c.itemId, startTime: v });
       break;
     case 'stop': await localCmd('handoff'); break;
-    default: throw new Error('Neznámý příkaz ' + c.action);
+    default: throw new Error('Unknown command ' + c.action);
   }
   await new Promise((r) => setTimeout(r, c.action === 'playItem' ? 1500 : 300));
   return localNowPlaying();
@@ -674,12 +674,12 @@ const discovery = remote.createDiscovery({
   deviceId: config.deviceId,
   name: deviceName(),
   onChange: () => {
-    // IP adresy se mění (DHCP): aktualizovat spárovaná zařízení podle mDNS
+    // IP addresses change (DHCP): update paired devices from mDNS
     let changed = false;
     for (const f of discovery.list()) {
       const p = config.paired.find((d) => d.deviceId && d.deviceId === f.deviceId);
       if (p && f.host && (p.host !== f.host || p.port !== f.port)) {
-        // záznam mDNS může být starý (jiný port) – převzít jen to, co opravdu odpovídá
+        // an mDNS record can be stale (other port) – take over only what really answers
         remote.locate(f.host, f.port, p.deviceId).then((hit) => {
           if (hit && (p.host !== f.host || p.port !== hit.port)) { p.host = f.host; p.port = hit.port; saveConfig(config); }
         });
@@ -690,12 +690,12 @@ const discovery = remote.createDiscovery({
 
 const lastLocate = new Map();
 
-/** Adresa tohoto PC v domácí síti (pro ruční párování z telefonu / TV). */
+/** This PC's address on the home network (for manual pairing from a phone / TV). */
 function lanAddress() {
   const nets = require('os').networkInterfaces();
   const all = Object.entries(nets).flatMap(([name, list]) => (list || []).map((a) => ({ name, ...a })))
     .filter((a) => a.family === 'IPv4' && !a.internal && /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a.address))
-    // virtuální adaptéry (Hyper-V, VirtualBox, VPN) až nakonec
+    // virtual adapters (Hyper-V, VirtualBox, VPN) last
     .sort((a, b) => (/vEthernet|VirtualBox|VMware|WSL|Loopback|vpn|tap/i.test(a.name) ? 1 : 0) - (/vEthernet|VirtualBox|VMware|WSL|Loopback|vpn|tap/i.test(b.name) ? 1 : 0));
   return all.length ? all[0].address : null;
 }
@@ -705,7 +705,7 @@ ipcMain.handle('devices:get', async () => {
   const paired = await Promise.all(config.paired.map(async (d) => {
     try {
       const np = await remote.remoteState(d).catch(async (e) => {
-        // přijímač mohl přejít na jiný port (8766, když 8765 drží něco jiného)
+        // the receiver may have moved to another port (8766 when something else holds 8765)
         if (e.status || Date.now() - (lastLocate.get(d.deviceId) || 0) < 20000) throw e;
         lastLocate.set(d.deviceId, Date.now());
         const hit = await remote.locate(d.host, d.port, d.deviceId);
@@ -755,7 +755,7 @@ ipcMain.handle('devices:pair', async (_e, p) => {
   }
 });
 
-// přejmenování: tento počítač (posílá se i ostatním zařízením) nebo spárované zařízení (jen tady)
+// rename: this computer (sent to the other devices too) or a paired device (only here)
 ipcMain.handle('devices:rename', (_e, id, name) => {
   const n = String(name || '').trim().slice(0, 60);
   if (!n) return false;
@@ -778,8 +778,8 @@ ipcMain.handle('devices:unpair', (_e, id) => {
 ipcMain.on('popup:open-main', () => showMain());
 ipcMain.on('popup:hide', () => hidePopup());
 
-// seznam kapitol: okno naroste nahoru (pokud je nad ním místo), jinak dolů; sbalení vrátí původní polohu
-// h = o kolik okno naroste (seznam kapitol pevně LIST_H, „Přehrávat na“ podle obsahu)
+// chapter list: the window grows up (if there is room above), otherwise down; collapsing restores the position
+// h = how much the window grows (chapter list fixed LIST_H, "Play on" by its content)
 ipcMain.handle('popup:list', (_e, open, h) => {
   if (!popupWin || popupWin.isDestroyed()) return null;
   const b = popupWin.getBounds();
@@ -790,7 +790,7 @@ ipcMain.handle('popup:list', (_e, open, h) => {
     listExtra = want;
     popupWin.setBounds({ x: b.x, y: listDir === 'up' ? b.y - want : b.y, width: POPUP_W, height: POPUP_H + want });
   } else if (open && listDir && want !== listExtra) {
-    // už otevřené, jen jiná výška (rozbalené párování): okraj u minipřehrávače zůstane na místě
+    // already open, only another height (pairing expanded): the edge at the mini player stays in place
     popupWin.setBounds({ x: b.x, y: listDir === 'up' ? b.y + listExtra - want : b.y, width: POPUP_W, height: POPUP_H + want });
     listExtra = want;
   } else if (!open && listDir) {
@@ -800,7 +800,7 @@ ipcMain.handle('popup:list', (_e, open, h) => {
   }
   return listDir;
 });
-// poloha kurzoru vůči obsahu minipřehrávače (DIP = CSS px)
+// cursor position relative to the mini player's content (DIP = CSS px)
 ipcMain.handle('popup:cursor', () => {
   if (!popupWin || popupWin.isDestroyed()) return null;
   const p = screen.getCursorScreenPoint();
@@ -808,7 +808,7 @@ ipcMain.handle('popup:cursor', () => {
   return { x: p.x - b.x, y: p.y - b.y };
 });
 
-// ---------- ikona v oznamovací oblasti ----------
+// ---------- tray icon ----------
 function updateTooltip() {
   if (!notifyIcon) return;
   let tip = APP_NAME;
@@ -826,9 +826,9 @@ function flagIcon(code) {
 }
 
 // ---------- aktualizace ----------
-// electron-updater čte latest.yml z vydání „win-latest“ na GitHubu (adresa je v app-update.yml,
-// který vytvoří electron-builder z build.publish). Nic se nestahuje bez souhlasu: když je novější
-// verze, ukáže se oznámení „Je k dispozici verze …“; klik = stáhnout, nainstalovat a restartovat.
+// electron-updater reads latest.yml from the "win-latest" release on GitHub (the address is in app-update.yml,
+// which electron-builder creates from build.publish). Nothing is downloaded without consent: when there is a newer
+// version, a "Version … is available" notification appears; click = download, install and restart.
 const UPDATE_EVERY = 6 * 60 * 60 * 1000;
 // idle | checking | none | available | downloading | ready | error
 const upd = { status: 'idle', version: null, error: null, offered: null };
@@ -836,16 +836,16 @@ let autoUpdater = null;
 let manualCheck = false;
 
 function setupUpdater() {
-  if (!app.isPackaged) return; // spuštění z vývojového prostředí
+  if (!app.isPackaged) return; // started from the development environment
   try { ({ autoUpdater } = require('electron-updater')); } catch (e) { return; }
-  autoUpdater.autoDownload = false; // stahovat až po kliknutí
+  autoUpdater.autoDownload = false; // download only after a click
   autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.on('checking-for-update', () => { upd.status = 'checking'; });
   autoUpdater.on('update-not-available', () => { upd.status = 'none'; reportManual(); });
   autoUpdater.on('update-available', (info) => {
     upd.status = 'available';
     upd.version = info.version;
-    // automatická kontrola nabídne stejnou verzi jen jednou za běh, ruční vždy
+    // the automatic check offers the same version once per run, the manual one always
     if (manualCheck || upd.offered !== info.version) offerUpdate();
     manualCheck = false;
   });
@@ -869,10 +869,10 @@ function checkUpdates(manual) {
   if (!autoUpdater) return;
   if (upd.status === 'checking' || upd.status === 'downloading' || upd.status === 'ready') return;
   manualCheck = manual;
-  autoUpdater.checkForUpdates().catch(() => { /* hlásí se přes 'error' */ });
+  autoUpdater.checkForUpdates().catch(() => { /* reported through 'error' */ });
 }
 
-// Oznámení Windows musí zůstat v paměti, dokud nezmizí – jinak se klik na něj ztratí.
+// A Windows notification must stay referenced until it disappears – otherwise its click is lost.
 const liveNotices = new Set();
 function notice(title, body, onClick) {
   if (!Notification.isSupported()) return;
@@ -889,11 +889,11 @@ function offerUpdate() {
   notice(t('updAvailable', { v: upd.version }), t('updClickInstall'), downloadAndInstall);
 }
 
-/** Po souhlasu: stáhnout, nainstalovat (tiše) a aplikaci znovu spustit. */
+/** After consent: download, install (silently) and restart the app. */
 function downloadAndInstall() {
   if (!autoUpdater || upd.status !== 'available') return;
   upd.status = 'downloading';
-  autoUpdater.downloadUpdate().catch(() => { /* hlásí se přes 'error' */ });
+  autoUpdater.downloadUpdate().catch(() => { /* reported through 'error' */ });
 }
 
 function reportManual() {
@@ -906,7 +906,7 @@ function reportManual() {
 function installUpdate() {
   if (!autoUpdater || upd.status !== 'ready') return;
   app.isQuitting = true;
-  autoUpdater.quitAndInstall(true, true); // tiše a po instalaci znovu spustit
+  autoUpdater.quitAndInstall(true, true); // silently, and restart after installing
 }
 
 function updateMenuItems() {
@@ -946,7 +946,7 @@ function buildMenu() {
       icon: flagIcon(cur),
       submenu: I18N.LANGS.map((l) => ({
         label: l.name,
-        type: 'checkbox', // háček u vybraného (radio by kreslilo kroužky)
+        type: 'checkbox', // tick at the selected one (radio would draw circles)
         checked: l.code === cur,
         icon: flagIcon(l.code),
         click: () => setLang(l.code)
@@ -982,7 +982,7 @@ function createNotifyIcon() {
 
 // ---------- start ----------
 app.whenReady().then(() => {
-  // povolení přehrávání zvuku a notifikací pro stránku ABS
+  // allow audio playback and notifications for the ABS page
   session.fromPartition('persist:abs').setPermissionRequestHandler((_wc, perm, cb) => {
     cb(['media', 'mediaKeySystem', 'notifications', 'clipboard-sanitized-write', 'fullscreen'].includes(perm));
   });
@@ -992,19 +992,19 @@ app.whenReady().then(() => {
 
   receiver.listen(remote.DEFAULT_PORT)
     .then((port) => discovery.start(port))
-    .catch(() => { /* port obsazený / zakázaný – přijímač nepoběží */ });
+    .catch(() => { /* port taken / blocked – the receiver will not run */ });
 
   const startHidden = process.argv.includes('--hidden');
   if (!config.serverUrl) showSetup();
   else createMain(!startHidden);
 
-  // tooltip ikony s aktuální knihou
+  // tray tooltip with the current book
   setInterval(() => { if (!(popupWin && popupWin.isVisible())) getState(); }, 5000);
 
   setupUpdater();
 });
 
-app.on('window-all-closed', () => { /* zůstat v liště */ });
+app.on('window-all-closed', () => { /* stay in the tray */ });
 app.on('before-quit', () => {
   app.isQuitting = true;
   saveBounds();

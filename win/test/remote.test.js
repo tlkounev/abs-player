@@ -1,5 +1,5 @@
 // node --test test/remote.test.js
-// Ověřuje protokol "přehrávat na" bez Electronu: přijímač, párování, příkazy a převody stavů.
+// Tests the "play on" protocol without Electron: receiver, pairing, commands and state conversions.
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
@@ -49,11 +49,11 @@ test('info, pairing, state and commands', async () => {
     assert.equal(info.deviceId, 'pc-1');
     assert.equal(remote.needsPassword(info, 'https://abs.example', 'ondra'), false);
 
-    // bez spárování nic
-    await assert.rejects(remote.remoteState({ host: '127.0.0.1', port, secret: 'x' }), /spárované/);
+    // nothing without pairing
+    await assert.rejects(remote.remoteState({ host: '127.0.0.1', port, secret: 'x' }), /not paired/);
 
-    // špatný kód
-    await assert.rejects(remote.pair({ host: '127.0.0.1', port, code: '000000', serverUrl: 'https://abs.example', username: 'ondra', myName: 't' }), /kód/);
+    // wrong code
+    await assert.rejects(remote.pair({ host: '127.0.0.1', port, code: '000000', serverUrl: 'https://abs.example', username: 'ondra', myName: 't' }), /pairing code/);
 
     const d = await remote.pair({ host: '127.0.0.1', port, code: '123456', serverUrl: 'https://abs.example', username: 'ondra', myName: 't' });
     assert.equal(d.deviceId, 'pc-1');
@@ -82,7 +82,7 @@ test('pairing is rate limited', async () => {
     for (let i = 0; i < 5; i++) {
       await assert.rejects(remote.pair({ host: '127.0.0.1', port, code: '999999', serverUrl: 's', username: 'u', myName: 't' }));
     }
-    await assert.rejects(remote.pair({ host: '127.0.0.1', port, code: '123456', serverUrl: 's', username: 'u', myName: 't' }), /pokusů/);
+    await assert.rejects(remote.pair({ host: '127.0.0.1', port, code: '123456', serverUrl: 's', username: 'u', myName: 't' }), /Too many attempts/);
   } finally {
     r.close();
   }
@@ -107,7 +107,7 @@ test('NowPlaying -> popup state', () => {
   assert.equal(st.rate, 1.25);
   assert.equal(st.sleepRemaining, null);
   assert.deepEqual(st.chaptersList[1], { n: 2, title: 'b', start: 50, end: 100 });
-  // kniha bez kapitol (Android posílá jednu pseudo-kapitolu)
+  // book without chapters (Android sends one pseudo-chapter)
   const one = remote.nowPlayingToPopup({ itemId: 'x', chapters: [{ title: 'x', startSec: 0, endSec: 10 }], positionSec: 1, durationSec: 10 }, {});
   assert.equal(one.chapter, null);
   assert.equal(one.hasChapters, false);
@@ -136,7 +136,7 @@ test('discovery without bonjour is a no-op', () => {
 
 test('receiver on the next port (8765 taken by something else) is found, pair returns the name', async () => {
   const http = require('node:http');
-  // na 8765 běží něco cizího, přijímač až na 8766
+  // something else runs on 8765, the receiver on 8766
   const other = http.createServer((q, s) => { s.writeHead(404); s.end('nope'); });
   await new Promise((ok, ko) => other.once('error', ko).listen(remote.DEFAULT_PORT, '0.0.0.0', ok)).catch(() => null);
   const secrets = [];

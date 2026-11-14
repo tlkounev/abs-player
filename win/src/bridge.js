@@ -1,13 +1,12 @@
-// Vkládá se do stránky Audiobookshelf (main world) přes webContents.executeJavaScript.
-// Napojuje se přímo na Vue komponentu přehrávače (MediaPlayerContainer) webového klienta ABS,
-// takže ovládání jde stejnou cestou jako tlačítka ve webu (včetně synchronizace postupu na server).
+// Injected into the Audiobookshelf page (main world) via webContents.executeJavaScript.
+// Hooks directly into the player's Vue component (MediaPlayerContainer) of the ABS web client,
+// so control goes the same way as the web's buttons (including progress sync to the server).
 //
-// Navíc opravuje synchronizaci webového přehrávače (stejná pravidla jako aplikace ABS Player
-// pro Android):
-//  - při pozastavení hned uloží pozici na server (web to sám nedělá, až 20 s by se ztratilo),
-//  - před pokračováním po pauze si přečte pozici ze serveru a převezme ji, když ji mezitím
-//    posunulo jiné zařízení (web by jinak pokračoval ze své staré pozice a přepsal ji),
-//  - když je pozastavený, sleduje změny z jiných zařízení (socket → store) a pozici převezme hned.
+// It also fixes the web player's sync (same rules as ABS Player for Android):
+//  - on pause it saves the position to the server right away (the web does not; up to 20 s would be lost),
+//  - before resuming after a pause it reads the server position and takes it over when another
+//    device moved it meanwhile (the web would resume from its old position and overwrite it),
+//  - while paused it follows changes from other devices (socket → store) and takes the position over at once.
 (() => {
   if (window.__absPlayer) return true;
 
@@ -16,9 +15,9 @@
   const watch = {
     playing: false,
     sessionId: null,
-    sessionAt: 0,      // kdy začala aktuální relace (ms)
-    syncedPos: null,   // pozice, kterou má podle nás server
-    pausedAt: 0,       // kdy jsme pozastavili (ms, hodiny PC)
+    sessionAt: 0,      // when the current session started (ms)
+    syncedPos: null,   // the position we believe the server has
+    pausedAt: 0,       // when we paused (ms, PC clock)
     notice: null,
     noticeUntil: 0
   };
@@ -61,11 +60,11 @@
     watch.noticeUntil = Date.now() + 6000;
   }
 
-  // Obal stažený s autorizací a převedený na data: URL, aby ho popup (jiný původ) zobrazil vždy.
+  // Cover downloaded with authorization and turned into a data: URL, so the popup (another origin) can always show it.
   async function coverData(relSrc) {
     if (!relSrc) return null;
     if (coverCache.has(relSrc)) return coverCache.get(relSrc);
-    coverCache.set(relSrc, null); // zabrání paralelnímu stahování
+    coverCache.set(relSrc, null); // prevents parallel downloads
     try {
       const url = new URL(relSrc, location.href).href;
       const headers = {};
@@ -125,7 +124,7 @@
     try {
       const p = store().getters['user/getUserMediaProgress'](li.id, li.recentEpisode ? li.recentEpisode.id : null);
       if (p && p.duration > 0) return Math.max(0, p.duration - (p.currentTime || 0));
-    } catch (e) { /* bez zbývajícího času */ }
+    } catch (e) { /* no time left */ }
     return null;
   }
 
@@ -136,7 +135,7 @@
 
   // ---------- synchronizace ----------
 
-  /** Pošle aktuální pozici na server a počká na odpověď. */
+  /** Sends the current position to the server and waits for the answer. */
   async function syncNow(vm) {
     const ph = vm && vm.playerHandler;
     if (!ph || !ph.currentSessionId) return false;
@@ -157,12 +156,12 @@
     return Promise.race([p, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
   }
 
-  /** Před pokračováním: převzít novější pozici ze serveru, pokud ji posunulo jiné zařízení. */
+  /** Before resuming: take over a newer server position if another device moved it. */
   async function checkBeforeResume(vm) {
     const item = vm.streamLibraryItem;
     const ph = vm.playerHandler;
     if (!item || !ph) return;
-    if (Date.now() - watch.sessionAt < 5000) return; // právě načteno se startovní pozicí
+    if (Date.now() - watch.sessionAt < 5000) return; // just loaded with the start position
     const p = await withTimeout(axios().$get(`/api/me/progress/${item.id}`).catch(() => null), 2500);
     if (!p || typeof p.currentTime !== 'number') return;
     const cur = currentTime(vm);
@@ -174,7 +173,7 @@
     }
   }
 
-  /** Obalí play/playPause přehrávače kontrolou serveru (jednou na instanci PlayerHandleru). */
+  /** Wraps the player's play/playPause with the server check (once per PlayerHandler instance). */
   function patchHandler(vm) {
     const ph = vm.playerHandler;
     if (!ph || ph.__absPlayerPatched) return;
@@ -194,7 +193,7 @@
     }
   }
 
-  /** Pozastaveno: pozice z jiného zařízení (socket aktualizuje store) se převezme hned. */
+  /** Paused: a position from another device (socket updates the store) is taken over at once. */
   function followWhilePaused(vm) {
     const item = vm.streamLibraryItem;
     const ph = vm.playerHandler;
@@ -202,7 +201,7 @@
     let p = null;
     try { p = store().getters['user/getUserMediaProgress'](item.id, vm.streamEpisode ? vm.streamEpisode.id : null); } catch (e) {}
     if (!p || typeof p.currentTime !== 'number' || !p.lastUpdate) return;
-    if (p.lastUpdate <= watch.pausedAt + 1500) return; // změna z doby před pauzou (nebo naše vlastní)
+    if (p.lastUpdate <= watch.pausedAt + 1500) return; // a change from before the pause (or our own)
     const cur = currentTime(vm);
     if (Math.abs(p.currentTime - cur) > 3) {
       ph.seek(p.currentTime, false);
@@ -236,7 +235,7 @@
   }
   setInterval(() => { tick().catch(() => {}); }, 1000);
 
-  // ---------- stav pro minipřehrávač / vzdálená zařízení ----------
+  // ---------- state for the mini player / remote devices ----------
 
   async function state() {
     const s = store();
@@ -305,7 +304,7 @@
         if (!vm.isPlaying) vm.playPause();
         return true;
       case 'pauseSync':
-        // pozastavit a počkat, až server pozici uloží (předání na jiné zařízení)
+        // pause and wait until the server has saved the position (handoff to another device)
         return (async () => {
           if (!vm.streamLibraryItem) return null;
           if (vm.isPlaying) vm.playPause();
@@ -316,14 +315,14 @@
           return { id: vm.streamLibraryItem.id, time: currentTime(vm) };
         })();
       case 'handoff':
-        // pozastavit, uložit pozici a zavřít relaci (přehrávání pokračuje jinde)
+        // pause, save the position and close the session (playback continues elsewhere)
         return (async () => {
           if (!vm.streamLibraryItem) return null;
           const id = vm.streamLibraryItem.id;
           if (vm.isPlaying) vm.playPause();
           const time = currentTime(vm);
           watch.playing = false;
-          // druhé zařízení může začít hned; uložení pozice a zavření relace doběhne tady na pozadí
+          // the other device can start right away; saving the position and closing the session finish here in the background
           (async () => {
             await new Promise((r) => setTimeout(r, 250));
             try { await syncNow(vm); } catch (e) {}
@@ -353,7 +352,7 @@
       case 'rate': {
         const r = Math.min(3, Math.max(0.5, Number(arg) || 1));
         if (ui && typeof ui.playbackRateChanged === 'function') {
-          ui.playbackRate = r; // aktualizuje i ovládání ve webu a uloží do uživatelského nastavení
+          ui.playbackRate = r; // also updates the web controls and saves it to the user settings
           ui.playbackRateChanged(r);
         } else {
           vm.setPlaybackRate(r);
@@ -366,7 +365,7 @@
         const vc = ui && ui.$refs && ui.$refs.volumeControl;
         if (vc) {
           if (v > 0 && vc.isMute) vc.isMute = false;
-          vc.volume = v; // stejná cesta jako posuvník ve webu (uloží i do localStorage)
+          vc.volume = v; // same path as the web's slider (also saved to localStorage)
         } else {
           if (ui) ui.volume = v;
           vm.setVolume(v);
@@ -382,7 +381,7 @@
       case 'recent':
         return inProgress();
       case 'readerInfo':
-        // čtečka e-knih: kapitoly audia (pro synchronizaci), pozice poslechu a čtení, přihlášení pro stažení
+        // e-book reader: audio chapters (for sync), listening and reading position, auth for the download
         return (async () => {
           const li = await axios().$get('/api/items/' + arg.id + '?expanded=1');
           let p = null;
@@ -419,7 +418,7 @@
         }
         const payload = { libraryItemId: arg.id, episodeId: arg.episodeId || null };
         if (typeof arg.startTime === 'number' && isFinite(arg.startTime)) payload.startTime = arg.startTime;
-        watch.sessionAt = Date.now(); // startovní pozice je záměrná, nekontrolovat proti serveru
+        watch.sessionAt = Date.now(); // the start position is intended, do not check it against the server
         window.$nuxt.$eventBus.$emit('play-item', payload);
         inProgressCache.at = 0;
         return true;

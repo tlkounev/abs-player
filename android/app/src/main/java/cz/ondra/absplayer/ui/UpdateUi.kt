@@ -41,7 +41,7 @@ import java.util.Locale
 private val BannerBg = Color(0xFF3A3225)
 private val BannerLine = Color(0x73E3A54D)
 
-/** Status line for the menu / TV footer: "Máš nejnovější verzi", "Hledám aktualizace…", error. */
+/** Status line for the menu / TV footer: "You have the latest version", "Checking for updates…", error. */
 @Composable
 fun updateStatus(): Pair<String, Color>? {
     val st by Updater.state.collectAsStateWithLifecycle()

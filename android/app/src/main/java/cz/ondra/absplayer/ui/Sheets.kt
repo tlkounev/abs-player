@@ -233,8 +233,8 @@ private fun DevicesSheet(vm: MainViewModel, pairInitially: Boolean = false) {
         paired.forEach { targets.remote(it).refresh() }
     }
 
-    // same as the Windows panel: this device first ("toto zařízení"), paired ones with ×, renaming with the
-    // pencil, "+ Spárovat zařízení" opens the pairing form right here, this device's pairing code at the bottom
+    // same as the Windows panel: this device first ("this device"), paired ones with ×, renaming with the
+    // pencil, "+ Pair a device" opens the pairing form right here, this device's pairing code at the bottom
     var renaming by remember { mutableStateOf<String?>(null) }
     var pairOpen by remember { mutableStateOf(pairInitially) }
     val scroll = rememberScrollState()
@@ -280,7 +280,7 @@ private fun DevicesSheet(vm: MainViewModel, pairInitially: Boolean = false) {
         val pairBtnFocus = remember { FocusRequester() }
         var pairWasOpen by remember { mutableStateOf(false) }
         LaunchedEffect(pairOpen) {
-            // TV: after closing the form the remote stays on "+ Spárovat zařízení"
+            // TV: after closing the form the remote stays on "+ Pair a device"
             if (!pairOpen && pairWasOpen && vm.app.isTv) { delay(50); runCatching { pairBtnFocus.requestFocus() } }
             pairWasOpen = pairOpen
         }
@@ -374,7 +374,7 @@ private fun DeviceRow(
     }
 }
 
-/** Pairing form inside "Přehrávat na" (as in Windows): devices found in the network, IP, port, code. */
+/** Pairing form inside "Play on" (as in Windows): devices found in the network, IP, port, code. */
 @Composable
 private fun PairSection(vm: MainViewModel, onCancel: () -> Unit) {
     val targets = vm.app.targets
@@ -445,7 +445,7 @@ private fun PairSection(vm: MainViewModel, onCancel: () -> Unit) {
         if (unpaired.isEmpty()) {
             var long by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) { delay(10_000); long = true }
-            // nothing found after 10 s: the TV shows its address at the bottom of "Přehrávat na"
+            // nothing found after 10 s: the TV shows its address at the bottom of "Play on"
             Text(if (long) tr("notFoundHint") else tr("searchingNet"), color = C.Muted, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 8.dp))
         } else {
             unpaired.forEach { f ->
@@ -471,7 +471,7 @@ private fun PairSection(vm: MainViewModel, onCancel: () -> Unit) {
                 if (vm.pairBusy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Text(tr("pairBtn"), fontSize = 14.sp)
             }
         }
-        // IP | port | code (TV: + Spárovat | ×) in one row, values centred
+        // IP | port | code (TV: + Pair | ×) in one row, values centred
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             CompactField(host, { host = it.trim() }, tr("ipAddr"), Modifier.weight(2.2f), KeyboardOptions(keyboardType = KeyboardType.Uri), focusRequester = hostFocus)
             CompactField(port, { port = it.filter(Char::isDigit).take(5) }, tr("port"), Modifier.weight(1f), KeyboardOptions(keyboardType = KeyboardType.Number))

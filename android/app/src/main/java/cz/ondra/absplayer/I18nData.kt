@@ -1,4 +1,4 @@
-// Vygenerováno z android/i18n/strings.py (python3 i18n/gen.py) – needitovat ručně.
+// Generated from android/i18n/strings.py (python3 i18n/gen.py) – do not edit by hand.
 package cz.ondra.absplayer
 
 internal object I18nData {

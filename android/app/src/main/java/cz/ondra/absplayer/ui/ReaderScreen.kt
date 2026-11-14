@@ -110,7 +110,7 @@ private val READER_BG = mapOf("dark" to Color(0xFF1E1E1E), "sepia" to Color(0xFF
 /**
  * EPUB reader: epub.js in a WebView (the same reader as the Windows app, positions compatible with
  * the Audiobookshelf web reader). Bars on top: chapter, Aa, contents; at the bottom progress and
- * "Poslouchat od této strany". On the TV ←/→ turn pages and OK shows the bars.
+ * "Listen from this page". On the TV ←/→ turn pages and OK shows the bars.
  */
 @SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class)

@@ -12,7 +12,7 @@ import cz.ondra.absplayer.data.Series
 
 /**
  * Android Auto browse tree. Top-level folders become tabs in the car:
- *   Pokračovat | Knihovna | Série | Nové
+ *   Continue | Library | Series | New
  */
 class BrowseTree(private val app: App) {
 

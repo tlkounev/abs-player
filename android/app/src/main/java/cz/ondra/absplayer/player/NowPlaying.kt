@@ -28,7 +28,7 @@ data class NowPlaying(
     val muted: Boolean = false,
     /** Seconds left on the sleep timer; -1 = end of chapter; null = off. */
     val sleepSec: Int? = null,
-    /** Short status line, e.g. "Pozice převzata z: Windows". */
+    /** Short status line, e.g. "Position taken over from: Windows". */
     val info: String? = null,
     val error: String? = null,
 ) {

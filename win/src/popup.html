@@ -39,7 +39,7 @@
     user-select: none;
     -webkit-user-select: none;
   }
-  /* celé okno se dá chytit a přetáhnout; ovládací prvky ne */
+  /* the whole window can be grabbed and dragged; the controls cannot */
   .card {
     position: absolute; inset: 0;
     background: var(--bg);
@@ -49,11 +49,11 @@
     display: flex; flex-direction: column;
     -webkit-app-region: drag;
   }
-  /* ovládací oblasti celé bez přetahování, aby hover fungoval i v mezerách mezi tlačítky */
+  /* control areas are not draggable at all, so hover works also in the gaps between buttons */
   button, input, .bar, .row, .vol-wrap, .rate, .controls, .progress, .side, .win-btns { -webkit-app-region: no-drag; }
   .hidden { display: none !important; }
 
-  /* --- hlavička --- */
+  /* --- header --- */
   .head { display: flex; gap: 12px; align-items: flex-start; min-height: 72px; }
   .cover { width: 72px; height: 72px; flex: none; border-radius: 4px; object-fit: cover; background: var(--track); }
   .cover:not([src]) { visibility: hidden; }
@@ -77,7 +77,7 @@
   .sleep { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 3px; padding-right: 6px; font-variant-numeric: tabular-nums; }
   .sleep svg { width: 12px; height: 12px; fill: currentColor; }
 
-  /* --- průběh --- */
+  /* --- progress --- */
   .progress { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
   .bar { position: relative; height: 14px; display: flex; align-items: center; }
   .bar .rail { position: absolute; left: 0; right: 0; height: 4px; border-radius: 2px; background: var(--track); }
@@ -95,7 +95,7 @@
   .times span:nth-child(2) { text-align: center; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .times span:last-child { text-align: right; }
 
-  /* --- ovládání --- */
+  /* --- controls --- */
   .controls { margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 6px; position: relative; }
   .ctl {
     position: relative; width: 38px; height: 38px; border: 0; border-radius: 50%; background: transparent;
@@ -135,7 +135,7 @@
 
   /* --- seznam kapitol --- */
   .card { gap: 0; }
-  .ch-panel { flex: none; height: calc(var(--list-h, 300px) - 10px); /* + 10px okraj = přesně o kolik okno naroste */ display: flex; flex-direction: column; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .ch-panel { flex: none; height: calc(var(--list-h, 300px) - 10px); /* + 10px margin = exactly how much the window grows */ display: flex; flex-direction: column; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--line); }
   .card.down .ch-panel { order: 2; padding: 10px 0 0; margin: 10px 0 0; border-bottom: 0; border-top: 1px solid var(--line); }
   .ch-head { display: flex; align-items: center; gap: 8px; margin: -4px -6px 6px 0; }
   .ch-head h1 { font-size: 14px; font-weight: 600; }
@@ -165,7 +165,7 @@
   .ch-row .mini i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 1px; background: var(--accent); }
   .ch-empty { color: var(--muted); text-align: center; padding: 20px 0; }
 
-  /* --- přehrávat na --- */
+  /* --- play on --- */
   .target { color: var(--accent); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
   .target svg { width: 12px; height: 12px; fill: currentColor; flex: none; }
   .dev-list { flex: 1; overflow-y: auto; -webkit-app-region: no-drag; margin-right: -8px; padding-right: 4px; }
@@ -183,7 +183,7 @@
   .dev-tools { display: flex; gap: 2px; }
   .dev-name { min-width: 0; height: 26px; border: 1px solid var(--accent); border-radius: 4px; background: var(--surface, #2f2f2f); color: inherit; font: inherit; padding: 0 6px; outline: none; }
   .dev-sec { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; margin: 10px 6px 4px; }
-  /* IP | port | kód v jednom řádku, pod tím stav + Spárovat; hodnoty uprostřed polí */
+  /* IP | port | code in one row, status + Pair below; values centred in the fields */
   .pair { display: grid; grid-template-columns: 2.2fr 1fr 1.4fr; gap: 6px; align-items: center; padding: 0 6px; -webkit-app-region: no-drag; }
   .pair input { height: 26px; padding: 0 6px; border-radius: 4px; border: 1px solid var(--line); background: var(--hover); color: var(--fg); font: inherit; font-size: 12px; outline: 0; min-width: 0; text-align: center; }
   .pair input::placeholder { text-align: center; }
@@ -201,9 +201,9 @@
   .my-code { margin: 10px 6px 2px; color: var(--muted); font-size: 11px; }
   .my-code b { color: var(--fg); font-size: 13px; letter-spacing: .08em; }
 
-  /* --- prázdný stav --- */
+  /* --- empty state --- */
   .empty { flex: 1; display: flex; flex-direction: column; }
-  /* úvodní stránka otevřená z přehrávače: právě hrající kniha je zvýrazněná */
+  /* home page opened from the player: the playing book is highlighted */
   .row.cur { background: color-mix(in srgb, var(--accent) 16%, transparent); }
   .row.cur .t .a { color: var(--accent); }
   .empty-head { display: flex; align-items: center; justify-content: space-between; margin: -4px -6px 6px 0; }
@@ -232,7 +232,7 @@
 <body>
 <div class="card">
 
-  <!-- přehrávat na -->
+  <!-- play on -->
   <div id="devPanel" class="ch-panel hidden">
     <div class="ch-head">
       <h1 data-txt="playOn"></h1>
@@ -272,7 +272,7 @@
     <div class="ch-list" id="chItems"></div>
   </div>
 
-  <!-- přehrává se -->
+  <!-- playing -->
   <div id="player" class="hidden" style="display:flex;flex-direction:column;flex:1">
     <div class="head">
       <img id="cover" class="cover" alt="">
@@ -337,7 +337,7 @@
     </div>
   </div>
 
-  <!-- nic nehraje -->
+  <!-- nothing playing -->
   <div id="empty" class="empty hidden">
     <div class="empty-head">
       <h1 data-txt="continue"></h1>
@@ -350,7 +350,7 @@
     <div class="list" id="list"></div>
   </div>
 
-  <!-- zpráva -->
+  <!-- message -->
   <div id="msg" class="msg-wrap hidden">
     <div class="msg-top win-btns">
       <button class="icon-btn dev-btn" data-act="devices" data-tip="playOn"><svg viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h10a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 11H9v1.5h2V14H5v-1.5h2V11H3a1.5 1.5 0 0 1-1.5-1.5v-6ZM3 3.5v6h10v-6H3Z"/></svg></button>
@@ -406,7 +406,7 @@ function fmt(sec) {
   return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
 }
 
-// měnit SVG jen při změně – přepis pod kurzorem vyvolává falešné události najetí myši
+// change the SVG only when it changes – rewriting it under the cursor fires false hover events
 function setIcon(el, html) {
   if (el.dataset.icon === html) return;
   el.dataset.icon = html;
@@ -423,7 +423,7 @@ function setBar(bar, p) {
   bar.querySelector('.knob').style.left = (p * 100) + '%';
 }
 
-// t = pozice v celé knize (s)
+// t = position in the whole book (s)
 function setProgress(t) {
   if (!st || !st.item) return;
   const r = st.rate || 1;
@@ -443,7 +443,7 @@ function setProgress(t) {
   $('bookLabel').textContent = tr('book') + ' · ' + (d > 0 ? Math.floor((t / d) * 100) : 0) + ' %';
 }
 
-// kapitola pro danou pozici – při přetahování po knize se popisky kapitoly mění s pozicí
+// chapter for a position – while dragging over the book the chapter labels follow the position
 function chapterAt(t) {
   if (!st || !st.chapter) return null;
   const c = st.chapter;
@@ -474,7 +474,7 @@ function render() {
   for (const b of document.querySelectorAll('.dev-btn')) b.classList.toggle('on', devOpen || !!(st.target && st.target.remote));
   if (!st.item && st.remoteError) {
     show('msg');
-    // probouzení TV (Wake-on-LAN) – jinak „nedostupná“ s tlačítkem Přehrát na tomto zařízení
+    // waking the TV (Wake-on-LAN) – otherwise "unavailable" with the Play on this device button
     $('msgTxt').textContent = st.waking != null ? tr('waking', { name: st.target.name, s: st.waking })
       : tr('deviceOffline', { name: st.target.name }) + (st.lastTitle ? '\n' + st.lastTitle : '');
     $('msgTxt').style.whiteSpace = 'pre-line';
@@ -498,7 +498,7 @@ function render() {
   }
 
   if (homeOpen) {
-    // úvodní stránka (jako po spuštění) i během přehrávání; klik na hrající knihu = zpět
+    // home page (as after start) also while playing; click on the playing book = back
     show('empty');
     const items = homeList();
     const key = 'h:' + items.map((i) => i.id + (i.cover ? 1 : 0)).join(',');
@@ -536,7 +536,7 @@ function render() {
   $('sleep').classList.toggle('hidden', st.sleepRemaining == null);
   if (st.sleepRemaining != null) $('sleepTxt').textContent = fmt(st.sleepRemaining);
 
-  // s kapitolami: velký pruh = kapitola, tenký = kniha; bez kapitol jen velký pruh knihy
+  // with chapters: big bar = chapter, thin = book; without chapters only a big book bar
   const hasCh = !!st.chapter;
   $('chBlock').classList.toggle('hidden', !hasCh);
   $('bookBar').classList.toggle('thin', hasCh);
@@ -570,10 +570,10 @@ function buildItemRows(list, items, curId) {
     btn.title = isCur ? tr('backToPlayer') : tr('play');
     btn.innerHTML = '<svg viewBox="0 0 20 20">' + PLAY + '</svg>';
     btn.onclick = isCur ? () => setHomeOpen(false) : () => playFromRecent(it);
-    row.onclick = (e) => { if (!(e.target.closest && e.target.closest('button'))) btn.onclick(); }; // celá plocha knihy
+    row.onclick = (e) => { if (!(e.target.closest && e.target.closest('button'))) btn.onclick(); }; // the whole book row
     row.append(img, t);
     if (it.ebook) {
-      // e-kniha: otevře okno čtečky
+      // e-book: opens the reader window
       const rd = document.createElement('button');
       rd.className = 'icon-btn read-btn';
       rd.title = tr('read');
@@ -591,7 +591,7 @@ function buildItemRows(list, items, curId) {
   }
 }
 
-// --- úvodní stránka z přehrávače (tlačítko ← vlevo nahoře vedle „_“) ---
+// --- home page from the player (the ← button at the top next to "_") ---
 let homeOpen = false;
 let homeItems = null;
 
@@ -644,7 +644,7 @@ async function cmd(name, arg) {
   setTimeout(poll, 400);
 }
 
-// --- tlačítka ---
+// --- buttons ---
 $('play').onclick = () => cmd('playPause');
 $('back').onclick = () => cmd('jumpBack');
 $('fwd').onclick = () => cmd('jumpFwd');
@@ -665,9 +665,9 @@ $('rate').addEventListener('wheel', (e) => {
   cmd('rate', Math.min(3, Math.max(0.5, next)));
 }, { passive: false });
 
-// --- hlasitost: klik = ztlumit, najetí / fokus = posuvník ---
-// Zavírání se neřídí událostmi myši (Windows je u přetahovatelné plochy okna nedoručuje
-// a :hover pak „zamrzne“), ale skutečnou polohou kurzoru z hlavního procesu.
+// --- volume: click = mute, hover / focus = slider ---
+// Closing does not follow mouse events (Windows does not deliver them over a draggable window area
+// and :hover then "freezes"), but the real cursor position from the main process.
 const volWrap = $('volWrap');
 const volPop = volWrap.querySelector('.vol-pop');
 let volPollTimer = null;
@@ -823,7 +823,7 @@ function updateChapterList() {
       row.querySelector('.mini i').style.width = (len > 0 ? Math.min(100, ((t - c.start) / len) * 100) : 0) + '%';
     }
   }
-  // při změně kapitoly posunout seznam, pokud uživatel zrovna neroluje a nehledá
+  // on a chapter change scroll the list, unless the user is scrolling or searching
   if (curN !== lastCurN) {
     const first = lastCurN === 0;
     lastCurN = curN;
@@ -858,7 +858,7 @@ async function setListOpen(open) {
   }
 }
 
-// --- přehrávat na (zařízení) ---
+// --- play on (devices) ---
 let devOpen = false;
 let devTimer = null;
 let devData = null;
@@ -892,7 +892,7 @@ async function setDevOpen(open) {
     $('chPanel').classList.add('hidden');
   }
   devOpen = true;
-  // okno naroste přesně o obsah panelu: nejdřív obsah, pak změřit, pak zvětšit okno
+  // the window grows exactly by the panel's content: content first, then measure, then resize
   $('pErr').classList.add('hidden');
   $('devPanel').classList.remove('hidden');
   await loadDevices();
@@ -904,15 +904,15 @@ async function setDevOpen(open) {
   devTimer = setInterval(loadDevices, 4000);
 }
 
-/** O kolik má okno narůst, aby se panel „Přehrávat na“ vešel bez prázdného místa. */
+/** How much the window has to grow so the "Play on" panel fits without empty space. */
 function devPanelExtra() {
   const panel = $('devPanel'), items = $('devItems');
   const down = document.querySelector('.card').classList.contains('down');
   const pr = panel.getBoundingClientRect(), ir = items.getBoundingClientRect();
   const content = $('myCode').getBoundingClientRect().bottom - ir.top + items.scrollTop + 4;
-  // panel nahoře: dole padding 10 + čára 1; dole: nahoře čára + padding (už v ir.top - pr.top)
+  // panel above: padding 10 + line 1 at the bottom; below: line + padding at the top (already in ir.top - pr.top)
   const h = (ir.top - pr.top) + content + (down ? 0 : 11);
-  const extra = Math.min(Math.ceil(h) + 10, 560); // + mezera k minipřehrávači; víc už se posouvá
+  const extra = Math.min(Math.ceil(h) + 10, 560); // + gap to the mini player; beyond that it scrolls
   panel.style.setProperty('--list-h', extra + 'px');
   return extra;
 }
@@ -923,7 +923,7 @@ function fitDevPanel() {
   cancelAnimationFrame(fitFrame);
   fitFrame = requestAnimationFrame(() => { if (devOpen) window.abs.list(true, devPanelExtra()); });
 }
-// obsah panelu se mění (párování rozbalené, nápověda, chyba, zařízení) → okno se přizpůsobí
+// the panel's content changes (pairing expanded, hint, error, devices) → the window adapts
 new MutationObserver(() => fitDevPanel()).observe(document.getElementById('devItems'), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class'] });
 
 async function loadDevices() {
@@ -936,7 +936,7 @@ function devRow(icon, name, sub, cur, off, onClick, onRemove, renameId) {
   const row = document.createElement('div');
   row.className = 'dev-row' + (cur ? ' cur' : '') + (off ? ' off' : '');
   if (renameId && renamingId === renameId) {
-    // přejmenování: řádek se změní na pole + ✓ (Enter uloží, Esc zruší)
+    // rename: the row turns into a field + ✓ (Enter saves, Esc cancels)
     row.innerHTML = icon + '<input class="dev-name" maxlength="60">';
     const inp = row.querySelector('input');
     inp.value = name;
@@ -1066,7 +1066,7 @@ function checkPairTarget() {
     const info = await window.abs.deviceInfo(host, port);
     if ($('pHost').value.trim() !== host) return;
     pairInfo = info;
-    if (info.ok && info.port && String(info.port) !== $('pPort').value) $('pPort').value = String(info.port); // přijímač běží na jiném portu
+    if (info.ok && info.port && String(info.port) !== $('pPort').value) $('pPort').value = String(info.port); // the receiver runs on another port
     $('pHint').textContent = info.ok ? info.name + (info.needsPassword ? ' · ' + tr('needPass') : '') : tr('noResponse');
     updatePairBtn();
   }, 400);
@@ -1108,7 +1108,7 @@ $('chItems').addEventListener('wheel', () => { lastUserScroll = Date.now(); }, {
 $('chItems').addEventListener('pointerdown', () => { lastUserScroll = Date.now(); });
 document.documentElement.style.setProperty('--list-h', window.abs.listHeight + 'px');
 
-// --- klávesy ---
+// --- keys ---
 document.addEventListener('keydown', (e) => {
   if (e.target === $('volRange')) return;
   if (e.target instanceof HTMLInputElement && e.target.closest('#devPanel')) {
@@ -1130,7 +1130,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 window.abs.onShown(() => {
-  // okno se vždy ukazuje sbalené
+  // the window always shows collapsed
   if (devOpen) { devOpen = false; clearInterval(devTimer); devTimer = null; $('devPanel').classList.add('hidden'); }
   listOpen = false;
   $('chBtn').classList.remove('on');

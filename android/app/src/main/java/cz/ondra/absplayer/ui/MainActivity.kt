@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // The same screen runs on the TV; there it also receives playback from phones / PCs
-        // (pairing code + address are in "Přehrávat na").
+        // (pairing code + address are in "Play on").
         if ((application as App).isTv) cz.ondra.absplayer.tv.ReceiverService.start(this)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -89,7 +89,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** "Přehrávat na" from a phone / PC brought the app to the front on the TV: show the player. */
+    /** "Play on" from a phone / PC brought the app to the front on the TV: show the player. */
     private fun handleOpenPlayer(intent: Intent?) {
         if (intent?.getBooleanExtra(EXTRA_OPEN_PLAYER, false) == true && vm.stack.lastOrNull() != Screen.Player) {
             vm.push(Screen.Player)

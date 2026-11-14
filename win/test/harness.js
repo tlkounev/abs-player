@@ -1,5 +1,5 @@
-// Testy bez ikony v oznamovací oblasti: bridge.js proti maketě přehrávače ABS (mock.html), popup.html a setup.html.
-// Spuštění: npm test  (screenshoty se uloží do test/out/)
+// Tests without the tray icon: bridge.js against a mock of the ABS player (mock.html), popup.html and setup.html.
+// Run: npm test  (screenshots go to test/out/)
 const { app, BrowserWindow, ipcMain } = require('electron');
 const http = require('http');
 const fs = require('fs');
@@ -61,7 +61,7 @@ app.whenReady().then(async () => {
   check('cmd log', JSON.stringify(log) === JSON.stringify(['playPause', 'jumpFwd', 'jumpBack', 'seek:5000', 'rate:1.5', 'prevChapter', 'goToNext', 'play-item:{"libraryItemId":"li2","episodeId":null}']));
   await exec(`(() => { const p = ${P}; p.isPlaying = true; p.playerHandler.playerPlaying = true; p.currentTime = 1234; p.currentPlaybackRate = 1.25; p.$refs.audioPlayer.$refs.volumeControl.volume = 0.8; })()`);
 
-  // i18n: všechny jazyky mají všechny texty a vlajku
+  // i18n: every language has all texts and a flag
   check('i18n complete', I18N.LANGS.length === 15 && I18N.LANGS.every((l) => l.flag && Object.keys(I18N.STRINGS[l.code]).length === I18N.KEYS.length));
 
   let targetOverride = null;
@@ -119,7 +119,7 @@ app.whenReady().then(async () => {
   check('chapter times', await jsP("document.getElementById('chElapsed').textContent + '|' + document.getElementById('chRemaining').textContent") === '20:34|-3:32');
   check('drag region', await jsP("getComputedStyle(document.querySelector('.card')).webkitAppRegion || getComputedStyle(document.querySelector('.card')).getPropertyValue('-webkit-app-region')") === 'drag');
 
-  // Pokračovat v poslechu při přehrávání (tlačítko nahoře)
+  // Continue while playing (button at the top)
   await exec(`(() => { const orig = window.$nuxt.$axios.$get; window.$nuxt.$axios.$get = async (url) => url.includes('items-in-progress') ? ({ libraryItems: [
       { id: 'li1', updatedAt: 1, media: { coverPath: '/c', metadata: { title: 'Stopařův průvodce po Galaxii', authorName: 'Douglas Adams' } } },
       { id: 'li3', updatedAt: 1, media: { coverPath: null, ebookFormat: 'epub', metadata: { title: 'Saturnin', authorName: 'Zdeněk Jirotka' } } } ] }) : orig(url); })()`);
@@ -140,7 +140,7 @@ app.whenReady().then(async () => {
   await wait(700);
   check('home back to player', await jsP("document.getElementById('empty').classList.contains('hidden') && !document.getElementById('player').classList.contains('hidden')"));
 
-  // hlasitost: najetí → posuvník; zavření podle polohy kurzoru (bez DOM událostí)
+  // volume: hover → slider; closing by cursor position (no DOM events)
   const r = await jsP("JSON.stringify(document.getElementById('volBtn').getBoundingClientRect())").then(JSON.parse);
   const bx = Math.round(r.x + r.width / 2), by = Math.round(r.y + r.height / 2);
   fakeCursor = { x: bx, y: by };
@@ -148,7 +148,7 @@ app.whenReady().then(async () => {
   await wait(400);
   check('volume popover on hover', await jsP("document.getElementById('volWrap').classList.contains('open')"));
   await shot(popup, 'p-vol.png');
-  // skutečný klik myší
+  // a real mouse click
   popup.webContents.sendInputEvent({ type: 'mouseDown', x: bx, y: by, button: 'left', clickCount: 1 });
   popup.webContents.sendInputEvent({ type: 'mouseUp', x: bx, y: by, button: 'left', clickCount: 1 });
   await wait(600);
@@ -156,11 +156,11 @@ app.whenReady().then(async () => {
   check('click does not focus button', await jsP("document.activeElement !== document.getElementById('volBtn')"));
   await wait(800);
   check('stays open while cursor over', await jsP("document.getElementById('volWrap').classList.contains('open')"));
-  // kurzor odjede na přetahovací plochu – stránka nedostane žádnou událost
+  // the cursor moves to the drag area – the page gets no event
   fakeCursor = { x: 200, y: 20 };
   await wait(900);
   check('closes when cursor leaves (no DOM events)', !(await jsP("document.getElementById('volWrap').classList.contains('open')")));
-  // kurzor nad posuvníkem drží otevřené
+  // the cursor over the slider keeps it open
   fakeCursor = { x: bx, y: by };
   popup.webContents.sendInputEvent({ type: 'mouseMove', x: bx + 1, y: by });
   await wait(300);
@@ -176,7 +176,7 @@ app.whenReady().then(async () => {
   fakeCursor = { x: 300, y: 120 };
   await wait(900);
 
-  // seek v kapitole: klik doprostřed pruhu kapitoly 1 (0–1500) → ~750
+  // seek in the chapter: click in the middle of chapter 1's bar (0–1500) → ~750
   const cb = await jsP("JSON.stringify(document.getElementById('chBar').getBoundingClientRect())").then(JSON.parse);
   const cx = Math.round(cb.x + cb.width / 2), cy = Math.round(cb.y + cb.height / 2);
   popup.webContents.sendInputEvent({ type: 'mouseDown', x: cx, y: cy, button: 'left', clickCount: 1 });
@@ -222,7 +222,7 @@ app.whenReady().then(async () => {
   global.__dir = 'up';
   await exec(`(() => { const p = ${P}; p.currentTime = 1234; })()`);
 
-  // --- přehrávat na ---
+  // --- play on ---
   await jsP("document.querySelector('#player [data-act=devices]').click()");
   await wait(900);
   check('devices panel open', await jsP("!document.getElementById('devPanel').classList.contains('hidden')"));
@@ -268,7 +268,7 @@ app.whenReady().then(async () => {
   await wait(900);
   check('pair + select called', JSON.stringify(devCalls.filter((c) => !c.startsWith('rename:'))) === JSON.stringify(['pair:10.0.0.7:8765:123456', 'select:pc2']));
   check('panel closed after pairing', await jsP("document.getElementById('devPanel').classList.contains('hidden')") && popup.getBounds().height === 236);
-  // přepnutí z panelu zařízení na kapitoly nezmění velikost okna
+  // switching from the devices panel to chapters keeps the window size
   await jsP("document.querySelector('#player [data-act=devices]').click()");
   await wait(700);
   check('pair form collapsed on reopen', await jsP("document.getElementById('pairSection').classList.contains('hidden')"));
@@ -278,21 +278,21 @@ app.whenReady().then(async () => {
   await jsP("document.getElementById('chClose').click()");
   await wait(500);
   check('collapsed again', popup.getBounds().height === 236);
-  // vzdálený cíl: řádek „Přehrává se na“
+  // remote target: the "Playing on" row
   targetOverride = { id: 'tv1', name: 'Obývák TV', kind: 'tv', remote: true };
   await wait(900);
   check('remote target line', await jsP("!document.getElementById('target').classList.contains('hidden') && document.getElementById('targetTxt').textContent") === 'Obývák TV' && await jsP("document.getElementById('target').title") === 'Přehrává se na: Obývák TV');
   await shot(popup, 'p-remote.png');
   targetOverride = null;
 
-  // --- synchronizace webového přehrávače ---
+  // --- web player sync ---
   const net = () => exec('window.__net.slice()');
   await exec(`(() => { const p = ${P}; p.chapters = p.chapters.slice(0, 3); p.currentTime = 1234; p.isPlaying = true; p.playerHandler.playerPlaying = true; window.__net.length = 0; })()`);
   await wait(1300);
   await exec("window.__absPlayer.cmd('playPause')"); // pauza
   await wait(1400);
   check('sync on pause ' + JSON.stringify(await net()), (await net()).includes('post:/api/session/sess1/sync:1234:12'));
-  // jiné zařízení mezitím posunulo pozici → při pokračování se převezme
+  // another device moved the position meanwhile → taken over on resume
   await exec("window.__serverProgress = { currentTime: 5000, lastUpdate: Date.now() }; window.__net.length = 0;");
   await exec("window.__absPlayer.cmd('playPause')");
   await wait(600);
@@ -300,20 +300,20 @@ app.whenReady().then(async () => {
   check('resume takes newer server position ' + JSON.stringify(n1), n1.includes('get:/api/me/progress/li1') && n1.includes('phSeek:5000'));
   st = await exec('window.__absPlayer.state()');
   check('resume plays + notice', st.isPlaying && Math.round(st.currentTime) === 5000 && st.notice === 'moved');
-  // stejná pozice na serveru → nic se nepřevezme
+  // same position on the server → nothing taken over
   await exec("window.__absPlayer.cmd('playPause')");
   await wait(1400);
   await exec("window.__serverProgress = { currentTime: 5001, lastUpdate: Date.now() }; window.__net.length = 0;");
   await exec("window.__absPlayer.cmd('playPause')");
   await wait(600);
   check('resume keeps own position', !(await net()).some((x) => x.startsWith('phSeek')));
-  // pozastaveno + změna z jiného zařízení (socket → store) → převezme se hned
+  // paused + change from another device (socket → store) → taken over at once
   await exec("window.__absPlayer.cmd('playPause')");
   await wait(1400);
   await exec("window.__storeProgress = { currentTime: 7000, lastUpdate: Date.now() + 5000 }; window.__serverProgress = { currentTime: 7000, lastUpdate: Date.now() }; window.__net.length = 0;");
   await wait(1400);
   check('follow while paused ' + JSON.stringify(await net()), (await net()).includes('phSeek:7000'));
-  // předání na jiné zařízení: pauza, uložení, zavření
+  // handoff to another device: pause, save, close
   await exec("window.__storeProgress = null; window.__absPlayer.cmd('playPause')");
   await wait(300);
   await exec("window.__net.length = 0");
@@ -325,14 +325,14 @@ app.whenReady().then(async () => {
   check('handoff ' + JSON.stringify(h) + ' ' + JSON.stringify(n2), h && h.id === 'li1' && Math.round(h.time) === 7000 && n2.some((x) => x.startsWith('post:/api/session/sess1/sync:7000:')) && n2.includes('closePlayer'));
   await exec("window.__absPlayer.cmd('playItem', { id: 'li2', startTime: 42 })");
   check('playItem with startTime', (await exec('window.__log')).includes('play-item:{"libraryItemId":"li2","episodeId":null,"startTime":42}'));
-  // stejná kniha už načtená a pozastavená (Poslouchat od této strany ve čtečce): posun + přehrát
+  // the same book already loaded and paused (Listen from this page in the reader): seek + play
   await exec(`(() => { const p = ${P}; p.streamLibraryItem = { id: 'li1', updatedAt: 1, media: {} }; p.isPlaying = false; p.playerHandler.playerPlaying = false; window.__log.length = 0; })()`);
   await exec("window.__absPlayer.cmd('playItem', { id: 'li1', startTime: 321 })");
   const lg = await exec('window.__log');
   check('same book: seek + play, not a new session', lg.includes('seek:321') && lg.includes('playPause') && !lg.some((x) => x.startsWith('play-item')), lg);
   await exec(`(() => { const p = ${P}; p.streamLibraryItem = { id: 'li1', updatedAt: 1, media: {} }; p.currentTime = 1234; p.isPlaying = true; p.playerHandler.playerPlaying = true; })()`);
 
-  // hide tlačítko
+  // hide button
   await jsP("document.querySelector('[data-act=hide]').click()");
   await wait(100);
 
@@ -344,7 +344,7 @@ app.whenReady().then(async () => {
     await shot(popup, 'p-' + l + '.png');
   }
 
-  // vypnutá TV: tlačítko Přehrát na tomto zařízení
+  // TV off: the Play on this device button
   await jsP("busy = true; st = { ready: true, loggedIn: true, item: null, remoteError: true, waking: null, lastTitle: 'V Krvavém pásu', target: { name: 'Obývák TV', remote: true } }; render();");
   await wait(300);
   check('offline TV: play here button', await jsP("!document.getElementById('playHere').classList.contains('hidden') && document.getElementById('playHere').textContent === " + JSON.stringify(I18N.tr(lang, 'playHere'))));
@@ -356,7 +356,7 @@ app.whenReady().then(async () => {
   check('waking text', (await jsP("document.getElementById('msgTxt').textContent")) === I18N.tr(lang, 'waking', { name: 'Obývák TV', s: 23 }) && await jsP("document.getElementById('playHere').classList.contains('hidden')"));
   await jsP("busy = false;");
 
-  // prázdný stav
+  // empty state
   await exec(`(() => { const p = ${P}; p.streamLibraryItem = null;
     window.$nuxt.$axios.$get = async () => ({ libraryItems: [
       { id: 'li1', updatedAt: 1, media: { coverPath: '/c', metadata: { title: 'Stopařův průvodce po Galaxii', authorName: 'Douglas Adams' } } },
@@ -368,7 +368,7 @@ app.whenReady().then(async () => {
   await wait(500);
   check('start page: click on title plays', String(await exec('window.__log[window.__log.length - 1]')).startsWith('play-item:{"libraryItemId":"li1"'));
 
-  // setup okno
+  // setup window
   const setup = new BrowserWindow({ width: 500, height: 340, show: true, backgroundColor: '#232323',
     webPreferences: { preload: path.join(SRC, 'setup-preload.js'), contextIsolation: true, sandbox: true } });
   setup.webContents.on('console-message', (_e, lvl, msg) => results.push('setup console: ' + msg));

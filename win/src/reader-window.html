@@ -148,7 +148,7 @@
     if (cur) cur.scrollIntoView({ block: 'nearest' });
   }
 
-  // hostitel pro sdílenou čtečku (reader.js)
+  // host for the shared reader (reader.js)
   window.AbsHost = {
     config: () => JSON.stringify(Object.assign({}, cfg, { settings, spread })),
     bookData: () => window.absReader.bookData(),

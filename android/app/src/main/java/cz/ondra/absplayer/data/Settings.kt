@@ -112,7 +112,7 @@ class Settings(context: Context) {
             .apply()
     }
 
-    /** This device's own name chosen in "Přehrávat na" (null = the system device name). */
+    /** This device's own name chosen in "Play on" (null = the system device name). */
     var localName: String?
         get() = prefs.getString("localName", null)?.takeIf { it.isNotBlank() }
         set(v) = prefs.edit().putString("localName", v?.trim()?.takeIf { it.isNotEmpty() }).apply()

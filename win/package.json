@@ -2,7 +2,7 @@
   "name": "abs-player-win",
   "productName": "ABS Player",
   "version": "1.3.2",
-  "description": "ABS Player pro Windows – Audiobookshelf v oznamovací oblasti",
+  "description": "ABS Player for Windows – Audiobookshelf in the notification area",
   "main": "src/main.js",
   "author": "Ondra",
   "license": "MIT",

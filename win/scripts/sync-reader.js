@@ -1,4 +1,4 @@
-// Zkopíruje sdílenou čtečku e-knih (/reader v kořeni repozitáře) do src/reader (balí se s aplikací).
+// Copies the shared e-book reader (/reader at the repository root) to src/reader (packaged with the app).
 'use strict';
 const fs = require('fs');
 const path = require('path');

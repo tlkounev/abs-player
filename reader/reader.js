@@ -1,24 +1,24 @@
-// ABS Player – EPUB čtečka (epub.js), sdílená Androidem (WebView) a Windows (Electron).
+// ABS Player – EPUB reader (epub.js), shared by Android (WebView) and Windows (Electron).
 //
-// Hostitel (window.AbsHost) dodá konfiguraci a dostává zprávy:
-//   bookData()          -> (volitelně, Windows) Promise<ArrayBuffer> se souborem knihy místo bookUrl
+// The host (window.AbsHost) supplies the configuration and receives messages:
+//   bookData()          -> (optional, Windows) Promise<ArrayBuffer> with the book file instead of bookUrl
 //   config()            -> JSON: { bookUrl, startCfi, mode: 'saved'|'fromAudio'|'toAudio', audioTime,
 //                                  audioDuration, audioChapters: [{start,end,title}], settings, locations }
 //   relocated(json)     <- { cfi, progress, chapter, chapterIndex, chapterCount, page, pages }
 //   toc(json)           <- [{ label, href, index }]
-//   tap(zone)           <- 'center' (lišta), okraje listují samy
-//   listen(seconds)     <- „Poslouchat od této strany“: čas v audioknize
-//   saveLocations(json) <- vygenerované pozice (hostitel je uloží, příště se nepočítají znovu)
+//   tap(zone)           <- 'center' (bar); the edges turn pages themselves
+//   listen(seconds)     <- "Listen from this page": time in the audiobook
+//   saveLocations(json) <- generated locations (the host stores them; next time they are not computed again)
 //   ready() / error(text)
 //
-// Hostitel volá: reader.next(), reader.prev(), reader.goto(href), reader.applySettings(json),
+// The host calls: reader.next(), reader.prev(), reader.goto(href), reader.applySettings(json),
 //                reader.listenHere(), reader.gotoAudio(seconds)
 //
-// Pozice = CFI začátku stránky, stejně jako webová čtečka Audiobookshelfu (ebookLocation / ebookProgress).
+// Position = CFI of the page start, same as the Audiobookshelf web reader (ebookLocation / ebookProgress).
 //
-// Synchronizace s poslechem: poměr uvnitř kapitoly. % uplynulé audio kapitoly = % textu stejné kapitoly
-// v e-knize (počítáno podle pozic epub.js, tj. podle znaků, ne stran). Kapitoly se přiřadí podle názvu,
-// jinak podle pořadí; když to nejde, poměr přes celou knihu.
+// Sync with listening: the ratio inside a chapter. % of the elapsed audio chapter = % of the text of the same chapter
+// in the e-book (counted by epub.js locations, i.e. by characters, not pages). Chapters are matched by title,
+// else by order; when that fails, the ratio over the whole book.
 'use strict';
 
 (function () {
@@ -39,9 +39,9 @@
   const FONTS = { serif: 'Georgia, "Noto Serif", "Times New Roman", serif', sans: 'Roboto, "Segoe UI", Arial, sans-serif' };
 
   let book, rendition, ready = false, locationsReady = false;
-  let toc = [];          // [{ label, href, index, loc }] podle pořadí v knize
-  let chapterMap = null; // audio kapitola -> index v toc (null = poměr přes celou knihu)
-  let current = null;    // poslední relocated
+  let toc = [];          // [{ label, href, index, loc }] in book order
+  let chapterMap = null; // audio chapter -> index in toc (null = ratio over the whole book)
+  let current = null;    // last relocated
   let settings = Object.assign({ theme: 'dark', fontSize: 100, font: 'serif', lineHeight: 1.6 }, cfg.settings || {});
 
   const wait = document.getElementById('wait');
@@ -86,7 +86,7 @@
     return out;
   }
 
-  /** Index pozice (epub.js locations), kde začíná sekce spine. */
+  /** Location index (epub.js locations) where a spine section starts. */
   function buildToc() {
     const total = book.locations.length();
     const spineStart = {};
@@ -103,7 +103,7 @@
       if (!item) return;
       let loc = spineStart[item.index];
       if (loc === undefined) {
-        // sekce bez textu (obrázek): první pozice za ní
+        // section without text (image): the first location after it
         const next = Object.keys(spineStart).map(Number).filter((k) => k > item.index).sort((a, b) => a - b)[0];
         loc = next !== undefined ? spineStart[next] : total;
       }
@@ -118,12 +118,12 @@
     chapterMap = mapChapters(cfg.audioChapters || [], toc);
   }
 
-  /** Audio kapitola i -> kapitola e-knihy (index v toc), nebo null, když si neodpovídají. */
+  /** Audio chapter i -> e-book chapter (index in toc), or null when they do not match. */
   function mapChapters(audio, text) {
     const n = audio.length, m = text.length;
     if (!n || !m) return null;
     const map = new Array(n).fill(null);
-    // 1) podle názvu (stejný text, nebo stejné číslo kapitoly), jen dopředu
+    // 1) by title (same text, or same chapter number), forward only
     let from = 0, matched = 0;
     for (let a = 0; a < n; a++) {
       const an = norm(audio[a].title), anum = firstNumber(audio[a].title);
@@ -134,7 +134,7 @@
       }
     }
     if (matched >= Math.max(2, Math.ceil(n * 0.5))) {
-      // nepřiřazené mezi dvěma přiřazenými: po pořadí, pokud se vejdou
+      // unmatched between two matched ones: by order, if they fit
       for (let a = 0; a < n; a++) {
         if (map[a] !== null) continue;
         let p = a - 1; while (p >= 0 && map[p] === null) p--;
@@ -145,7 +145,7 @@
       }
       return map;
     }
-    // 2) stejný počet kapitol: po pořadí
+    // 2) same number of chapters: by order
     if (n === m) return audio.map((_, i) => i);
     return null;
   }
@@ -215,7 +215,7 @@
       const s = book.locations.locationFromCfi(location.start.cfi);
       const e = book.locations.locationFromCfi(location.end.cfi);
       out.progress = location.end.percentage || (total ? e / total : 0);
-      // „strana“ = kolik pozic se vejde na obrazovku (mění se s písmem)
+      // "page" = how many locations fit on the screen (changes with the font)
       const span = Math.max(1, e - s);
       out.page = Math.floor(s / span) + 1;
       out.pages = Math.max(out.page, Math.ceil(total / span));
@@ -229,7 +229,7 @@
     call('relocated', JSON.stringify(out));
   }
 
-  // ------------------------------------------------------------------ ovládání
+  // ------------------------------------------------------------------ controls
 
   const api = {
     next() { if (rendition) rendition.next(); },
@@ -260,7 +260,7 @@
     return new Promise((r) => locationsWaiters.push(r));
   }
 
-  // klepnutí: okraje listují, střed ukáže / schová lištu
+  // tap: the edges turn pages, the centre shows / hides the bar
   // new size / one or two pages: lay out again and return to the same place (else the columns end up
   // shifted half a page)
   let relayoutTimer = null;
@@ -334,7 +334,7 @@
       window.addEventListener('epub-resize', relayout);
       await book.ready;
 
-      // pozice: z mezipaměti hostitele, jinak spočítat (u velkých knih několik sekund)
+      // locations: from the host's cache, otherwise compute them (a few seconds for big books)
       let fromCache = false;
       if (cfg.locations) {
         try { book.locations.load(cfg.locations); fromCache = book.locations.length() > 0; } catch (e) { fromCache = false; }

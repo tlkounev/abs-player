@@ -123,7 +123,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     isFinished = ev.isFinished,
                     lastUpdate = ev.lastUpdate,
                 ))
-                // Move the item to the front of "Pokračovat" (debounced).
+                // Move the item to the front of "Continue" (debounced).
                 continueRefreshJob?.cancel()
                 continueRefreshJob = launch {
                     delay(3_000)

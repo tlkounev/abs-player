@@ -1,9 +1,9 @@
-# Vytvoří zkušební EPUB 3: 6 kapitol různé délky (pro test čtečky a přiřazení kapitol).
+# Creates a test EPUB 3: 6 chapters of different length (for the reader test and chapter matching).
 import sys, zipfile, random
 out = sys.argv[1]
 random.seed(1)
 words = "loď kapitánka stála u průzoru a dívala se na šedý povrch který se pomalu otáčel pod nimi navigátor mlčel".split()
-lens = [3, 8, 5, 12, 4, 9]  # odstavců po 120 slovech
+lens = [3, 8, 5, 12, 4, 9]  # paragraphs of 120 words
 chapters = []
 for i, n in enumerate(lens, 1):
     paras = []

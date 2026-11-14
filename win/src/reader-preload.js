@@ -1,4 +1,4 @@
-// Most mezi oknem čtečky a hlavním procesem.
+// Bridge between the reader window and the main process.
 'use strict';
 const { contextBridge, ipcRenderer } = require('electron');
 

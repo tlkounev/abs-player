@@ -1,12 +1,12 @@
-// Přehrávání na jiném zařízení – stejný protokol jako aplikace ABS Player (Android / Google TV).
+// Playback on another device – the same protocol as the ABS Player app (Android / Google TV).
 //
 //   GET  /info   -> { deviceId, name, loggedIn, server, username, version, kind, acceptsTokens }
 //   POST /pair   { code, server, username, userId, accessToken?, refreshToken?, phoneName } -> { secret, deviceId, name }
 //   GET  /state  -> NowPlaying
 //   POST /cmd    { action, value?, itemId? } -> NowPlaying
 //
-// Zařízení se v síti hlásí přes mDNS jako _absplayer._tcp s TXT { id, name, kind }.
-// Vše kromě /info a /pair vyžaduje hlavičku X-Secret, kterou přijímač vydá při spárování.
+// Devices announce themselves via mDNS as _absplayer._tcp with TXT { id, name, kind }.
+// Everything except /info and /pair needs the X-Secret header the receiver hands out when pairing.
 'use strict';
 
 const http = require('http');
@@ -16,9 +16,9 @@ const SERVICE_TYPE = 'absplayer';
 const DEFAULT_PORT = 8765;
 const PROTOCOL_VERSION = 2;
 
-// ---------------------------------------------------------------- převody stavů
+// ---------------------------------------------------------------- state conversions
 
-/** NowPlaying (protokol) → stav minipřehrávače. */
+/** NowPlaying (protocol) → mini player state. */
 function nowPlayingToPopup(np, extra) {
   const base = { ready: true, loggedIn: true, ...extra };
   if (!np || !np.itemId) return { ...base, item: null };
@@ -53,7 +53,7 @@ function nowPlayingToPopup(np, extra) {
   };
 }
 
-/** Stav webového přehrávače (bridge.js) + kapitoly → NowPlaying (protokol). */
+/** Web player state (bridge.js) + chapters → NowPlaying (protocol). */
 function popupToNowPlaying(st, chapters) {
   if (!st || !st.ready || !st.item) {
     return { itemId: null, title: '', author: '', chapters: [], durationSec: 0, positionSec: 0, isPlaying: false, isBuffering: false, isLoading: false, speed: 1, volume: 1, muted: false };
@@ -72,11 +72,11 @@ function popupToNowPlaying(st, chapters) {
     volume: typeof st.volume === 'number' ? st.volume : 1,
     muted: !!st.muted,
     sleepSec: typeof st.sleepRemaining === 'number' ? Math.round(st.sleepRemaining) : null,
-    info: st.notice === 'moved' ? 'Pozice převzata z jiného zařízení' : null
+    info: st.notice === 'moved' ? 'Position taken over from another device' : null
   };
 }
 
-/** Příkaz minipřehrávače → příkaz protokolu (pro vzdálené zařízení). */
+/** Mini player command → protocol command (for a remote device). */
 function popupCmdToRemote(name, arg) {
   switch (name) {
     case 'playPause': return { action: 'toggle' };
@@ -95,10 +95,10 @@ function popupCmdToRemote(name, arg) {
   }
 }
 
-// ---------------------------------------------------------------- přijímač (toto PC)
+// ---------------------------------------------------------------- receiver (this PC)
 
 /**
- * HTTP server, přes který spárovaný telefon (nebo jiné PC) ovládá přehrávání v této aplikaci.
+ * HTTP server through which a paired phone (or another PC) controls playback in this app.
  * opts: { deviceId, name, info(), state() -> NowPlaying, command(cmd) -> NowPlaying,
  *         getSecrets() -> string[], addSecret(s), code }
  */
@@ -140,24 +140,24 @@ function createReceiver(opts) {
       }
       if (req.method === 'POST' && url === '/pair') {
         const now = Date.now();
-        if (now < lockedUntil) return send(res, 403, { error: 'Příliš mnoho pokusů, zkus to za minutu' });
+        if (now < lockedUntil) return send(res, 403, { error: 'Too many attempts, try again in a minute' });
         const body = JSON.parse((await readBody(req)) || '{}');
         if (String(body.code || '').trim() !== opts.code()) {
           if (++failed >= 5) { failed = 0; lockedUntil = now + 60000; }
-          return send(res, 403, { error: 'Špatný párovací kód' });
+          return send(res, 403, { error: 'Wrong pairing code' });
         }
         failed = 0;
         const secret = crypto.randomBytes(24).toString('hex');
         opts.addSecret(secret, body.phoneName || '');
         return send(res, 200, { secret, deviceId: opts.deviceId, name: typeof opts.name === 'function' ? opts.name() : opts.name });
       }
-      if (!authorized(req)) return send(res, 401, { error: 'Zařízení není spárované' });
+      if (!authorized(req)) return send(res, 401, { error: 'Device is not paired' });
       if (req.method === 'GET' && url === '/state') return send(res, 200, await opts.state());
       if (req.method === 'POST' && url === '/cmd') {
         const cmd = JSON.parse((await readBody(req)) || '{}');
         return send(res, 200, await opts.command(cmd));
       }
-      return send(res, 404, { error: 'Neznámý požadavek' });
+      return send(res, 404, { error: 'Unknown request' });
     } catch (e) {
       return send(res, 500, { error: String((e && e.message) || e) });
     }
@@ -190,7 +190,7 @@ function createReceiver(opts) {
   };
 }
 
-// ---------------------------------------------------------------- klient (vzdálené zařízení)
+// ---------------------------------------------------------------- client (remote device)
 
 async function request(method, url, body, secret, timeoutMs) {
   const ctrl = new AbortController();
@@ -222,12 +222,12 @@ const remoteState = (d) => request('GET', deviceUrl(d, '/state'), null, d.secret
 const remoteCmd = (d, cmd) => request('POST', deviceUrl(d, '/cmd'), cmd, d.secret, 10000);
 const remoteInfo = (host, port, timeoutMs) => request('GET', deviceUrl({ host, port }, '/info'), null, null, timeoutMs || 3000);
 
-/** Porty, na kterých může přijímač běžet (bere první volný od 8765 – na TV občas 8765 drží něco jiného). */
+/** Ports a receiver can run on (it takes the first free one from 8765 – on a TV something else sometimes holds 8765). */
 const RECEIVER_PORTS = Array.from({ length: 10 }, (_, i) => DEFAULT_PORT + i);
 
 /**
- * Najde přijímač na adrese: nejdřív zadaný port, pak ostatní porty přijímače. S deviceId platí jen
- * to zařízení. Vrací { port, info } nebo null.
+ * Finds the receiver at an address: the given port first, then the other receiver ports. With deviceId only
+ * that device counts. Returns { port, info } or null.
  */
 async function locate(host, port, deviceId) {
   const ok = (i) => i && i.deviceId && (!deviceId || i.deviceId === deviceId);
@@ -245,17 +245,17 @@ function sameServer(a, b) {
   return n(a) === n(b);
 }
 
-/** Potřebuje zařízení při párování heslo (aby dostalo vlastní přihlášení)? */
+/** Does the device need the password when pairing (to get its own sign-in)? */
 function needsPassword(info, serverUrl, username) {
   return !!info.acceptsTokens && !(info.loggedIn && sameServer(info.server, serverUrl) && info.username === username);
 }
 
 /**
- * Spáruje vzdálené zařízení. TV, která není přihlášená k tomuto účtu, dostane vlastní pár tokenů:
- * přihlásíme se znovu heslem (refresh tokeny rotují, zařízení nesmí sdílet jeden).
+ * Pairs a remote device. A TV that is not signed in to this account gets its own pair of tokens:
+ * we sign in again with the password (refresh tokens rotate, devices must not share one).
  */
 async function pair({ host, port, code, password, serverUrl, username, userId, myName }) {
-  // zadaný / nalezený port může být starý: vzít ten, na kterém přijímač opravdu odpovídá
+  // the given / found port can be stale: take the one the receiver really answers on
   const hit = await locate(host, port);
   if (!hit) { const e = new Error('noResponse'); e.code = 'noResponse'; throw e; }
   port = hit.port;
@@ -279,13 +279,13 @@ async function pair({ host, port, code, password, serverUrl, username, userId, m
     req.userId = u.id || req.userId;
     req.accessToken = u.accessToken || u.token;
     req.refreshToken = u.refreshToken || null;
-    if (!req.accessToken) throw new Error('Server nevrátil token');
+    if (!req.accessToken) throw new Error('The server returned no token');
   }
   let resp;
   try {
     resp = await request('POST', deviceUrl({ host, port }, '/pair'), req, null, 8000);
   } catch (e) {
-    // TV hlásí, že k tomuto účtu přihlášená není → je potřeba heslo
+    // the TV reports it is not signed in to this account → the password is needed
     if (e.status === 400 && !req.accessToken) { const err = new Error('needPassword'); err.code = 'needPassword'; throw err; }
     throw e;
   }
@@ -294,7 +294,7 @@ async function pair({ host, port, code, password, serverUrl, username, userId, m
 
 // ---------------------------------------------------------------- mDNS
 
-/** Ohlášení tohoto PC a hledání ostatních. Bez knihovny bonjour-service (testy) jen nic nedělá. */
+/** Announces this PC and looks for the others. Without the bonjour-service library (tests) it does nothing. */
 function createDiscovery({ deviceId, name, onChange, Bonjour }) {
   let B = Bonjour;
   if (!B) {

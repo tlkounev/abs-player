@@ -220,5 +220,5 @@ data class Author(
 @Serializable
 data class AuthorsResponse(val authors: List<Author> = emptyList())
 
-/** The two shelves of the Audiobookshelf home that the app shows under "Přidané". */
+/** The two shelves of the Audiobookshelf home that the app shows under "Added". */
 data class Recent(val books: List<LibraryItem> = emptyList(), val series: List<Series> = emptyList())
