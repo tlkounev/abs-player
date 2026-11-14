@@ -16,3 +16,4 @@ win/test/out/
 __pycache__/
 reader/test/out-*.png
 win/src/reader/
+reader/test/package*.json

@@ -14,7 +14,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
-import kotlin.math.abs
 
 /**
  * Keeps the server's position for the open book correct.
@@ -67,17 +66,12 @@ class SyncManager(
         val server = runCatching { api.progress(id) }.getOrNull()
         val serverTime = server?.currentTime ?: s.currentTime
         val local = settings.localProgress(id)
-        val start = when {
-            explicitStartSec != null -> explicitStartSec
-            local != null && !local.synced && local.updatedAt > (server?.lastUpdate ?: 0L) -> local.positionSec
-            server?.isFinished == true -> 0.0
-            else -> serverTime
-        }.coerceIn(0.0, maxOf(0.0, book.durationSec - 1))
+        val start = SyncRules.startPosition(explicitStartSec, local, server, s.currentTime, book.durationSec)
 
         sessionId = s.id
         itemId = id
         serverPosSec = serverTime
-        pendingLocal = abs(start - serverTime) > 1.0
+        pendingLocal = SyncRules.pendingAfterOpen(start, serverTime)
         listenedMs = 0
         lastSyncAt = SystemClock.elapsedRealtime()
         settings.lastItemId = id
@@ -89,8 +83,7 @@ class SyncManager(
         val id = itemId ?: return
         if (pendingLocal) return
         val p = withTimeoutOrNull(2_500) { runCatching { api.progress(id) }.getOrNull() } ?: return
-        val known = serverPosSec ?: posSec()
-        if (abs(p.currentTime - known) > 3.0 && abs(p.currentTime - posSec()) > 3.0) {
+        if (SyncRules.adoptBeforePlay(p.currentTime, serverPosSec, posSec(), pendingLocal)) {
             adopt(p.currentTime, lastOtherDevice)
         }
     }
@@ -100,9 +93,12 @@ class SyncManager(
         if (ev.libraryItemId != itemId) return
         if (ev.sessionId != null && ev.sessionId == sessionId) return
         lastOtherDevice = ev.deviceDescription
-        if (player.isPlaying || player.isLoadingBook || pendingLocal) return
-        if (abs(ev.currentTime - posSec()) > 2.0) adopt(ev.currentTime, ev.deviceDescription)
-        else serverPosSec = ev.currentTime
+        when (SyncRules.onRemote(ev.libraryItemId, ev.sessionId, ev.currentTime, itemId, sessionId, posSec(),
+            player.isPlaying || player.isLoadingBook, pendingLocal)) {
+            SyncRules.Remote.ADOPT -> adopt(ev.currentTime, ev.deviceDescription)
+            SyncRules.Remote.NOTE -> serverPosSec = ev.currentTime
+            SyncRules.Remote.IGNORE -> {}
+        }
     }
 
     private fun adopt(sec: Double, device: String?) {
@@ -145,11 +141,7 @@ class SyncManager(
                 settings.saveLocalProgress(id, posSec(), synced = false)
             }
         }
-        val interval = when {
-            player.isPlaying -> 10_000L
-            pendingLocal -> 30_000L
-            else -> return
-        }
+        val interval = SyncRules.syncInterval(player.isPlaying, pendingLocal) ?: return
         if (now - lastSyncAt >= interval) {
             lastSyncAt = now
             scope.launch { syncNow() }

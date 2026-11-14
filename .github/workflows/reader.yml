@@ -1,0 +1,31 @@
+name: Reader
+
+# Tests of the shared EPUB reader (/reader) in Chromium: loading, contents, chapter matching,
+# listening ↔ reading sync, locations, themes, two-page spread.
+on:
+  push:
+    branches: [main]
+    paths: ["reader/**", ".github/workflows/reader.yml"]
+  pull_request:
+    paths: ["reader/**"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Playwright + Chromium
+        working-directory: reader/test
+        run: |
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Test book
+        run: python3 reader/test/make_epub.py "$RUNNER_TEMP/test.epub"
+      - name: Reader test
+        run: NODE_PATH=reader/test/node_modules node reader/test/reader.test.js "$RUNNER_TEMP/test.epub"
