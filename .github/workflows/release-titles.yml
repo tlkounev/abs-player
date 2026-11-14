@@ -1,0 +1,21 @@
+name: English release titles
+
+# One-off: renames old releases "ABS Player pro …" → "ABS Player for …".
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate "repos/${{ github.repository }}/releases?per_page=100" \
+            --jq '.[] | select(.name | test(" pro ")) | "\(.id)\t\(.name)"' |
+          while IFS=$'\t' read -r id name; do
+            gh api -X PATCH "repos/${{ github.repository }}/releases/$id" -f name="${name/ pro / for }" --jq .name
+          done

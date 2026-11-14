@@ -1,106 +1,126 @@
-# ABS Player pro Windows
+# ABS Player for Windows
 
-Webový klient Audiobookshelf jako samostatná aplikace v oznamovací oblasti Windows 11.
+The Audiobookshelf web client as a desktop app with a mini player in the Windows notification area.
+Version 1.3.2.
 
-## Ovládání
-- **Klik** na ikonu v liště → zobrazí / schová minipřehrávač.
-- **Dvojklik** → celé okno Audiobookshelf.
-- **Zavření celého okna** → schová se do lišty, přehrávání pokračuje.
-- **Pravý klik** → menu: otevřít, přehrát/pozastavit, změnit server, jazyk, spouštění po přihlášení, ukončit.
+**[⬇ Download ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe)**
+· [all releases](https://github.com/tlkounev/abs-player/releases)
 
-### Minipřehrávač
-- Zůstává otevřený, i když klikneš jinam. Schová se klikem na ikonu v liště, tlačítkem `_` nebo klávesou Esc.
-- Dá se chytit kdekoli mimo tlačítka a přetáhnout; pozice se pamatuje (i po restartu).
-- Dva pruhy průběhu: horní = aktuální kapitola, spodní (tenký) = celá kniha. Oba jdou posouvat.
-  Kniha bez kapitol má jen jeden pruh.
-- Hlasitost: klik = ztlumit / zrušit ztlumení, najetí myší nebo fokus = svislý posuvník, kolečko = ±5 %.
-- Rychlost: klik = další krok (0.75–2×), kolečko = ±0.05.
-- Klávesy: mezerník = play/pauza, ←/→ = skok, M = ztlumit, Enter = celé okno, Esc = schovat.
-- Seznam kapitol: tlačítko se třemi tečkami pod „Otevřít celé okno“ nebo klik na „Kapitola x/y“.
-  Okno naroste nahoru (u horního okraje obrazovky dolů), seznam sjede na aktuální kapitolu,
-  dohrané mají háček, klik skočí na začátek kapitoly, pole Hledat filtruje podle názvu (bez ohledu
-  na diakritiku) nebo čísla. Esc vymaže hledání / zavře seznam.
-- Když nic nehraje, nabídne poslední rozposlouchané tituly. Při přehrávání se na tuto úvodní
-  stránku vrátíš zaoblenou šipkou Zpět vpravo nahoře: právě hrající kniha je první a zvýrazněná (klik na ni
-  nebo Esc = zpět do přehrávače), klik na jinou ji pustí od jejího místa. Aktivní je celý řádek knihy.
+<p>
+  <img src="../docs/screenshots/windows-popup.png" width="560" alt="Mini player, Continue and Play on">
+  <img src="../docs/screenshots/windows-chapters.png" width="250" alt="Chapter list">
+</p>
+<p>
+  <img src="../docs/screenshots/windows-reader.png" width="820" alt="E-book reader">
+</p>
 
-### Přehrávat na (TV, jiné PC) a z telefonu sem
-- Tlačítko s monitorem v minipřehrávači (nebo menu ikony → *Přehrávat na*) otevře seznam zařízení.
-- **Přepnutí:** když něco hraje, pozastaví se, pozice se uloží na server a přehrávání pokračuje
-  na vybraném zařízení přesně odtud. Minipřehrávač pak ovládá to zařízení (pruhy, kapitoly,
-  rychlost, hlasitost) a pod autorem ukazuje jeho jméno. Zpět se přepne výběrem tohoto PC.
-- **Hledání přijímače:** když na zadaném portu nic neodpovídá, zkusí se porty 8765–8774 (TV bere
-  první volný). Spárované zařízení, které přešlo na jiný port, se najde samo.
-- Panel *Přehrávat na* je vysoký přesně podle obsahu; rozbalené párování okno protáhne.
-  IP | port | kód jsou v jednom řádku s hodnotami uprostřed, pod nimi stav a Spárovat.
-- Za párovacím kódem je adresa tohoto PC (IP:port) pro ruční párování.
-- Přepnutí na TV pošle knihu hned; uložení pozice a zavření přehrávače tady doběhne na pozadí.
-- **Přejmenování:** tužka u zařízení změní řádek na pole (Enter uloží, Esc zruší). Název tohoto
-  PC se posílá i ostatním zařízením, název spárovaného zařízení platí jen tady.
-- **Párování:** tlačítko „+ Spárovat zařízení (TV nebo PC)“ otevře formulář (křížek / Esc ho zavře).
-  Zařízení v síti se najdou samy (mDNS), jinak zadej IP. Zadej šestimístný kód,
-  který zařízení ukazuje. TV, která ještě není přihlášená k tvému účtu, chce navíc heslo k ABS
-  (získá s ním vlastní přihlášení, heslo se neukládá).
-- **PC jako přijímač:** telefon s ABS Player může přehrávání poslat sem. Párovací kód tohoto
-  PC je dole v seznamu zařízení a v menu ikony. Port 8765 (při prvním spuštění Windows zeptá,
-  zda povolit přístup v síti – povol pro soukromé sítě).
+The installer is not code-signed, so SmartScreen may ask: *More info* → *Run anyway*.
+On the first start enter the address of your Audiobookshelf server and sign in as usual.
 
-### Synchronizace pozice
-Webový přehrávač ABS sám pozici při pozastavení neukládá a po pauze pokračuje ze své staré
-pozice, i když mezitím posloucháš jinde (a přepíše ji). Aplikace to opravuje stejně jako ABS Player pro Android:
-- při pozastavení hned uloží pozici na server,
-- před pokračováním si přečte pozici ze serveru a převezme ji, pokud ji posunulo jiné zařízení,
-- když je pozastavený, převezme změnu z jiného zařízení okamžitě (zobrazí „Pozice převzata…“).
+## Tray icon
 
-### Jazyky
-čeština, slovenština, angličtina, němčina, polština, francouzština, španělština, italština,
-portugalština, nizozemština, maďarština, ukrajinština, ruština, čínština, japonština.
-Výchozí podle jazyka Windows; mění se vlajkou v okně s adresou serveru nebo v menu ikony (Jazyk).
-Týká se aplikace, jazyk samotného webu ABS se nastavuje v ABS.
+- **Click** → show / hide the mini player.
+- **Double-click** → the full Audiobookshelf window.
+- **Closing the full window** hides it to the tray; playback continues.
+- **Right-click** → menu: open, play / pause, *Play on*, change server, language, start at sign-in,
+  check for updates, quit.
 
-### Aktualizace
-- Menu ikony v liště (pravý klik) ukazuje nahoře verzi a *Zkontrolovat aktualizace*.
-- Aplikace se při spuštění a pak každých 6 hodin podívá, jestli je novější verze; nic sama nestahuje.
-- Když je, ukáže oznámení Windows *Je k dispozici verze …*: klik = stáhnout, tiše nainstalovat a
-  aplikaci znovu spustit. Totéž nabízí menu ikony (*Stáhnout a nainstalovat verzi …*).
-- *Zkontrolovat aktualizace* ukáže buď to oznámení, nebo *Máš nejnovější verzi*.
+## Mini player
 
-### Vypnutá TV
-- Když je vybraná TV nedostupná, minipřehrávač nabídne *Přehrát na tomto zařízení* (pustí knihu
-  tady od pozice uložené na serveru).
-- Výběr vypnuté TV v *Přehrávat na*: aplikace pošle Wake-on-LAN (MAC adresu TV si zjistí z ARP,
-  když je TV zapnutá; na TV musí být zapnuté probouzení přes síť / Wi‑Fi) a 30 s čeká
-  (*Probouzím …*). Když TV naběhne, kniha se na ní spustí; když ne, hraje se dál tady.
-- Zdroj: vydání `win-latest` na GitHubu (`latest.yml` + instalátor), ten po každém sestavení
-  přepíše GitHub Actions. Funguje jen s veřejným repozitářem.
+- Stays open when you click elsewhere. Hide it with the tray icon, the `_` button or Esc.
+- Drag it anywhere outside the buttons; its position is remembered (also after a restart).
+- Two progress bars: the top one = current chapter, the thin one = whole book. Both can be dragged.
+  A book without chapters has one bar.
+- Volume: click = mute / unmute, hover or focus = vertical slider, mouse wheel = ±5 %.
+- Speed: click = next step (0.75–2×), mouse wheel = ±0.05.
+- Keys: Space = play / pause, ← / → = jump, M = mute, Enter = full window, Esc = hide.
+- **Chapter list:** the list button under *Open full window*, or click *Chapter x/y*. The window grows up
+  (down when it sits at the top of the screen), the list scrolls to the current chapter, finished chapters
+  have a tick, a click jumps to the chapter, *Search* filters by name (accent-insensitive) or number.
+  Esc clears the search / closes the list.
+- **Continue:** when nothing plays, the mini player shows the latest books in progress. While playing, the
+  curved back arrow at the top right opens the same list: the playing book is first and highlighted
+  (click it or Esc = back to the player), a click on another book plays it from its position.
+  Books with an EPUB have a book icon before ▶ that opens the reader.
 
-## Jak to funguje
-Hlavní okno je Chromium (Electron) s webem ABS v perzistentní relaci (přihlášení zůstává).
-Minipřehrávač volá přímo metody Vue komponent přehrávače webového klienta
-(MediaPlayerContainer, PlayerUi, VolumeControl), takže se chová stejně jako ovládání ve webu,
-včetně synchronizace postupu na server a uložení hlasitosti / rychlosti.
+## Play on (TV, another PC) – and from the phone to this PC
 
-Nastavení: `%APPDATA%\ABS Player\config.json` (server, jazyk, pozice oken, spárovaná zařízení).
-Při prvním spuštění se převezme nastavení i přihlášení z dřívější verze (Audiobookshelf Tray);
-tu pak odinstaluj, jinak by běžely obě.
+- The monitor button in the mini player (or tray menu → *Play on*) opens the device list.
+- **Switching:** the current book is paused, its position saved to the server, and playback continues on
+  the selected device from exactly there. The mini player then controls that device (bars, chapters, speed,
+  volume) and shows its name under the author. Select this PC to switch back.
+- **Pairing:** *+ Pair a device (TV or PC)* opens the form (× / Esc closes it). Devices on the network are
+  found automatically (mDNS, network scan), or type the IP. Enter the 6-digit code shown by the other device.
+  A TV that is not signed in to your account yet also asks for the Audiobookshelf password (it gets its own
+  sign-in; the password is not stored).
+- **Finding a receiver:** when nothing answers on the given port, ports 8765–8774 are tried (the TV takes the
+  first free one). A paired device that moved to another port is found again automatically.
+- **Renaming:** the pencil turns the row into a field (Enter saves, Esc cancels). The name of this PC is sent
+  to the other devices; the name of a paired device applies only here.
+- **This PC as a receiver:** a phone with ABS Player can send playback here. The pairing code and address
+  (IP:port) of this PC are at the bottom of the device list and in the tray menu. Port 8765 – on the first
+  start Windows asks whether to allow network access: allow it for private networks.
+- **TV switched off:** when the selected TV is unreachable, the mini player offers *Play on this device*
+  (plays here from the position saved on the server). Selecting a TV that is off sends Wake-on-LAN (the app
+  learns the TV's MAC address from ARP while the TV is on; the TV must have wake on network / Wi-Fi enabled)
+  and waits 30 s (*Waking up …*). If the TV comes up, the book starts there; otherwise it keeps playing here.
 
-Ikona aplikace i v liště je originální logo Audiobookshelf (`assets/abs-logo.svg`
-z repozitáře advplyr/audiobookshelf), ICO soubory generuje `npm run icons`.
+## Reading e-books (EPUB)
 
-## Sestavení
+A reader window with the same `/reader` page as the Android app (epub.js): contents on the left, chapter,
+*Aa* (size, font, theme, line spacing) and **Listen from this page** at the top, progress and page at the bottom.
+Turn pages with the arrow keys, PageUp / PageDown, the mouse wheel or a click on the left / right side.
+Two pages side by side when the window is wide enough. The position is saved to Audiobookshelf like in the
+web reader. *Listen from this page* starts the audio at that place; the reader stays open and the mini player
+appears. Open it with the book icon in *Continue* (books with an EPUB only).
+
+## Position sync
+
+The Audiobookshelf web player does not save the position on pause, and after a pause it resumes from its own
+old position even when you listened elsewhere in the meantime (and overwrites the newer one). The app fixes
+this the same way as ABS Player for Android:
+
+- on pause it saves the position to the server immediately,
+- before resuming it reads the server position and takes it over when another device moved it,
+- while paused it takes over a change from another device immediately ("Position taken over …").
+
+## Languages
+
+English, Czech, Slovak, German, Polish, French, Spanish, Italian, Portuguese, Dutch, Hungarian, Ukrainian,
+Russian, Chinese and Japanese. The default follows Windows; change it with the flag in the server window or in
+the tray menu (*Language*). This is the app language; the language of the Audiobookshelf web app itself is set
+in Audiobookshelf.
+
+## Updates
+
+- The tray menu shows the version and *Check for updates* at the top.
+- On start and then every 6 hours the app checks for a newer version; it downloads nothing by itself.
+- When there is one, a Windows notification *Version … is available* appears: click = download, install
+  silently and restart the app. The tray menu offers the same (*Download and install version …*).
+- Source: the `win-latest` release on GitHub (`latest.yml` + installer), refreshed by GitHub Actions after
+  every build.
+
+## How it works
+
+The main window is Chromium (Electron) with the Audiobookshelf web app in a persistent session (you stay
+signed in). The mini player calls the Vue components of the web player directly (MediaPlayerContainer,
+PlayerUi, VolumeControl), so it behaves exactly like the web controls, including progress sync and saved
+volume / speed.
+
+Settings: `%APPDATA%\ABS Player\config.json` (server, language, window positions, paired devices).
+On the first start, settings and sign-in from the earlier version (Audiobookshelf Tray) are taken over;
+uninstall that one afterwards, otherwise both would run.
+
+The app and tray icon is the original Audiobookshelf logo (`assets/abs-logo.svg` from the
+advplyr/audiobookshelf repository); `npm run icons` generates the ICO files.
+
+## Build
+
 ```
 npm install
-npm start          # spuštění pro vývoj
-npm run dist       # ikony + vlajky + instalátor a zip do dist/
-npm test           # automatické testy proti maketě přehrávače ABS (screenshoty do test/out/)
+npm start          # run for development
+npm run dist       # icons + flags + installer and zip in dist/
+npm test           # automated tests against a mock of the Audiobookshelf player (screenshots in test/out/)
 ```
 
-Instalátor pro Windows lze sestavit i na Linuxu (electron-builder potřebuje Wine).
-
-## Čtení e-knih (EPUB)
-
-Okno čtečky se stejnou stránkou `/reader` jako Android (epub.js): obsah vlevo, nahoře kapitola,
-*Aa* a *Poslouchat od této strany*, dole průběh a strana. Listuje se šipkami, PageUp/PageDown
-nebo kolečkem. Pozice se ukládá do ABS jako ve webové čtečce. *Poslouchat od této strany* spustí knihu (okno čtečky
-zůstane otevřené, ukáže se minipřehrávač). Otevírá se ikonou knihy před ▶ v seznamu
-*Pokračovat* (jen u knih s e-knihou EPUB).
+The Windows installer can also be built on Linux (electron-builder needs Wine).

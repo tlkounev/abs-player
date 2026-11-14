@@ -1,158 +1,175 @@
-# ABS Player pro Android
+# ABS Player for Android
 
-Vlastní Android klient pro Audiobookshelf: telefon, Android Auto a Google TV v jedné aplikaci.
-Verze 1.6.4.
+An Audiobookshelf client for the phone, Android Auto and Android TV / Google TV – all in one APK.
+Version 1.6.4.
 
-## Co umí
+**[⬇ Download ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk)**
+· [all releases](https://github.com/tlkounev/abs-player/releases)
 
-**Telefon**
-- Záložky Pokračovat (rozposlouchané ze všech zařízení) | Přidané | Knihovna | Série | Autoři:
-  - *Přidané* = Nedávno přidané knihy a Nedávné série (stejné police jako na Homu Audiobookshelfu);
-  - Knihovna, Série i Autoři mají hledání;
-  - v mřížkách je pod názvem série s pořadím (např. „Duna #2“).
-- **Čtení e-knih (EPUB):** v detailu knihy je vedle *Poslouchat* tlačítko *Číst* (jen u knih s e-knihou v ABS).
-  - Čtečka: epub.js ve WebView (stejná stránka `/reader` jako ve Windows). Nahoře kapitola, *Aa*
-    (velikost, písmo, motiv tmavý/sépie/světlý, řádkování) a obsah; dole průběh, strana a
-    *Poslouchat od této strany* (čtečka zůstane otevřená, dole se objeví lišta přehrávání). Na TV ←/→
-    listuje, OK ukáže lištu; velikost písma se v *Aa* mění ←/→ (vybraný pruh pulzuje).
-  - *Označit jako dokončené* nastaví konec poslechu i čtení, *nedokončené* vrátí obojí na začátek.
-  - Pozice čtení se ukládá do ABS (`ebookLocation`, `ebookProgress`) jako ve webové čtečce.
-  - Poslech ↔ četba: % uplynulé audio kapitoly = stejné % textu kapitoly (podle znaků). Kapitoly
-    se přiřadí podle názvu / čísla, jinak podle pořadí, jinak poměr přes celou knihu.
-  - Když je poslech jinde než četba, detail nabídne *Číst od místa poslechu* / *Poslouchat od místa četby*.
-- Detail knihy a přehrávač: autor a série jsou odkazy. Autor otevře své knihy, série své knihy v pořadí.
-- Přehrávač je rozložený jako minipřehrávač ABS Player pro Windows (varianta B):
-  - nahoře velký obal;
-  - pod ním název, autor · série a kapitola; vpravo časovač, *Přehrávat na* a seznam kapitol;
-  - pruh kapitoly a tenký pruh celé knihy. Oba se dají posouvat a při tažení se popisky mění podle pozice.
-    Časy jsou uplynulý a zbývající podle rychlosti;
-  - ovládání: hlasitost | ⏮ | ↺10 | ▶ | ↻10 | ⏭ | rychlost.
-- Hlasitost: klepnutí = ztlumit, podržení = svislý posuvník.
-- Rychlost: klepnutí = další krok 0,75–2×, podržení = − / + po 0,05.
-- Záložky se dají přepínat i přejetím prstem doleva / doprava.
-- Aplikace hledá novou verzi při každém spuštění a návratu do ní.
-- Stažením dolů (kdekoli na obrazovce) nebo šipkou se přehrávač zavře na hlavní stránku.
-- Když nic nehraje, přehrávač nabídne poslední rozposlouchané tituly.
-- Detail knihy: kapitoly jsou sbalené, otevře je řádek *Kapitoly (n)*.
-- Ovládání dálkovým ovladačem (TV): vybraná položka má oranžový rámeček, tlačítko Play bílý a je
-  větší. Detail knihy začíná na *Pokračovat*, přehrávač na Play. V přehrávači ↑/↓ přechází mezi
-  řádky a ←/→ na pruhu kapitoly posouvá o 10 s, na pruhu knihy o 1 minutu. Vybraný pruh nemá rámeček,
-  jeho kolečko pulzuje. Šipka dolů ze záložek nebo z hledání jde na první viditelnou položku vlevo.
-  Přejetí po záložkách rovnou přepne obsah, návrat nahoru vede na otevřenou záložku. V textových
-  polích se klávesnice otevře až po OK. V detailu knihy jde z pruhu přehrávání šipka nahoru na řádek
-  *Kapitoly*. Na TV a na šířku je
-  obal vlevo a ovládání vpravo.
-- Seznam kapitol s hledáním bez diakritiky i podle čísla, časovač (minuty nebo konec kapitoly).
-- Jazyk aplikace se mění vlajkou na hlavní stránce. Je to stejných 15 jazyků jako ve Windows:
-  čeština, slovenština, angličtina, němčina, polština, francouzština, španělština, italština,
-  portugalština, nizozemština, maďarština, ukrajinština, ruština, čínština a japonština.
-  Výchozí je jazyk systému. Texty jsou v `i18n/strings.py`, `python3 i18n/gen.py` z nich generuje `I18nData.kt`.
-- Minipřehrávač dole (↺10, ▶), ovládání z notifikace, sluchátek a Bluetooth.
+<p>
+  <img src="../docs/screenshots/phone-1-continue.png" width="180" alt="Continue">
+  <img src="../docs/screenshots/phone-2-book.png" width="180" alt="Book detail">
+  <img src="../docs/screenshots/phone-3-player.png" width="180" alt="Player">
+  <img src="../docs/screenshots/phone-7-reader.png" width="180" alt="Reader">
+</p>
+<p>
+  <img src="../docs/screenshots/tv-1-continue.png" width="400" alt="Google TV">
+  <img src="../docs/screenshots/tv-3-player.png" width="400" alt="Google TV player">
+</p>
 
-**Android Auto**
-- Záložky Pokračovat | Knihovna | Série | Nové, obaly v mřížce, průběh u každé knihy.
-- Kniha se v autě tváří jako seznam kapitol: pruh ukazuje kapitolu (ne 12h knihu),
-  ⏮/⏭ skáče po kapitolách, fronta = kapitoly.
-- Tlačítka jako v oficiální aplikaci: ⏯ ↺10 ↻10 | rychlost ⏮ ⏭. Rychlost ukazuje aktuální hodnotu
-  (třeba 1.25x), klepnutí = další krok 0,75–2×. ⏮ ⏭ skáčou po kapitolách. Hledání hlasem/textem.
-- Fronta začíná kapitolou před právě přehrávanou (Android Auto ji vždy otevře nahoře).
-- Obrazovku přehrávání (barvy podle obalu, vlnitý pruh, rozložení) kreslí samo Android Auto, aplikace
-  dodává jen data, obal a tlačítka. Proto vypadá stejně jako u ostatních přehrávačů.
-- Tlačítko „Pokračovat“ po připojení auta obnoví poslední knihu.
+## Features
 
-**Přehrávat na – TV i PC**
-- Cílem může být Google TV (toto APK) nebo PC s ABS Player pro Windows 1.1.4+.
-- Seznam zařízení vypadá jako ve Windows: toto zařízení první (oranžový proužek, „toto zařízení“),
-  spárovaná s ×, každé jde přejmenovat tužkou. Nový název tohoto zařízení uvidí i ostatní
-  (při dalším hledání / párování), název spárovaného zařízení platí jen tady.
-- Párování: *+ Spárovat zařízení* otevře formulář přímo v seznamu (jako ve Windows), zařízení ukáže šestimístný kód.
-  IP | port | kód jsou v jednom řádku (hodnoty uprostřed), na TV i se Spárovat a ×; panel na TV je užší.
-  Přepnutí zařízení přesune knihu hned (i pozastavenou) a otevře přehrávač; na TV je Přehrávat na
-  panel uprostřed obrazovky.
-  Aplikace si při spuštění řekne o „Zařízení v okolí“ – bez něj ji novější Android do domácí sítě nepustí.
-  Zařízení se hledají přes mDNS a navíc dotazem na všechny adresy domácí sítě (porty 8765–8768),
-  takže se najdou i tam, kde mDNS nefunguje. Po zadání IP si aplikace port najde sama.
-  Když přijímač přejde na jiný port (8765 drží na TV něco jiného → 8766), spárovaná zařízení ho
-  najdou sama; záznamy mDNS se před použitím ověří.
-  Heslo k ABS je potřeba jen pro TV, která ještě není přihlášená k tvému účtu.
+### Phone
 
-**Google TV (stejné APK)**
-- Na TV je stejná obrazovka jako na telefonu. Běží tam přijímač na pozadí (spouští se i po zapnutí TV);
-  párovací kód TV a její adresa jsou v *Přehrávat na* dole.
-- Když na TV pošleš přehrávání, aplikace se sama otevře s přehrávačem (i když byla jen schovaná
-  pod Homem) – jen s povolením
-  „Zobrazení přes jiné aplikace“ (tlačítko *Povolit* v *Přehrávat na*; když TV to nastavení nemá:
-  `adb shell appops set cz.ondra.absplayer SYSTEM_ALERT_WINDOW allow`).
-- Odchod z aplikace na TV (domů, jiná aplikace) přehrávání pozastaví a uloží pozici. Během
-  přehrávání se nespouští spořič obrazovky.
-- Telefon: *Přehrávat na → Spárovat zařízení* → vybrat TV, zadat kód (a heslo, pokud TV není přihlášená).
-- Pak *Přehrávat na → TV*: telefon pozastaví, uloží pozici na server a TV pokračuje přesně odtud.
-  Telefon se stane ovladačem (stav, kapitoly, rychlost, časovač). Zpět na telefon funguje stejně.
-- TV si přehrává sama ze serveru (vlastní přihlášení, vlastní synchronizace), bez Chromecastu.
+- Tabs **Continue** (in progress on any device) | **Added** | **Library** | **Series** | **Authors**:
+  - *Added* = recently added books and recent series (the same shelves as the Audiobookshelf home page);
+  - Library, Series and Authors can be searched;
+  - grids show the series and its number under the title (e.g. "Sherlock Holmes #2");
+  - swipe left / right to switch tabs.
+- **Book detail:** author and series are links (the author's books, the series in order).
+  Chapters are folded behind a *Chapters (n)* row.
+- **Player**, laid out like the Windows mini player:
+  - a large cover; title, author · series and chapter below; sleep timer, *Play on* and the chapter list on the right;
+  - a chapter bar and a thin bar for the whole book. Both can be dragged, and the labels follow while dragging.
+    Times show elapsed and remaining, adjusted to the playback speed;
+  - controls: volume | ⏮ | ↺10 | ▶ | ↻10 | ⏭ | speed.
+- Volume: tap = mute, hold = vertical slider. Speed: tap = next step 0.75–2×, hold = − / + by 0.05.
+- Chapter list with search by name (accent-insensitive) or number; sleep timer in minutes or to the end of the chapter.
+- Swipe the player down (anywhere) or use the arrow to close it. A mini player stays at the bottom (↺10, ▶).
+- When nothing is playing, the player offers the latest books in progress.
+- Controls in the notification, on headphones and over Bluetooth.
+- **15 app languages** (flag on the home page), the same as in Windows: English, Czech, Slovak,
+  German, Polish, French, Spanish, Italian, Portuguese, Dutch, Hungarian, Ukrainian, Russian,
+  Chinese and Japanese. Default = system language.
 
-## Synchronizace pozice
+### Reading e-books (EPUB)
 
-Server ABS uloží vždy poslední poslanou pozici, bez porovnání času. Aplikace proto:
+- Books that have an EPUB in Audiobookshelf get a **Read** button next to *Listen* in the book detail.
+- The reader is epub.js in a WebView (the same `/reader` page as in the Windows app):
+  - top: chapter, *Aa* (size, font, dark / sepia / light theme, line spacing) and contents;
+  - bottom: progress, page, and **Listen from this page** – the reader stays open and a playback bar appears under the text;
+  - on the TV ← / → turn pages, OK shows the bar; in *Aa* the font size changes with ← / → (the selected bar pulses).
+- The reading position is saved to Audiobookshelf (`ebookLocation`, `ebookProgress`), like the web reader.
+- Listening ↔ reading: the elapsed % of the audio chapter = the same % of that chapter's text (by characters).
+  Chapters are matched by title or number, else by order, else by the ratio over the whole book.
+- When listening and reading are at different places, the book detail offers *Read from the listening
+  position* / *Listen from the reading position*.
+- *Mark as finished* finishes both listening and reading; *not finished* resets both.
 
-1. Před každým spuštěním / pokračováním si přečte pozici ze serveru. Když se liší od toho,
-   co naposledy zapsala, posunul ji jiný klient → převezme ji („Pozice převzata z: …“).
-2. Když je pozastavená, sleduje živé události serveru (socket) a pozici přebírá okamžitě.
-3. Při přehrávání posílá pozici každých 10 s a hned při pauze, posunu, zastavení a konci knihy.
-4. Když se sync nepovede (bez signálu), drží pozici lokálně a zkouší znovu; při dalším otevření
-   knihy vyhraje, pokud je novější než serverová.
-5. Výpadek streamu (tunel) zkusí znovu navázat 5×; dopředu se bufferuje až 15 minut.
+### Android TV / Google TV
 
-Pozor: stará pozice z jiné aplikace (oficiální app, web) se pořád může zapsat, pokud ta aplikace
-pokračuje ze staré pozice. Tahle aplikace ale sama nikdy nepřepíše novější pozici starou.
+- The same screens as on the phone, driven by the remote:
+  - the focused item has an orange frame, the Play button turns white and grows;
+  - book detail starts on *Continue*, the player on Play;
+  - in the player ↑ / ↓ move between rows; ← / → seek 10 s on the chapter bar and 1 minute on the book bar
+    (the knob of the selected bar pulses);
+  - moving across the tabs switches the content right away; ↓ from the tabs or search goes to the first visible item;
+  - the keyboard opens only after pressing OK in a text field.
+- A **receiver** runs in the background (also after the TV is switched on). The TV's pairing code and
+  address are at the bottom of *Play on*.
+- When a book is sent to the TV, the app comes to the front with the player – also when it was only hidden
+  behind the home screen. This needs *Display over other apps* (the *Allow* button in *Play on*; if the TV has
+  no such setting: `adb shell appops set cz.ondra.absplayer SYSTEM_ALERT_WINDOW allow`).
+- Leaving the app on the TV (Home, another app) pauses playback and saves the position.
+  No screensaver while a book plays.
 
-## Sestavení
+### Android Auto
 
-Potřeba: Android Studio (Ladybug nebo novější) nebo JDK 17+ a Android SDK 35.
+- Tabs Continue | Library | Series | New, covers in a grid, progress on every book.
+- In the car a book behaves like a list of chapters: the bar shows the chapter (not a 12-hour book),
+  ⏮ / ⏭ jump between chapters, the queue = chapters (it starts one chapter before the current one,
+  because Android Auto always opens it at the top).
+- Buttons as in the official app: ⏯ ↺10 ↻10 | speed ⏮ ⏭. The speed button shows the current value
+  (e.g. 1.25x); tap = next step 0.75–2×. Voice and text search.
+- The playback screen itself (colours from the cover, wavy bar, layout) is drawn by Android Auto;
+  the app only supplies data, cover and buttons, so it looks like every other player.
+- *Continue* after connecting the car resumes the last book.
+
+### Play on – TV and PC
+
+- The target can be a Google TV (this APK) or a PC with ABS Player for Windows 1.1.4+.
+- The device list looks like the Windows one: this device first (orange stripe, "this device"),
+  paired devices with ×, each one can be renamed with the pencil. A new name for this device is seen by
+  the others (on the next discovery / pairing); the name of a paired device applies only here.
+- *+ Pair a device* opens the form right in the list; the other device shows a 6-digit code.
+  IP | port | code sit in one row.
+- Switching moves the book right away (also when paused) and opens the player.
+  The phone then works as a remote (state, chapters, speed, sleep timer). Switching back works the same way.
+- On the first start the app asks for *Nearby devices* – without it newer Android versions keep the app off the home network.
+- Devices are found by mDNS and by asking every address of the home network (ports 8765–8774), so they
+  are found also where mDNS does not work. After typing an IP the app finds the port itself.
+  When a receiver moves to another port (8765 taken on the TV → 8766), paired devices find it again;
+  mDNS records are verified before use.
+- The Audiobookshelf password is needed only for a TV that is not signed in to your account yet.
+- The TV plays from the server itself (own sign-in, own sync) – no Chromecast.
+
+## Position sync
+
+The Audiobookshelf server stores whatever position it receives last, without comparing times. So the app:
+
+1. Reads the server position before every start / resume. When it differs from what the app wrote last,
+   another client moved it → the app takes it over ("Position taken over from: …").
+2. While paused, it follows the server's live events (socket) and takes positions over immediately.
+3. While playing, it sends the position every 10 s and right away on pause, seek, stop and end of book.
+4. When sync fails (no signal), it keeps the position locally and retries; on the next open of the book
+   it wins if it is newer than the server's.
+5. A dropped stream (tunnel) is reconnected up to 5×; up to 15 minutes are buffered ahead.
+
+Note: another app (the official app, the web) can still write an old position if it resumes from it.
+This app never overwrites a newer position with an older one.
+
+## Updates
+
+- The version is in the ⋮ menu on the home page, together with *Check for updates* (also on the TV).
+- On start (at most once a day) the app looks at the GitHub releases (`android-v…`). When there is a newer
+  version, a bar *Version … is available* appears at the top; ✕ hides it until the next version.
+- *Update* downloads the APK and hands it to the Android installer, which asks for confirmation.
+  The first time Android asks to allow installing unknown apps for ABS Player.
+- Works because the repository is public and every release APK is signed with the same key.
+
+## Install
+
+- **Phone:** install [ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk).
+- **Android Auto:** apps installed outside the Play Store appear in the car only after enabling unknown sources.
+  On the phone: Settings → search "Android Auto" → scroll down and tap *Version* 10× → confirm developer mode →
+  ⋮ → *Developer settings* → *Unknown sources*.
+- **Google TV:** `adb connect <tv-ip>` and `adb install ABS-Player-Android.apk` (or a file manager on the TV).
+  The app appears in the apps row.
+
+## Limitations
+
+- Audiobooks only (no podcasts), no offline downloads (streams with a large buffer).
+- *Play on* works on the local network (mDNS + HTTP, port 8765+), not from outside over mobile data.
+- The phone itself is not a receiver (Android does not let a background app start playback); after
+  opening it and pressing play it always takes over the latest position from the PC / TV.
+- If the TV is in another VLAN, type its IP when pairing.
+
+## Build
+
+Requires Android Studio (Ladybug or newer) or JDK 17+ and Android SDK 35.
 
 ```
-gradlew assembleRelease
+./gradlew assembleRelease
 ```
-Lokálně sestavené APK je podepsané ladicím klíčem. Každý push do `main`, který mění složku `android/`,
-sestaví APK na GitHubu (Actions) a podepíše ho pevným klíčem z tajných proměnných repozitáře:
 
-- `ANDROID_KEYSTORE_B64` – keystore (PKCS12, alias `absplayer`) v base64,
-- `ANDROID_KEYSTORE_PASSWORD` – heslo ke keystoru i klíči.
+A locally built APK is signed with the debug key. Every push to `main` that changes `android/` (or `reader/`)
+builds the APK on GitHub Actions and signs it with a fixed key from the repository secrets:
 
-Bez nich se APK podepíše ladicím klíčem a vydání (tag `android-v…`) se nevytvoří, protože takové APK
-nejde nainstalovat přes předchozí verzi.
+- `ANDROID_KEYSTORE_B64` – the keystore (PKCS12, alias `absplayer`) in base64,
+- `ANDROID_KEYSTORE_PASSWORD` – the password of the keystore and the key.
 
-## Aktualizace
+Without them the APK is signed with a debug key and no release (`android-v…` tag) is created, because such an
+APK cannot be installed over the previous version.
 
-- Verze je v menu ⋮ na hlavní stránce, tamtéž *Zkontrolovat aktualizace* (i na TV).
-- Aplikace se při spuštění (nejvýš jednou denně) podívá do vydání na GitHubu (`android-v…`).
-  Je-li novější verze, ukáže nahoře pruh *K dispozici je verze …*; ✕ ho skryje do další verze.
-- *Aktualizovat* stáhne APK a předá ho instalátoru Androidu, ten se zeptá na potvrzení.
-  Poprvé Android chce povolit „instalaci neznámých aplikací“ pro ABS Player.
-- Funguje jen s veřejným repozitářem (stahuje se bez přihlášení) a s APK podepsanými stejným klíčem.
+App texts live in `i18n/strings.py`; `python3 i18n/gen.py` generates `I18nData.kt` from them.
 
-## Instalace
+## Code map
 
-- Telefon: nainstalovat APK.
-- Android Auto: aplikace instalovaná mimo Obchod Play se v autě zobrazí až po zapnutí neznámých
-  zdrojů. V telefonu: Nastavení → vyhledat „Android Auto“ → sjet dolů a 10× klepnout na *Verze* →
-  potvrdit vývojářský režim → menu ⋮ → *Nastavení pro vývojáře* → *Neznámé zdroje*.
-- Google TV: `adb connect <ip-tv>` a `adb install app-release.apk` (nebo přes správce souborů).
-  Aplikace se objeví v řádku aplikací.
-
-## Omezení
-
-- Jen audioknihy (podcasty ne), bez stahování offline (streamuje s velkým bufferem).
-- Ovládání TV/PC funguje v lokální síti (mDNS + HTTP port 8765); přes 5G zvenku zatím ne.
-- Telefon sám přijímačem není (Android nedovolí spustit přehrávání aplikaci na pozadí); po otevření
-  a stisku play ale vždy převezme nejnovější pozici z PC/TV.
-  Pokud je TV v jiné VLAN, zadej při párování IP ručně.
-
-## Struktura
-
-- `data/` – API klient ABS (JWT access/refresh tokeny, starší servery s trvalým tokenem), socket.io.
-- `player/ChapterPlayer.kt` – fasáda přehrávače: kniha jako playlist kapitol.
-- `player/SyncManager.kt` – pravidla synchronizace výše.
-- `player/PlayerEngine.kt` – ExoPlayer + sync + časovač, sdílené telefonem i TV.
-- `player/PlaybackService.kt`, `BrowseTree.kt` – notifikace a Android Auto.
-- `remote/` – cíle přehrávání (telefon / TV), párování, vyhledávání TV v síti.
-- `tv/` – přijímač na TV (služba, HTTP API, start po zapnutí TV).
+- `data/` – Audiobookshelf API client (JWT access / refresh tokens, older servers with a permanent token), socket.io.
+- `player/ChapterPlayer.kt` – player facade: a book as a playlist of chapters.
+- `player/SyncManager.kt` – the sync rules above.
+- `player/PlayerEngine.kt` – ExoPlayer + sync + sleep timer, shared by phone and TV.
+- `player/PlaybackService.kt`, `BrowseTree.kt` – notification and Android Auto.
+- `remote/` – playback targets (phone / TV / PC), pairing, discovery.
+- `tv/` – the TV receiver (service, HTTP API, start after boot).
+- `ui/ReaderScreen.kt` + [`/reader`](../reader) – the EPUB reader.
