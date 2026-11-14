@@ -56,6 +56,17 @@ test('dragging the bottom edge scales by height', () => {
   assert.equal(Math.abs(r.bounds.height / r.bounds.width - POPUP_H / POPUP_W) < 0.01, true);
 });
 
+test('with an open panel the whole window scales (player + panel)', () => {
+  // 100 %: player 236 + Play on 300 = 536 high, grown up from y 790
+  const start = { bounds: { x: 1500, y: 490, width: POPUP_W, height: 536 }, cursor: { x: 1500, y: 490 }, baseH: 536 };
+  const r = resizeBounds('nw', start, { x: 1310, y: 490 }, WA);
+  assert.equal(r.scale, 1.5);
+  assert.deepEqual(r.bounds, { x: 1500 + POPUP_W - 570, y: 490 + 536 - 804, width: 570, height: 804 });
+  // never higher than the work area
+  const big = resizeBounds('nw', start, { x: 0, y: 0 }, WA);
+  assert.ok(big.bounds.height <= WA.height && big.scale <= WA.height / 536);
+});
+
 test('the scale stays between 100 and 200 % and inside the work area', () => {
   const start = { bounds: { x: 100, y: 100, width: POPUP_W, height: POPUP_H }, cursor: { x: 480, y: 336 } };
   assert.equal(resizeBounds('se', start, { x: 100, y: 100 }, WA).scale, 1);

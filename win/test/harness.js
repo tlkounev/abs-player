@@ -327,7 +327,7 @@ app.whenReady().then(async () => {
   await shot(popup, 'p-scaled.png');
   await jsP("document.querySelector('#player [data-act=devices]').click()");
   await wait(600);
-  check('no resize grips while a panel is open', await jsP("getComputedStyle(document.querySelector('.grip.se')).display") === 'none');
+  check('resize grips also while a panel is open', await jsP("getComputedStyle(document.querySelector('.grip.se')).display") !== 'none');
   await jsP("document.getElementById('devClose').click()");
   await wait(600);
   global.__scale = 1;

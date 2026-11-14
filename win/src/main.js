@@ -881,16 +881,19 @@ ipcMain.handle('popup:cursor', () => {
   return { x: (p.x - b.x) / popupScale, y: (p.y - b.y) / popupScale };
 });
 
-// dragging an edge / corner of the mini player (only without an open panel): the size follows the cursor
+// dragging an edge / corner of the mini player (also with an open panel): the size follows the cursor
 let resizeStart = null;
 ipcMain.on('popup:resize-start', () => {
-  if (!popupWin || popupWin.isDestroyed() || listDir) return;
-  resizeStart = { bounds: popupWin.getBounds(), cursor: screen.getCursorScreenPoint() };
+  if (!popupWin || popupWin.isDestroyed()) return;
+  const bounds = popupWin.getBounds();
+  // the window's height at 100 %: the player plus an open panel
+  resizeStart = { bounds, cursor: screen.getCursorScreenPoint(), baseH: POPUP_H + (listDir ? listExtra / popupScale : 0) };
 });
 ipcMain.on('popup:resize', (_e, edge) => {
   if (!resizeStart || !popupWin || popupWin.isDestroyed() || !/^(n|s|e|w|ne|nw|se|sw)$/.test(String(edge))) return;
   const r = popupSize.resizeBounds(edge, resizeStart, screen.getCursorScreenPoint(), screen.getDisplayMatching(resizeStart.bounds).workArea);
   popupScale = r.scale;
+  if (listDir) listExtra = r.bounds.height - PH(); // the open panel scales with the player
   popupWin.setBounds(r.bounds);
   popupWin.webContents.setZoomFactor(popupScale);
 });
@@ -899,7 +902,8 @@ ipcMain.on('popup:resize-end', () => {
   resizeStart = null;
   const b = popupWin.getBounds();
   config.popupScale = popupScale;
-  config.popupPos = { x: b.x, y: b.y };
+  // the position of the collapsed window is what gets saved
+  config.popupPos = { x: b.x, y: listDir === 'up' ? b.y + listExtra : b.y };
   saveConfig(config);
 });
 

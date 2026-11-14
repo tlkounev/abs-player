@@ -52,7 +52,7 @@
   /* control areas are not draggable at all, so hover works also in the gaps between buttons */
   button, input, .bar, .row, .vol-wrap, .rate, .controls, .progress, .side, .win-btns { -webkit-app-region: no-drag; }
   .hidden { display: none !important; }
-  /* edges and corners for making the player bigger / smaller (not while a panel is open) */
+  /* edges and corners for making the player bigger / smaller */
   .grip { position: fixed; z-index: 50; -webkit-app-region: no-drag; }
   .grip.n, .grip.s { left: 10px; right: 10px; height: 5px; cursor: ns-resize; }
   .grip.e, .grip.w { top: 10px; bottom: 10px; width: 5px; cursor: ew-resize; }
@@ -60,7 +60,6 @@
   .grip.ne, .grip.nw, .grip.se, .grip.sw { width: 10px; height: 10px; }
   .grip.ne { top: 0; right: 0; cursor: nesw-resize; } .grip.sw { bottom: 0; left: 0; cursor: nesw-resize; }
   .grip.nw { top: 0; left: 0; cursor: nwse-resize; } .grip.se { bottom: 0; right: 0; cursor: nwse-resize; }
-  body.expanded .grip { display: none; }
 
   /* --- header --- */
   .head { display: flex; gap: 12px; align-items: flex-start; min-height: 72px; }
@@ -510,7 +509,6 @@ for (const g of document.querySelectorAll('.grip')) {
 }
 
 function render() {
-  document.body.classList.toggle('expanded', devOpen || listOpen);
   $('playHere').classList.add('hidden');
   if (listOpen && !(st && st.item && st.hasChapters)) setListOpen(false);
   if (homeOpen && !(st && st.item)) homeOpen = false;
@@ -894,7 +892,6 @@ async function setListOpen(open) {
   if (open === listOpen) return;
   if (open && !(st && st.hasChapters)) return;
   listOpen = open;
-  document.body.classList.toggle('expanded', devOpen || listOpen);
   $('chBtn').classList.toggle('on', open);
   if (open) {
     if (devOpen) closeDevPanel(true);
@@ -930,7 +927,6 @@ const ICON_X = '<svg viewBox="0 0 16 16"><path d="M4.2 3.1 8 6.9l3.8-3.8 1.1 1.1
 
 function closeDevPanel(keepWindow) {
   devOpen = false;
-  document.body.classList.toggle('expanded', listOpen);
   setPairOpen(false);
   clearInterval(devTimer);
   devTimer = null;
@@ -951,7 +947,6 @@ async function setDevOpen(open) {
     $('chPanel').classList.add('hidden');
   }
   devOpen = true;
-  document.body.classList.add('expanded');
   // the window grows exactly by the panel's content: content first, then measure, then resize
   $('pErr').classList.add('hidden');
   $('devPanel').classList.remove('hidden');

@@ -33,17 +33,19 @@ function listBounds(s, b, open, want, wa, size) {
 }
 
 /** Scale of the mini player when an edge / corner is dragged: the size follows the cursor, the aspect ratio
- * stays, 100–200 % and never bigger than the work area. start = { bounds, cursor }, c = cursor now.
- * Returns { scale, bounds } – the opposite edge / corner stays in place. */
+ * stays, 100–200 % and never bigger than the work area. start = { bounds, cursor, baseH }, c = cursor now;
+ * baseH = the window's height at 100 % (the player + an open panel). Returns { scale, bounds } – the opposite
+ * edge / corner stays in place. */
 function resizeBounds(edge, start, c, wa) {
   const b = start.bounds;
+  const BH = start.baseH || POPUP_H;
   const dx = c.x - start.cursor.x, dy = c.y - start.cursor.y;
   const byX = edge.includes('e') ? b.width + dx : edge.includes('w') ? b.width - dx : null;
   const byY = edge.includes('s') ? (b.height + dy) * b.width / b.height : edge.includes('n') ? (b.height - dy) * b.width / b.height : null;
   const w = byX != null && byY != null ? Math.max(byX, byY) : (byX != null ? byX : byY);
-  let scale = Math.min(Math.max(w / POPUP_W, 1), 2, wa.width / POPUP_W, wa.height / POPUP_H);
+  let scale = Math.min(Math.max(w / POPUP_W, 1), 2, wa.width / POPUP_W, wa.height / BH);
   scale = Math.round(scale * 100) / 100;
-  const nw = Math.round(POPUP_W * scale), nh = Math.round(POPUP_H * scale);
+  const nw = Math.round(POPUP_W * scale), nh = Math.round(BH * scale);
   let x = edge.includes('w') ? b.x + b.width - nw : edge.includes('e') ? b.x : Math.round(b.x + (b.width - nw) / 2);
   let y = edge.includes('n') ? b.y + b.height - nh : edge.includes('s') ? b.y : Math.round(b.y + (b.height - nh) / 2);
   x = Math.min(Math.max(x, wa.x), wa.x + wa.width - nw);
