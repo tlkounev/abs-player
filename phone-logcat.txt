@@ -1,0 +1,447 @@
+--------- beginning of main
+11-14 11:24:56.829  3582  3582 W ondra.absplayer: Accessing hidden method Landroid/os/Trace;->traceBegin(JLjava/lang/String;)V (unsupported, reflection, allowed)
+11-14 11:24:56.829  3582  3582 W ondra.absplayer: Accessing hidden method Landroid/os/Trace;->traceEnd(J)V (unsupported, reflection, allowed)
+11-14 11:24:56.829  3582  3582 W ondra.absplayer: Accessing hidden method Landroid/os/Trace;->asyncTraceBegin(JLjava/lang/String;I)V (unsupported, reflection, allowed)
+11-14 11:24:56.829  3582  3582 W ondra.absplayer: Accessing hidden method Landroid/os/Trace;->asyncTraceEnd(JLjava/lang/String;I)V (unsupported, reflection, allowed)
+11-14 11:24:56.831  3582  3582 I cr_WVCFactoryProvider: Loaded version=113.0.5672.136 minSdkVersion=29 isBundle=false multiprocess=true packageId=2
+11-14 11:24:56.838  3582  6223 I cr_VariationsUtils: Failed reading seed file "/data/user/0/cz.ondra.absplayer/app_webview/variations_seed_new"
+11-14 11:24:56.838  3582  6223 I cr_VariationsUtils: Failed reading seed file "/data/user/0/cz.ondra.absplayer/app_webview/variations_seed"
+11-14 11:24:56.838  3582  6223 I cr_VariationsUtils: Requesting new seed from IVariationsSeedServer
+--------- beginning of system
+11-14 11:24:56.840   527  2167 D CompatibilityChangeReporter: Compat change id reported: 261072174; UID 10135; state: ENABLED
+11-14 11:24:56.847  3582  3582 I cr_LibraryLoader: Successfully loaded native library
+11-14 11:24:56.848  3582  3582 I cr_CachingUmaRecorder: Flushed 8 samples from 8 histograms.
+11-14 11:24:56.863   527  2167 D ActivityManager: sync unfroze 2714 com.google.android.webview:webview_service for 6
+11-14 11:24:56.869   527   828 D CompatibilityChangeReporter: Compat change id reported: 135634846; UID 99000; state: DISABLED
+11-14 11:24:56.869   527   556 D CompatibilityChangeReporter: Compat change id reported: 143937733; UID 10192; state: ENABLED
+11-14 11:24:56.883   990   990 I Zygote  : Entering forkRepeatedly native zygote loop
+11-14 11:24:56.894   990   990 D Zygote  : Forked child process 6228
+11-14 11:24:56.897   527   556 I ActivityManager: Start proc 6228:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0ai9000 for  {cz.ondra.absplayer/org.chromium.content.app.SandboxedProcessService0:0}
+11-14 11:24:56.899  3582  3582 D CompatibilityChangeReporter: Compat change id reported: 183155436; UID 10192; state: ENABLED
+11-14 11:24:56.901  6228  6228 I ocessService0:0: Using CollectorTypeCC GC.
+11-14 11:24:56.902  1027  1354 D BtGatt.ScanManager: uid 10131 isForeground true scanMode -1
+11-14 11:24:56.902  1027  1354 D BtGatt.ScanManager: uid 10131 isForeground true scanMode -1
+11-14 11:24:56.902  6228  6228 W ocessService0:0: Unexpected CPU variant for x86: x86_64.
+11-14 11:24:56.902  6228  6228 W ocessService0:0: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+11-14 11:24:56.905  5532  5532 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.safetynet.service.START pkg=com.google.android.gms }
+11-14 11:24:56.905  5532  5532 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.safetynet.service.START pkg=com.google.android.gms }
+11-14 11:24:56.912  6228  6228 E ocessService0:0: Not starting debugger since process cannot load the jdwp agent.
+11-14 11:24:56.923  3582  3582 D AutofillManager: Fill dialog is enabled:false, hints=[password, passwordAuto, creditCardNumber, creditCardSecurityCode, creditCardExpirationDate]
+11-14 11:24:56.929  6228  6228 D CompatibilityChangeReporter: Compat change id reported: 171979766; UID 99000; state: ENABLED
+11-14 11:24:56.930  6228  6228 D CompatibilityChangeReporter: Compat change id reported: 242716250; UID 99000; state: ENABLED
+11-14 11:24:56.935  6228  6228 I LoadedApk: No resource references to update in package com.google.android.trichromelibrary
+11-14 11:24:56.936  6228  6228 I cr_WebViewApkApp: Launched version=113.0.5672.136 minSdkVersion=29 isBundle=false processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0
+11-14 11:24:56.936   527  2811 I ActivityManager: Flag disabled. Ignoring finishAttachApplication from uid: 99000. pid: 6228
+11-14 11:24:56.937  6228  6228 W SystemServiceRegistry: No service published for: virtualdevice
+11-14 11:24:56.937  6228  6228 I cr_ChildProcessService: Creating new ChildProcessService pid=6228
+11-14 11:24:56.960   527  2167 D CompatibilityChangeReporter: Compat change id reported: 271850009; UID 10135; state: ENABLED
+11-14 11:24:56.960   527  2167 D CompatibilityChangeReporter: Compat change id reported: 253665015; UID 10135; state: ENABLED
+11-14 11:24:56.960   527  2167 D CompatibilityChangeReporter: Compat change id reported: 194532703; UID 10135; state: ENABLED
+11-14 11:24:56.961   527  2167 D CompatibilityChangeReporter: Compat change id reported: 135634846; UID 10135; state: DISABLED
+11-14 11:24:56.962   527   556 D CompatibilityChangeReporter: Compat change id reported: 143937733; UID 10135; state: ENABLED
+11-14 11:24:56.968  3582  3582 D CompatibilityChangeReporter: Compat change id reported: 214741472; UID 10192; state: ENABLED
+11-14 11:24:56.970  3582  3582 D CompatibilityChangeReporter: Compat change id reported: 171228096; UID 10192; state: ENABLED
+11-14 11:24:56.974   340   340 D Zygote  : Forked child process 6262
+11-14 11:24:56.975   527   556 I ActivityManager: Start proc 6262:com.google.android.webview:webview_apk/u0a135 for service {com.google.android.webview/org.chromium.android_webview.nonembedded.AwComponentUpdateService}
+11-14 11:24:56.980   527  2167 D ConnectivityService: requestNetwork for uid/pid:10192/3582 activeRequest: null callbackRequest: 155 [NetworkRequest [ REQUEST id=156, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10192 RequestorUid: 10192 RequestorPkg: cz.ondra.absplayer UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647
+11-14 11:24:56.981   527   770 D ConnectivityService: NetReassign [156 : null → 100] [c 0] [a 0] [i 1]
+11-14 11:24:56.981   527   761 D WifiNetworkFactory: got request NetworkRequest [ REQUEST id=156, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10192 RequestorUid: 10192 RequestorPkg: cz.ondra.absplayer UnderlyingNetworks: Null] ]
+11-14 11:24:56.981   527   761 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=156, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10192 RequestorUid: 10192 RequestorPkg: cz.ondra.absplayer UnderlyingNetworks: Null] ]
+11-14 11:24:56.981   527   761 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=156, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10192 RequestorUid: 10192 RequestorPkg: cz.ondra.absplayer UnderlyingNetworks: Null] ]
+11-14 11:24:56.981   527   761 D MultiInternetWifiNetworkFactory: got request NetworkRequest [ REQUEST id=156, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10192 RequestorUid: 10192 RequestorPkg: cz.ondra.absplayer UnderlyingNetworks: Null] ]
+11-14 11:24:56.983   527   770 D ConnectivityService: NetReassign [no changes] [c 0] [a 0] [i 1]
+11-14 11:24:56.998  3582  6248 W cr_media: BLUETOOTH_CONNECT permission is missing.
+11-14 11:24:56.999  3582  6248 W cr_media: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+11-14 11:24:57.009  6262  6262 I iew:webview_apk: Using CollectorTypeCC GC.
+11-14 11:24:57.010  6262  6262 W iew:webview_apk: Unexpected CPU variant for x86: x86_64.
+11-14 11:24:57.010  6262  6262 W iew:webview_apk: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+11-14 11:24:57.012  6262  6262 E iew:webview_apk: Not starting debugger since process cannot load the jdwp agent.
+11-14 11:24:57.016   527  2811 D CompatibilityChangeReporter: Compat change id reported: 168419799; UID 10135; state: DISABLED
+11-14 11:24:57.017   527  2811 D CompatibilityChangeReporter: Compat change id reported: 273564678; UID 10135; state: DISABLED
+11-14 11:24:57.018  3582  3582 D CompatibilityChangeReporter: Compat change id reported: 193247900; UID 10192; state: ENABLED
+11-14 11:24:57.025  6228  6250 I cr_LibraryLoader: Successfully loaded native library
+11-14 11:24:57.026  6228  6250 I cr_CachingUmaRecorder: Flushed 2 samples from 2 histograms.
+11-14 11:24:57.032  6228  6250 W SystemServiceRegistry: No service published for: uimode
+11-14 11:24:57.036  6262  6262 D CompatibilityChangeReporter: Compat change id reported: 171979766; UID 10135; state: ENABLED
+11-14 11:24:57.037  6262  6262 D CompatibilityChangeReporter: Compat change id reported: 242716250; UID 10135; state: ENABLED
+11-14 11:24:57.040   527  2811 D CompatibilityChangeReporter: Compat change id reported: 170503758; UID 10135; state: ENABLED
+11-14 11:24:57.043  6262  6262 W ziparchive: Unable to open '/data/app/~~C_RjCUCD1Lpfve7KxDqaYA==/com.google.android.trichromelibrary_567263637-EhstUe-QyDL4CjvifM8tAg==/TrichromeLibrary.dm': No such file or directory
+11-14 11:24:57.045  6262  6262 W ziparchive: Unable to open '/data/app/~~C_RjCUCD1Lpfve7KxDqaYA==/com.google.android.trichromelibrary_567263637-EhstUe-QyDL4CjvifM8tAg==/TrichromeLibrary.dm': No such file or directory
+11-14 11:24:57.045  6262  6262 W iew:webview_apk: Entry not found
+11-14 11:24:57.045  6262  6262 D nativeloader: Configuring clns-6 for other apk /data/app/~~C_RjCUCD1Lpfve7KxDqaYA==/com.google.android.trichromelibrary_567263637-EhstUe-QyDL4CjvifM8tAg==/TrichromeLibrary.apk. target_sdk_version=34, uses_libraries=ALL, library_path=/data/app/~~g7ttaRRrGfPK2sLDAicd0w==/com.google.android.webview-HAOhJyCSpFJuwvx-D298zw==/lib/x86_64:/data/app/~~g7ttaRRrGfPK2sLDAicd0w==/com.google.android.webview-HAOhJyCSpFJuwvx-D298zw==/WebViewGoogle.apk!/lib/x86_64:/data/app/~~C_RjCUCD1Lpfve7KxDqaYA==/com.google.android.trichromelibrary_567263637-EhstUe-QyDL4CjvifM8tAg==/TrichromeLibrary.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/com.google.android.webview
+11-14 11:24:57.049  6262  6262 D nativeloader: Configuring clns-7 for other apk /data/app/~~g7ttaRRrGfPK2sLDAicd0w==/com.google.android.webview-HAOhJyCSpFJuwvx-D298zw==/WebViewGoogle.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~g7ttaRRrGfPK2sLDAicd0w==/com.google.android.webview-HAOhJyCSpFJuwvx-D298zw==/lib/x86_64:/data/app/~~g7ttaRRrGfPK2sLDAicd0w==/com.google.android.webview-HAOhJyCSpFJuwvx-D298zw==/WebViewGoogle.apk!/lib/x86_64:/data/app/~~C_RjCUCD1Lpfve7KxDqaYA==/com.google.android.trichromelibrary_567263637-EhstUe-QyDL4CjvifM8tAg==/TrichromeLibrary.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/com.google.android.webview
+11-14 11:24:57.061  6262  6262 V GraphicsEnvironment: Currently set values for:
+11-14 11:24:57.061  6262  6262 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+11-14 11:24:57.061  6262  6262 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+11-14 11:24:57.061  6262  6262 V GraphicsEnvironment: ANGLE GameManagerService for com.google.android.webview: false
+11-14 11:24:57.061  6262  6262 V GraphicsEnvironment: com.google.android.webview is not listed in per-application setting
+11-14 11:24:57.062  6262  6262 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+11-14 11:24:57.062  6262  6262 I LoadedApk: No resource references to update in package com.google.android.trichromelibrary
+11-14 11:24:57.063  6262  6262 I cr_WebViewApkApp: Launched version=113.0.5672.136 minSdkVersion=29 isBundle=false processName=com.google.android.webview:webview_apk
+11-14 11:24:57.066  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PLAYING(3), position=931580, buffered position=1933024, speed=1.0, updated=127909, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:24:57.068  1027  1027 D AudioMediaPlayerWrapper: cz.ondra.absplayer Only Title and Artist info sync for metadata
+11-14 11:24:57.069  1027  1027 V AudioMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:24:57.069  1027  1027 D MediaPlayerList: sendMediaUpdate state=PlaybackState {state=PLAYING(3), position=931590, buffered position=1933024, speed=1.0, updated=127919, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:24:57.070  2714  2995 I cr_VariationsUtils: Throttling seed download job
+11-14 11:24:57.070  2714  2995 I cr_VariationsUtils: Writing new seed to app's data directory
+11-14 11:24:57.070  1027  1027 D AvrcpTargetJni: sendMediaUpdateNative
+11-14 11:24:57.070  1027  1027 I bt_stack: [INFO:avrcp_service.cc(515)] virtual void bluetooth::avrcp::AvrcpService::SendMediaUpdate(bool, bool, bool) track_changed=0 :  play_state=1 :  queue=0
+11-14 11:24:57.070  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PLAYING(3), position=931580, buffered position=1933024, speed=1.0, updated=127909, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:24:57.071  1027  1027 D AudioMediaPlayerWrapper: cz.ondra.absplayer Only Title and Artist info sync for metadata
+11-14 11:24:57.075  1027  1027 V AudioMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:24:57.076  1027  1027 D MediaPlayerList: sendMediaUpdate state=PlaybackState {state=PLAYING(3), position=931597, buffered position=1933024, speed=1.0, updated=127926, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:24:57.076  1027  1027 D MediaControlGattService: updatePlayerState: playbackState= PLAYING
+11-14 11:24:57.077  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:24:57.077  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:24:57.077  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:24:57.077  1027  1027 W MediaControlGattService: Feature TRACK_POSITION(BIT 7) support: true
+11-14 11:24:57.077  1027  1027 W MediaControlGattService: Feature TRACK_POSITION_NOTIFY support: true
+11-14 11:24:57.077  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:24:57.077  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:24:57.077  1027  1027 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+11-14 11:24:57.078  1027  1027 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+11-14 11:24:57.078  1027  1027 W MediaControlGattService: Feature MEDIA_CONTROL_POINT_OPCODES_SUPPORTED(BIT 19) support: true
+11-14 11:24:57.078  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:24:57.078  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:24:57.078  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:24:57.078  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:24:57.078  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:24:57.085   527  2811 I ActivityManager: Flag disabled. Ignoring finishAttachApplication from uid: 10135. pid: 6262
+11-14 11:24:57.089  3582  3710 D EGL_emulation: app_time_stats: avg=383.56ms min=18.04ms max=715.99ms count=4
+11-14 11:24:57.145  6262  6262 I cr_LibraryLoader: Successfully loaded native library
+11-14 11:24:57.184  5502  6147 I FontLog : Updating from directory version 0 to 25 from disk [CONTEXT service_id=132 ]
+11-14 11:24:57.185  5502  5749 I FontLog : Using directory in FlatBuffer format [CONTEXT service_id=132 ]
+11-14 11:24:57.187  5502  6147 I FontLog : Received query name=Google Sans&weight=700&besteffort=false, URI content://com.google.android.gms.fonts [CONTEXT service_id=132 ]
+11-14 11:24:57.188  5502  6147 I FontLog : Query [name=Google Sans&weight=700&besteffort=false] resolved to {Google Sans, wdth 100.0, wght 700, ital 0.0, bestEffort false} [CONTEXT service_id=132 ]
+11-14 11:24:57.189  5502  6147 I FontLog : Fetch {Google Sans, wdth 100.0, wght 700, ital 0.0, bestEffort false} end status Status{statusCode=SUCCESS, resolution=null} [CONTEXT service_id=132 ]
+11-14 11:24:57.199  5502  6147 I FontLog : Pulling font file for id = 1, cache size = 1 [CONTEXT service_id=132 ]
+11-14 11:24:57.202   339  6305 I resolv  : GetAddrInfoHandler::run: {100 100 100 983140 10135 0}
+11-14 11:24:57.205  5502  6147 I FontLog : Received query name=Noto Color Emoji Compat&weight=400&besteffort=false, URI content://com.google.android.gms.fonts [CONTEXT service_id=132 ]
+11-14 11:24:57.205  5502  6147 I FontLog : Query [name=Noto Color Emoji Compat&weight=400&besteffort=false] resolved to {Noto Color Emoji Compat, wdth 100.0, wght 400, ital 0.0, bestEffort false} [CONTEXT service_id=132 ]
+11-14 11:24:57.206  5502  6147 I FontLog : Fetch {Noto Color Emoji Compat, wdth 100.0, wght 400, ital 0.0, bestEffort false} end status Status{statusCode=SUCCESS, resolution=null} [CONTEXT service_id=132 ]
+11-14 11:24:57.211   339  6307 I resolv  : res_nmkquery: (QUERY, IN, A)
+11-14 11:24:57.213  5502  6147 I FontLog : Pulling font file for id = 2, cache size = 2 [CONTEXT service_id=132 ]
+11-14 11:24:57.213   339  6306 I resolv  : res_nmkquery: (QUERY, IN, AAAA)
+11-14 11:24:57.216  5502  6147 I FontLog : Received query name=Google Sans&weight=400&besteffort=false, URI content://com.google.android.gms.fonts [CONTEXT service_id=132 ]
+11-14 11:24:57.217  5502  6147 I FontLog : Query [name=Google Sans&weight=400&besteffort=false] resolved to {Google Sans, wdth 100.0, wght 400, ital 0.0, bestEffort false} [CONTEXT service_id=132 ]
+11-14 11:24:57.217  5502  6147 I FontLog : Font PFD returned from cache for {Google Sans, wdth 100.0, wght 400, ital 0.0, bestEffort false} [CONTEXT service_id=132 ]
+11-14 11:24:57.217  5502  6147 I FontLog : Fetch {Google Sans, wdth 100.0, wght 400, ital 0.0, bestEffort false} end status Status{statusCode=SUCCESS, resolution=null} [CONTEXT service_id=132 ]
+11-14 11:24:57.218   339  6307 I resolv  : res_nsend: used send_dg 55 terrno: 0
+11-14 11:24:57.219   339  6307 I resolv  : doQuery: rcode=0, ancount=1, return value=55
+11-14 11:24:57.219   339  6306 I resolv  : res_nsend: used send_dg 67 terrno: 0
+11-14 11:24:57.219   339  6306 I resolv  : doQuery: rcode=0, ancount=1, return value=67
+11-14 11:24:57.219  6262  6299 D TrafficStats: tagSocket(84) with statsTag=0xffffffff, statsUid=-1
+11-14 11:24:57.224  5502  6147 I FontLog : Pulling font file for id = 3, cache size = 3 [CONTEXT service_id=132 ]
+11-14 11:24:57.228  5502  6147 I FontLog : Received query name=Google Sans&weight=500&besteffort=false, URI content://com.google.android.gms.fonts [CONTEXT service_id=132 ]
+11-14 11:24:57.228  5502  6147 I FontLog : Query [name=Google Sans&weight=500&besteffort=false] resolved to {Google Sans, wdth 100.0, wght 500, ital 0.0, bestEffort false} [CONTEXT service_id=132 ]
+11-14 11:24:57.229  5502  6147 I FontLog : Font PFD returned from cache for {Google Sans, wdth 100.0, wght 500, ital 0.0, bestEffort false} [CONTEXT service_id=132 ]
+11-14 11:24:57.229  5502  6147 I FontLog : Fetch {Google Sans, wdth 100.0, wght 500, ital 0.0, bestEffort false} end status Status{statusCode=SUCCESS, resolution=null} [CONTEXT service_id=132 ]
+11-14 11:24:57.233  5502  6147 I FontLog : Pulling font file for id = 4, cache size = 4 [CONTEXT service_id=132 ]
+11-14 11:24:57.298   339  6314 I resolv  : GetAddrInfoHandler::run: {100 100 100 983140 10192 0}
+11-14 11:24:57.299   339  6316 I resolv  : res_nmkquery: (QUERY, IN, A)
+11-14 11:24:57.305   339  6315 I resolv  : res_nmkquery: (QUERY, IN, AAAA)
+11-14 11:24:57.323  6262  6303 W cr_AWNetworkFetcherTask: IOException during downloadToFile.
+11-14 11:24:57.323  6262  6303 W cr_AWNetworkFetcherTask: java.io.IOException: Cleartext HTTP traffic to edgedl.me.gvt1.com not permitted
+11-14 11:24:57.323  6262  6303 W cr_AWNetworkFetcherTask: 	at com.android.okhttp.HttpHandler$CleartextURLFilter.checkURLPermitted(HttpHandler.java:127)
+11-14 11:24:57.323  6262  6303 W cr_AWNetworkFetcherTask: 	at com.android.okhttp.internal.huc.HttpURLConnectionImpl.execute(HttpURLConnectionImpl.java:462)
+11-14 11:24:57.323  6262  6303 W cr_AWNetworkFetcherTask: 	at com.android.okhttp.internal.huc.HttpURLConnectionImpl.getResponse(HttpURLConnectionImpl.java:411)
+11-14 11:24:57.323  6262  6303 W cr_AWNetworkFetcherTask: 	at com.android.okhttp.internal.huc.HttpURLConnectionImpl.getResponseCode(HttpURLConnectionImpl.java:542)
+11-14 11:24:57.323  6262  6303 W cr_AWNetworkFetcherTask: 	at org.chromium.android_webview.nonembedded.NetworkFetcherTask.download(chromium-TrichromeWebViewGoogle6432.apk-stable-567263637:48)
+11-14 11:24:57.329   339  6317 I resolv  : GetAddrInfoHandler::run: {100 100 100 983140 10135 0}
+11-14 11:24:57.330   339  6319 I resolv  : res_nmkquery: (QUERY, IN, A)
+11-14 11:24:57.330   339  6318 I resolv  : res_nmkquery: (QUERY, IN, AAAA)
+11-14 11:24:57.335   339  6318 I resolv  : res_nsend: used send_dg 64 terrno: 0
+11-14 11:24:57.335   339  6318 I resolv  : doQuery: rcode=0, ancount=1, return value=64
+11-14 11:24:57.336   339  6319 I resolv  : res_nsend: used send_dg 52 terrno: 0
+11-14 11:24:57.336   339  6319 I resolv  : doQuery: rcode=0, ancount=1, return value=52
+11-14 11:24:57.337  6262  6304 D TrafficStats: tagSocket(87) with statsTag=0xffffffff, statsUid=-1
+11-14 11:24:58.420  3582  3710 D EGL_emulation: app_time_stats: avg=332.71ms min=47.02ms max=682.03ms count=4
+11-14 11:24:58.559   402   503 D AudioFlinger: mixer(0x7c9a24b02930) throttle end: throttle time(4)
+11-14 11:24:58.733   839   839 D StatusBarIconController: ignoring old pipeline callback because the new wifi icon is enabled
+11-14 11:24:58.785  3582  3630 I ondra.absplayer: JIT allocated 59KB for compiled code of void cz.ondra.absplayer.ui.ReaderScreenKt.ReaderScreen(cz.ondra.absplayer.ui.MainViewModel, cz.ondra.absplayer.ui.Screen$Reader, androidx.compose.runtime.Composer, int)
+11-14 11:24:58.785  3582  3630 I ondra.absplayer: Compiler allocated 10175KB to compile void cz.ondra.absplayer.ui.ReaderScreenKt.ReaderScreen(cz.ondra.absplayer.ui.MainViewModel, cz.ondra.absplayer.ui.Screen$Reader, androidx.compose.runtime.Composer, int)
+11-14 11:24:59.057   402   503 D AudioFlinger: mixer(0x7c9a24b02930) throttle end: throttle time(36)
+11-14 11:24:59.301   339  6316 E resolv  : send_mdns: timeout
+11-14 11:24:59.305   339  6316 I resolv  : res_nsend: used send_dg 0 terrno: 62
+11-14 11:24:59.306   339  6316 I resolv  : res_nsend: used send_dg 0 terrno: 62
+11-14 11:24:59.306   339  6316 I resolv  : doQuery: rcode=5, ancount=0, return value=-110
+11-14 11:24:59.309   339  6315 E resolv  : send_mdns: timeout
+11-14 11:24:59.310   339  6315 I resolv  : res_nsend: used send_dg 0 terrno: 62
+11-14 11:24:59.310   339  6315 I resolv  : res_nsend: used send_dg 0 terrno: 62
+11-14 11:24:59.311   339  6315 I resolv  : doQuery: rcode=5, ancount=0, return value=-110
+--------- beginning of kernel
+11-14 11:24:59.815     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+11-14 11:24:59.579   527  2167 D OomAdjuster: Not killing cached processes
+11-14 11:24:59.696  3582  3710 D EGL_emulation: app_time_stats: avg=78.82ms min=17.16ms max=643.87ms count=16
+11-14 11:25:00.029  1615  1903 I AiAiEcho: Predicting[0]: 
+11-14 11:25:00.029  1615  1903 I AiAiEcho: EchoTargets: 
+11-14 11:25:00.029  1615  1903 I AiAiEcho: Filtered by AiAi flag check: 
+11-14 11:25:00.029  1615  1903 I AiAiEcho: Ranked targets strategy: SORT, count: 0, ranking metadata: 
+11-14 11:25:00.029  1615  1903 I AiAiEcho: #postPredictionTargets: Sending updates to UISurface lockscreen with targets# 0 (types=[])
+11-14 11:25:00.029   839   839 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+11-14 11:25:00.066  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PLAYING(3), position=934604, buffered position=1933024, speed=1.0, updated=130915, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:00.067  1027  1027 D AudioMediaPlayerWrapper: cz.ondra.absplayer Only Title and Artist info sync for metadata
+11-14 11:25:00.067  1027  1027 V AudioMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:25:00.067  1027  1027 D MediaPlayerList: sendMediaUpdate state=PlaybackState {state=PLAYING(3), position=934607, buffered position=1933024, speed=1.0, updated=130918, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:00.067  1027  1027 D AvrcpTargetJni: sendMediaUpdateNative
+11-14 11:25:00.068  1027  1027 I bt_stack: [INFO:avrcp_service.cc(515)] virtual void bluetooth::avrcp::AvrcpService::SendMediaUpdate(bool, bool, bool) track_changed=0 :  play_state=1 :  queue=0
+11-14 11:25:00.068  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PLAYING(3), position=934604, buffered position=1933024, speed=1.0, updated=130915, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:00.068  1027  1027 D AudioMediaPlayerWrapper: cz.ondra.absplayer Only Title and Artist info sync for metadata
+11-14 11:25:00.069  1027  1027 V AudioMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:25:00.069  1027  1027 D MediaPlayerList: sendMediaUpdate state=PlaybackState {state=PLAYING(3), position=934609, buffered position=1933024, speed=1.0, updated=130920, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:00.069  1027  1027 D MediaControlGattService: updatePlayerState: playbackState= PLAYING
+11-14 11:25:00.069  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:00.069  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:00.070  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:00.070  1027  1027 W MediaControlGattService: Feature TRACK_POSITION(BIT 7) support: true
+11-14 11:25:00.070  1027  1027 W MediaControlGattService: Feature TRACK_POSITION_NOTIFY support: true
+11-14 11:25:00.070  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:00.070  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:00.070  1027  1027 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+11-14 11:25:00.070  1027  1027 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+11-14 11:25:00.070  1027  1027 W MediaControlGattService: Feature MEDIA_CONTROL_POINT_OPCODES_SUPPORTED(BIT 19) support: true
+11-14 11:25:00.070  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:00.070  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:00.070  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:00.071  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:00.071  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:00.165  1615  3053 I IPCThreadState: oneway function results for code 2 on binder at 0x7a47602d6f40 will be dropped but finished with status UNKNOWN_TRANSACTION
+11-14 11:25:00.398  3582  5776 D BufferPoolAccessor2.0: bufferpool2 0x7a47002c5948 : 5(40960 size) total buffers - 1(8192 size) used buffers - 344/349 (recycle/alloc) - 13/348 (fetch/transfer)
+11-14 11:25:00.399   484  5782 D BufferPoolAccessor2.0: bufferpool2 0x70b82e3d4318 : 5(10240 size) total buffers - 1(2048 size) used buffers - 340/345 (recycle/alloc) - 14/344 (fetch/transfer)
+11-14 11:25:01.114   527   547 E BLASTSyncEngine: WM sent Transaction to organized, but never received commit callback. Application ANR likely to follow.
+11-14 11:25:01.703  3582  3710 D EGL_emulation: app_time_stats: avg=1003.39ms min=998.56ms max=1008.22ms count=2
+11-14 11:25:02.993   527  2167 W ProcessStats: Tracking association SourceState{1c1cfa5 cz.ondra.absplayer/10192 BTop #10692} whose proc state 2 is better than process ProcessState{a2a1d14 com.google.android.gms.persistent/10131 pkg=com.google.android.gms} proc state 4 (222 skipped)
+11-14 11:25:02.993  5502  5502 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.scheduler.ACTION_PROXY_SCHEDULE dat=chimera-action:/... cmp=com.google.android.gms/.chimera.PersistentApiService }
+11-14 11:25:03.068  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PLAYING(3), position=937601, buffered position=1933024, speed=1.0, updated=133917, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:03.069  1027  1027 D AudioMediaPlayerWrapper: cz.ondra.absplayer Only Title and Artist info sync for metadata
+11-14 11:25:03.069  1027  1027 V AudioMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:25:03.069  1027  1027 D MediaPlayerList: sendMediaUpdate state=PlaybackState {state=PLAYING(3), position=937604, buffered position=1933024, speed=1.0, updated=133920, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:03.070  1027  1027 D AvrcpTargetJni: sendMediaUpdateNative
+11-14 11:25:03.070  1027  1027 I bt_stack: [INFO:avrcp_service.cc(515)] virtual void bluetooth::avrcp::AvrcpService::SendMediaUpdate(bool, bool, bool) track_changed=0 :  play_state=1 :  queue=0
+11-14 11:25:03.070  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PLAYING(3), position=937601, buffered position=1933024, speed=1.0, updated=133917, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:03.071  1027  1027 D AudioMediaPlayerWrapper: cz.ondra.absplayer Only Title and Artist info sync for metadata
+11-14 11:25:03.071  1027  1027 V AudioMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:25:03.071  1027  1027 D MediaPlayerList: sendMediaUpdate state=PlaybackState {state=PLAYING(3), position=937605, buffered position=1933024, speed=1.0, updated=133921, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:03.071  1027  1027 D MediaControlGattService: updatePlayerState: playbackState= PLAYING
+11-14 11:25:03.071  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:03.071  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:03.071  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:03.071  1027  1027 W MediaControlGattService: Feature TRACK_POSITION(BIT 7) support: true
+11-14 11:25:03.071  1027  1027 W MediaControlGattService: Feature TRACK_POSITION_NOTIFY support: true
+11-14 11:25:03.071  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:03.071  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:03.072  1027  1027 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+11-14 11:25:03.072  1027  1027 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+11-14 11:25:03.072  1027  1027 W MediaControlGattService: Feature MEDIA_CONTROL_POINT_OPCODES_SUPPORTED(BIT 19) support: true
+11-14 11:25:03.072  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:03.072  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:03.072  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:03.072  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:03.072  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:03.711  3582  3710 D EGL_emulation: app_time_stats: avg=1004.15ms min=992.51ms max=1015.79ms count=2
+11-14 11:25:04.713  3582  3710 D EGL_emulation: app_time_stats: avg=1000.88ms min=1000.88ms max=1000.88ms count=1
+11-14 11:25:05.048   527  2167 D OomAdjuster: Not killing cached processes
+11-14 11:25:05.658  3582  5776 D BufferPoolAccessor2.0: bufferpool2 0x7a47002c5948 : 5(40960 size) total buffers - 1(8192 size) used buffers - 385/390 (recycle/alloc) - 13/389 (fetch/transfer)
+11-14 11:25:05.659   484  5782 D BufferPoolAccessor2.0: bufferpool2 0x70b82e3d4318 : 5(10240 size) total buffers - 1(2048 size) used buffers - 381/386 (recycle/alloc) - 14/385 (fetch/transfer)
+11-14 11:25:06.070  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PLAYING(3), position=940603, buffered position=1933024, speed=1.0, updated=136919, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:06.071  1027  1027 D AudioMediaPlayerWrapper: cz.ondra.absplayer Only Title and Artist info sync for metadata
+11-14 11:25:06.071  1027  1027 V AudioMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:25:06.071  1027  1027 D MediaPlayerList: sendMediaUpdate state=PlaybackState {state=PLAYING(3), position=940606, buffered position=1933024, speed=1.0, updated=136922, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:06.072  1027  1027 D MediaControlGattService: updatePlayerState: playbackState= PLAYING
+11-14 11:25:06.072  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:06.072  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:06.072  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:06.072  1027  1027 W MediaControlGattService: Feature TRACK_POSITION(BIT 7) support: true
+11-14 11:25:06.072  1027  1027 W MediaControlGattService: Feature TRACK_POSITION_NOTIFY support: true
+11-14 11:25:06.072  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:06.072  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:06.072  1027  1027 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+11-14 11:25:06.072  1027  1027 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+11-14 11:25:06.072  1027  1027 W MediaControlGattService: Feature MEDIA_CONTROL_POINT_OPCODES_SUPPORTED(BIT 19) support: true
+11-14 11:25:06.072  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:06.073  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:06.073  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:06.073  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:06.073  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:06.073  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PLAYING(3), position=940603, buffered position=1933024, speed=1.0, updated=136919, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:06.073  1027  1027 D AudioMediaPlayerWrapper: cz.ondra.absplayer Only Title and Artist info sync for metadata
+11-14 11:25:06.074  1027  1027 V AudioMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:25:06.074  1027  1027 D MediaPlayerList: sendMediaUpdate state=PlaybackState {state=PLAYING(3), position=940608, buffered position=1933024, speed=1.0, updated=136924, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:06.074  1027  1027 D AvrcpTargetJni: sendMediaUpdateNative
+11-14 11:25:06.074  1027  1027 I bt_stack: [INFO:avrcp_service.cc(515)] virtual void bluetooth::avrcp::AvrcpService::SendMediaUpdate(bool, bool, bool) track_changed=0 :  play_state=1 :  queue=0
+11-14 11:25:06.448   527   618 D ActivityManager: freezing 2177 com.google.android.contacts
+11-14 11:25:06.713  3582  3710 D EGL_emulation: app_time_stats: avg=1000.06ms min=999.29ms max=1000.83ms count=2
+11-14 11:25:07.102  4588  4634 W Bugle   : TextClassifierLibManagerImpl: Reclaiming memory at level: 40
+11-14 11:25:07.117  5502  5805 I NetworkScheduler.Stats: Task com.google.android.gms/com.google.android.gms.checkin.CheckinService started execution. cause:4 exec_start_elapsed_seconds: 137 [CONTEXT service_id=218 ]
+11-14 11:25:07.120  5502  6042 I NetworkScheduler.Stats: Task com.google.android.gms/com.google.android.gms.tapandpay.gcmtask.TapAndPayGcmTaskService started execution. cause:4 exec_start_elapsed_seconds: 137 [CONTEXT service_id=218 ]
+11-14 11:25:07.120  5502  6042 V NFC     : this device does not have NFC support
+11-14 11:25:07.120  5502  6042 W TapAndPay: NfcAdapter is null while obtaining CardEmulation instance. [CONTEXT service_id=79 ]
+11-14 11:25:07.120  5502  6042 W TapAndPay: java.lang.NullPointerException: NfcAdapter is null
+11-14 11:25:07.120  5502  6042 W TapAndPay: 	at android.nfc.cardemulation.CardEmulation.getInstance(CardEmulation.java:152)
+11-14 11:25:07.120  5502  6042 W TapAndPay: 	at cdoy.<init>(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+11-14 11:25:07.120  5502  6042 W TapAndPay: 	at com.google.android.gms.tapandpay.hce.task.TapAndPayAidRegistrationTaskOperation.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):5)
+11-14 11:25:07.120  5502  6042 W TapAndPay: 	at com.google.android.gms.tapandpay.gcmtask.TapAndPayGcmTaskChimeraService.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):4)
+11-14 11:25:07.120  5502  6042 W TapAndPay: 	at avzs.call(:com.google.android.gms@231818047@23.18.18 (190800-535401451):4)
+11-14 11:25:07.120  5502  6042 W TapAndPay: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+11-14 11:25:07.120  5502  6042 W TapAndPay: 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+11-14 11:25:07.120  5502  6042 W TapAndPay: 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+11-14 11:25:07.120  5502  6042 W TapAndPay: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+11-14 11:25:07.120  5502  6042 W TapAndPay: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+11-14 11:25:07.120  5502  6042 W TapAndPay: 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+11-14 11:25:07.120  5502  6042 W TapAndPay: 	at java.lang.Thread.run(Thread.java:1012)
+11-14 11:25:07.123  5502  6308 I NetworkScheduler.Stats: Task com.google.android.gms/com.google.android.gms.checkin.CheckinService finished executing. cause:4 result: 1 elapsed_millis: 11 uptime_millis: 11 exec_start_elapsed_seconds: 137 [CONTEXT service_id=218 ]
+11-14 11:25:07.126  5502  6308 I NetworkScheduler.Stats: Task com.google.android.gms/com.google.android.gms.tapandpay.gcmtask.TapAndPayGcmTaskService finished executing. cause:4 result: 3 elapsed_millis: 6 uptime_millis: 6 exec_start_elapsed_seconds: 137 [CONTEXT service_id=218 ]
+11-14 11:25:07.144  5502  6308 I NetworkScheduler.Stats: Task com.google.android.gms/com.google.android.gms.tapandpay.gcmtask.TapAndPayGcmTaskService started execution. cause:5 exec_start_elapsed_seconds: 137 [CONTEXT service_id=218 ]
+11-14 11:25:07.144  5502  6308 I NetworkScheduler.Stats: Task com.google.android.gms/com.google.android.gms.auth.account.be.legacy.AuthCronService started execution. cause:5 exec_start_elapsed_seconds: 137 [CONTEXT service_id=218 ]
+11-14 11:25:07.145  5502  6308 I NetworkScheduler.Stats: Task com.google.android.gms/com.google.android.gms.tapandpay.gcmtask.TapAndPayGcmTaskService finished executing. cause:5 result: 1 elapsed_millis: 14 uptime_millis: 14 exec_start_elapsed_seconds: 137 [CONTEXT service_id=218 ]
+11-14 11:25:07.148  5502  6308 I NetworkScheduler.Stats: Task com.google.android.gms/com.google.android.gms.auth.account.be.legacy.AuthCronService finished executing. cause:5 result: 3 elapsed_millis: 8 uptime_millis: 8 exec_start_elapsed_seconds: 137 [CONTEXT service_id=218 ]
+11-14 11:25:07.156  5502  6308 I NetworkScheduler.Stats: Task com.google.android.gms/com.google.android.gms.telephonyspam.sync.SpamListSyncTaskService started execution. cause:5 exec_start_elapsed_seconds: 138 [CONTEXT service_id=218 ]
+11-14 11:25:07.156  5532  5602 I TelephonySpamChimeraSer: Running Telephony Spam Chimera Service [CONTEXT service_id=150 ]
+11-14 11:25:07.157  5532  5602 I TelephonySpamChimeraSer: Cleaning SIP Header local table of old entries [CONTEXT service_id=150 ]
+11-14 11:25:07.157  5532  5602 I SpamListSync: Call spam module disabled. Skipping cleaning cache sip header table. [CONTEXT service_id=150 ]
+11-14 11:25:07.157  5532  5602 I TelephonySpamChimeraSer: Syncing Call Spam List [CONTEXT service_id=150 ]
+11-14 11:25:07.157  5532  5602 I SpamListSync: SpamListSyncChimeraService.syncSpamList called with tag: telephonyspam.SpamListSyncOneOffTask, extras: Bundle[{SpamList Type=0, Action=1.0}] [CONTEXT service_id=150 ]
+11-14 11:25:07.158  5532  5602 I SpamListSync: Call spam module disabled. Skipping spam list syncing. [CONTEXT service_id=150 ]
+11-14 11:25:07.159  5502  6042 I NetworkScheduler.Stats: Task com.google.android.gms/com.google.android.gms.telephonyspam.sync.SpamListSyncTaskService finished executing. cause:5 result: 1 elapsed_millis: 7 uptime_millis: 7 exec_start_elapsed_seconds: 138 [CONTEXT service_id=218 ]
+11-14 11:25:07.188  3582  5934 D TrafficStats: tagSocket(6) with statsTag=0xffffffff, statsUid=-1
+11-14 11:25:07.998   527   618 D ActivityManager: freezing 6262 com.google.android.webview:webview_apk
+11-14 11:25:07.999   527   618 D ActivityManager: freezing 2714 com.google.android.webview:webview_service
+11-14 11:25:08.712  3582  3710 D EGL_emulation: app_time_stats: avg=999.56ms min=998.97ms max=1000.14ms count=2
+11-14 11:25:09.072  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PLAYING(3), position=943605, buffered position=1933024, speed=1.0, updated=139921, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:09.073  1027  1027 D AudioMediaPlayerWrapper: cz.ondra.absplayer Only Title and Artist info sync for metadata
+11-14 11:25:09.073  1027  1027 V AudioMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:25:09.073  1027  1027 D MediaPlayerList: sendMediaUpdate state=PlaybackState {state=PLAYING(3), position=943607, buffered position=1933024, speed=1.0, updated=139923, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:09.073  1027  1027 D AvrcpTargetJni: sendMediaUpdateNative
+11-14 11:25:09.073  1027  1027 I bt_stack: [INFO:avrcp_service.cc(515)] virtual void bluetooth::avrcp::AvrcpService::SendMediaUpdate(bool, bool, bool) track_changed=0 :  play_state=1 :  queue=0
+11-14 11:25:09.073  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PLAYING(3), position=943605, buffered position=1933024, speed=1.0, updated=139921, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:09.074  1027  1027 D AudioMediaPlayerWrapper: cz.ondra.absplayer Only Title and Artist info sync for metadata
+11-14 11:25:09.074  1027  1027 V AudioMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:25:09.074  1027  1027 D MediaPlayerList: sendMediaUpdate state=PlaybackState {state=PLAYING(3), position=943609, buffered position=1933024, speed=1.0, updated=139925, actions=4456395, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:09.075  1027  1027 D MediaControlGattService: updatePlayerState: playbackState= PLAYING
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature TRACK_POSITION(BIT 7) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature TRACK_POSITION_NOTIFY support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature MEDIA_CONTROL_POINT_OPCODES_SUPPORTED(BIT 19) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:09.075  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:09.215   527  2811 D ConnectivityService: requestNetwork for uid/pid:10128/2898 activeRequest: null callbackRequest: 158 [NetworkRequest [ REQUEST id=159, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10128 RequestorUid: 10128 RequestorPkg: com.google.android.dialer UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647
+11-14 11:25:09.218   527   761 D WifiNetworkFactory: got request NetworkRequest [ REQUEST id=159, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10128 RequestorUid: 10128 RequestorPkg: com.google.android.dialer UnderlyingNetworks: Null] ]
+11-14 11:25:09.218   527   761 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=159, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10128 RequestorUid: 10128 RequestorPkg: com.google.android.dialer UnderlyingNetworks: Null] ]
+11-14 11:25:09.218   527   761 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=159, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10128 RequestorUid: 10128 RequestorPkg: com.google.android.dialer UnderlyingNetworks: Null] ]
+11-14 11:25:09.218   527   761 D MultiInternetWifiNetworkFactory: got request NetworkRequest [ REQUEST id=159, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10128 RequestorUid: 10128 RequestorPkg: com.google.android.dialer UnderlyingNetworks: Null] ]
+11-14 11:25:09.218   527   770 D ConnectivityService: NetReassign [159 : null → 100] [c 0] [a 2] [i 1]
+11-14 11:25:09.219  2898  2898 I DialerConstellationSyncWorker: com.android.dialer.businessvoice.control.worker.ConstellationSyncWorker.startWork:66 starting work
+11-14 11:25:09.219  2898  3097 I DialerCountryCodeProvider: com.android.dialer.businessvoice.verifiedcall.impl.i18n.CountryCodeProvider.getSimCountryCodeInternal:85 returning Redacted-2-chars
+11-14 11:25:09.220  2898  3097 I DialerCachedVerifiedNumberProvider: com.android.dialer.businessvoice.verifiedcall.impl.constellation.CachedVerifiedNumberProvider.refreshConstellationInfo:190 Retrieving constellation info and refreshing the cache.
+11-14 11:25:09.233  5532  5532 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.common.BIND_SHARED_PREFS pkg=com.google.android.gms }
+11-14 11:25:09.233  5532  5532 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.common.BIND_SHARED_PREFS pkg=com.google.android.gms }
+11-14 11:25:09.235  5532  5532 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.common.BIND_SHARED_PREFS pkg=com.google.android.gms }
+11-14 11:25:09.235  5532  5602 E constellation: [api_verify_phone_operation] Failed to generate Client Signature
+11-14 11:25:09.235  5532  5602 E constellation: acwp: Stored private key deleted
+11-14 11:25:09.235  5532  5602 E constellation: 	at acos.e(:com.google.android.gms@231818047@23.18.18 (190800-535401451):4)
+11-14 11:25:09.235  5532  5602 E constellation: 	at acos.d(:com.google.android.gms@231818047@23.18.18 (190800-535401451):1)
+11-14 11:25:09.235  5532  5602 E constellation: 	at acoa.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):22)
+11-14 11:25:09.235  5532  5602 E constellation: 	at acoa.f(:com.google.android.gms@231818047@23.18.18 (190800-535401451):12)
+11-14 11:25:09.235  5532  5602 E constellation: 	at avsy.eo(:com.google.android.gms@231818047@23.18.18 (190800-535401451):1)
+11-14 11:25:09.235  5532  5602 E constellation: 	at avtf.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):14)
+11-14 11:25:09.235  5532  5602 E constellation: 	at dfhf.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+11-14 11:25:09.235  5532  5602 E constellation: 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+11-14 11:25:09.235  5532  5602 E constellation: 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+11-14 11:25:09.235  5532  5602 E constellation: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+11-14 11:25:09.235  5532  5602 E constellation: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+11-14 11:25:09.235  5532  5602 E constellation: 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+11-14 11:25:09.235  5532  5602 E constellation: 	at java.lang.Thread.run(Thread.java:1012)
+11-14 11:25:09.237  2898  3064 W DialerVerifiedNumberProvider: com.android.dialer.businessvoice.verifiedcall.impl.constellation.VerifiedNumberProvider.lambda$getConstellationResponse$1:155 Failed to get constellation token.
+11-14 11:25:09.237  2898  3064 W DialerVerifiedNumberProvider: nkq: 5004: 
+11-14 11:25:09.237  2898  3064 W DialerVerifiedNumberProvider: 	at nov.au(PG:1)
+11-14 11:25:09.237  2898  3064 W DialerVerifiedNumberProvider: 	at nnf.g(PG:2)
+11-14 11:25:09.237  2898  3064 W DialerVerifiedNumberProvider: 	at npo.a(Unknown Source:2)
+11-14 11:25:09.237  2898  3064 W DialerVerifiedNumberProvider: 	at npy.dm(PG:9)
+11-14 11:25:09.237  2898  3064 W DialerVerifiedNumberProvider: 	at ncz.onTransact(PG:4)
+11-14 11:25:09.237  2898  3064 W DialerVerifiedNumberProvider: 	at android.os.Binder.execTransactInternal(Binder.java:1344)
+11-14 11:25:09.237  2898  3064 W DialerVerifiedNumberProvider: 	at android.os.Binder.execTransact(Binder.java:1275)
+11-14 11:25:09.239  2898  3064 W DialerConstellationSyncWorker: com.android.dialer.businessvoice.control.worker.ConstellationSyncWorker.lambda$syncConstellation$2:110 Constellation api request failed, status code: 5004
+11-14 11:25:09.240  2898  3065 I WM-WorkerWrapper: Worker result RETRY for Work [ id=45f10cbe-30eb-4509-8144-7337db2dbd31, tags={ com.google.apps.tiktok.contrib.work.TikTokListenableWorker, TikTokWorker#com.android.dialer.businessvoice.control.worker.ConstellationSyncWorker } ]
+11-14 11:25:09.483   527   770 D ConnectivityService: releasing NetworkRequest [ REQUEST id=150, [ Transports: CELLULAR Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&NOT_VCN_MANAGED Uid: 10132 RequestorUid: 10132 RequestorPkg: com.google.android.googlequicksearchbox UnderlyingNetworks: Null] ] (release request)
+11-14 11:25:09.484   527   770 I ConnectivityService: Update capabilities for net 101 : -FOREGROUND
+11-14 11:25:09.485   339  3357 I netd    : networkSetPermissionForNetwork(101, 1) <1.55ms>
+11-14 11:25:09.717  3582  3710 D EGL_emulation: app_time_stats: avg=1004.97ms min=1004.97ms max=1004.97ms count=1
+11-14 11:25:10.175   527   618 D ActivityManager: freezing 2097 com.google.android.as.oss
+11-14 11:25:11.163  3582  5776 D BufferPoolAccessor2.0: bufferpool2 0x7a47002c5948 : 5(40960 size) total buffers - 1(8192 size) used buffers - 428/433 (recycle/alloc) - 13/432 (fetch/transfer)
+11-14 11:25:11.173   484  5782 D BufferPoolAccessor2.0: bufferpool2 0x70b82e3d4318 : 5(10240 size) total buffers - 1(2048 size) used buffers - 424/429 (recycle/alloc) - 14/428 (fetch/transfer)
+11-14 11:25:11.185  6328  6328 W BpBinder: Linking to death on android.gui.ISurfaceComposer but there are no threads (yet?) listening to incoming transactions. See ProcessState::startThreadPool and ProcessState::setThreadPoolMaxThreadCount. Generally you should setup the binder threadpool before other initialization steps.
+11-14 11:25:11.185  6328  6328 W ProcessState: Extra binder thread started, but 0 threads requested. Do not use *startThreadPool when zero threads are requested.
+11-14 11:25:11.197   137   137 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+11-14 11:25:11.197  6328  6329 I Gralloc4: mapper 4.x is not supported
+11-14 11:25:11.455     0     0 I servicemanager: Could not find android.hardware.graphics.allocator.IAllocator/default in the VINTF manifest.
+11-14 11:25:11.379   527   541 D CompatibilityChangeReporter: Compat change id reported: 161252188; UID 10192; state: DISABLED
+11-14 11:25:11.379   527   541 W ActivityTaskManager: callingPackage for (uid=2000, pid=6332) has no WPC
+11-14 11:25:11.380   527   541 D CompatibilityChangeReporter: Compat change id reported: 265464455; UID 10192; state: DISABLED
+11-14 11:25:11.380   527   541 D CompatibilityChangeReporter: Compat change id reported: 265452344; UID 10192; state: DISABLED
+11-14 11:25:11.380   527   541 D CompatibilityChangeReporter: Compat change id reported: 266124927; UID 10192; state: DISABLED
+11-14 11:25:11.380   527   541 D CompatibilityChangeReporter: Compat change id reported: 265451093; UID 10192; state: DISABLED
+11-14 11:25:11.380   527   541 D CompatibilityChangeReporter: Compat change id reported: 265456536; UID 10192; state: DISABLED
+11-14 11:25:11.380   527   541 D CompatibilityChangeReporter: Compat change id reported: 255940284; UID 10192; state: DISABLED
+11-14 11:25:11.380   527   541 D CompatibilityChangeReporter: Compat change id reported: 236283604; UID 10192; state: DISABLED
+11-14 11:25:11.380   527   541 D CompatibilityChangeReporter: Compat change id reported: 263959004; UID 10192; state: DISABLED
+11-14 11:25:11.380   527   541 D CompatibilityChangeReporter: Compat change id reported: 264304459; UID 10192; state: DISABLED
+11-14 11:25:11.380   527   541 D CompatibilityChangeReporter: Compat change id reported: 264301586; UID 10192; state: DISABLED
+11-14 11:25:11.380   527   541 D CompatibilityChangeReporter: Compat change id reported: 254631730; UID 10192; state: DISABLED
+11-14 11:25:11.380   527   541 D CompatibilityChangeReporter: Compat change id reported: 273509367; UID 10192; state: DISABLED
+11-14 11:25:11.381   527   541 D CompatibilityChangeReporter: Compat change id reported: 263259275; UID 10192; state: DISABLED
+11-14 11:25:11.381   527   541 D CompatibilityChangeReporter: Compat change id reported: 174042980; UID 10192; state: DISABLED
+11-14 11:25:11.381   527   541 D CompatibilityChangeReporter: Compat change id reported: 174042936; UID 10192; state: DISABLED
+11-14 11:25:11.381   527   541 D CompatibilityChangeReporter: Compat change id reported: 181136395; UID 10192; state: DISABLED
+11-14 11:25:11.381   527   541 D CompatibilityChangeReporter: Compat change id reported: 194480991; UID 10192; state: ENABLED
+11-14 11:25:11.382   527   541 D CompatibilityChangeReporter: Compat change id reported: 197654537; UID 10192; state: ENABLED
+11-14 11:25:11.383   839  3815 D KeyguardService: setOccluded(false)
+11-14 11:25:11.383   839  3815 D KeyguardViewMediator: setOccluded(false)
+11-14 11:25:11.383   527   541 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=cz.ondra.absplayer/.ui.MainActivity (has extras)} with LAUNCH_SINGLE_TASK from uid 2000 (BAL_ALLOW_PERMISSION) result code=3
+11-14 11:25:11.384   839   839 D KeyguardViewMediator: handleSetOccluded(false)
+11-14 11:25:11.386   839   879 D WindowManagerShell: onActivityRestartAttempt: ComponentInfo{cz.ondra.absplayer/cz.ondra.absplayer.ui.MainActivity}
+11-14 11:25:11.388   527  2811 I WifiService: releaseWifiLock uid=10192
+11-14 11:25:11.391  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PAUSED(2), position=945919, buffered position=1933024, speed=0.0, updated=142238, actions=4456397, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:11.393  1027  1027 D AudioMediaPlayerWrapper: cz.ondra.absplayer Only Title and Artist info sync for metadata
+11-14 11:25:11.393   527   541 D CompatibilityChangeReporter: Compat change id reported: 203800354; UID 10192; state: ENABLED
+11-14 11:25:11.393  1027  1027 V AudioMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:25:11.394  1027  1027 D MediaPlayerList: sendMediaUpdate state=PlaybackState {state=PAUSED(2), position=945919, buffered position=1933024, speed=0.0, updated=142242, actions=4456397, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:11.394  1027  1027 D AvrcpTargetJni: sendMediaUpdateNative
+11-14 11:25:11.394  1027  1027 I bt_stack: [INFO:avrcp_service.cc(515)] virtual void bluetooth::avrcp::AvrcpService::SendMediaUpdate(bool, bool, bool) track_changed=0 :  play_state=1 :  queue=0
+11-14 11:25:11.394  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PAUSED(2), position=945919, buffered position=1933024, speed=0.0, updated=142238, actions=4456397, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:11.399  1027  1027 D AudioMediaPlayerWrapper: cz.ondra.absplayer Only Title and Artist info sync for metadata
+11-14 11:25:11.403   839   839 D MediaDataManager: State updated outside of notification
+11-14 11:25:11.406  1027  1027 V AudioMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:25:11.406  1027  1027 D MediaPlayerList: sendMediaUpdate state=PlaybackState {state=PAUSED(2), position=945919, buffered position=1933024, speed=0.0, updated=142242, actions=4456397, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:11.406  1027  1027 D MediaControlGattService: updatePlayerState: playbackState= PAUSED
+11-14 11:25:11.406  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:11.406  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:11.406  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED(BIT 8) support: true
+11-14 11:25:11.406  1027  1027 W MediaControlGattService: Feature PLAYBACK_SPEED_NOTIFY support: true
+11-14 11:25:11.407  1027  1027 W MediaControlGattService: Feature TRACK_POSITION(BIT 7) support: true
+11-14 11:25:11.407  1027  1027 W MediaControlGattService: Feature TRACK_POSITION_NOTIFY support: true
+11-14 11:25:11.407  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:11.407  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:11.407  1027  1027 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+11-14 11:25:11.407  1027  1027 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+11-14 11:25:11.407  1027  1027 W MediaControlGattService: Feature MEDIA_CONTROL_POINT_OPCODES_SUPPORTED(BIT 19) support: true
+11-14 11:25:11.407  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:11.407  1027  1027 D MediaControlGattService: updateMediaStateChar
+11-14 11:25:11.407  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:11.407  1027  1027 D MediaControlGattService: updateMediaStateChar setting to state= 2
+11-14 11:25:11.408  1027  1027 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true
+11-14 11:25:11.408  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:11.408  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:11.408  1027  1027 W MediaControlGattService: Feature SEEKING_SPEED(BIT 9) support: true
+11-14 11:25:11.408  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PAUSED(2), position=945919, buffered position=1933024, speed=0.0, updated=142242, actions=4456397, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:11.408  1027  1027 W AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer tried to update with no new data
+11-14 11:25:11.409  1027  1027 V AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=PAUSED(2), position=945919, buffered position=1933024, speed=0.0, updated=142242, actions=4456397, custom actions=[Action:mName='Back 10 s, mIcon=2130968711, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Forward 10 s, mIcon=2130968716, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Speed 1.0×, mIcon=2130968617, mExtras=Bundle[EMPTY_PARCEL], Action:mName='Previous chapter, mIcon=2130968694, mExtras=Bundle[mParcelledData.dataSize=140], Action:mName='Next chapter, mIcon=2130968678, mExtras=Bundle[mParcelledData.dataSize=140]], active item id=1, error=null}
+11-14 11:25:11.410  1027  1027 W AudioMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer tried to update with no new data

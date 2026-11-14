@@ -1,0 +1,465 @@
+--------- beginning of main
+11-14 11:24:32.063  1207  1207 D NowPlayingListener: updatePlayback() called with: state = [PlaybackState {state=3, position=959201, buffered position=1933152, speed=1.0, updated=119434, actions=4456443, custom actions=[], active item id=1, error=null}] and now playing listener: dqv@b111faa
+11-14 11:24:32.063  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate() called with: state = [3], stateChangeTimeMs = [119434], currentPosMs = [959201]
+11-14 11:24:32.063  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate: Skipped update, state: 3 was unchanged
+11-14 11:24:32.063  1207  1207 D NowPlayingListener: updateMetadata() called with: metadata description = [Advice from a Caterpillar, Alice's Adventures in Wonderland, null] and now playing listener: dqv@b111faa
+11-14 11:24:32.064  1207  1207 D NowPlayingManager: onMediaDataUpdated() called with: NowPlayingData [dqs@ec8e0ec, title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:32.065  1207  1207 D NowPlayingManager: onMediaDataUpdated: A notification for Now Playing Card has been posted with NowPlayingData [title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:32.067   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.090   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.115   284   310 D goldfish-address-space: claimShared: Ask to claim region [0x3fc7ea000 0x3fcfd3000]
+11-14 11:24:32.119   155   155 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device manifest.
+11-14 11:24:32.123  4325  4325 I Gralloc4: mapper 4.x is not supported
+11-14 11:24:32.125   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.135  4325  4325 D HostConnection: createUnique: call
+11-14 11:24:32.136  4325  4325 D HostConnection: HostConnection::get() New Host Connection established 0xeab00320, tid 4325
+11-14 11:24:32.137  4325  4325 D goldfish-address-space: allocate: Ask for block of size 0x100
+11-14 11:24:32.137  4325  4325 D goldfish-address-space: allocate: ioctl allocate returned offset 0x3fbffe000 size 0x2000
+11-14 11:24:32.151   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.157  4325  4325 D HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_vulkan_async_qsri ANDROID_EMU_read_color_buffer_dma ANDROID_EMU_hwc_color_transform GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_0 
+11-14 11:24:32.174   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+--------- beginning of system
+11-14 11:24:32.063   472   472 I chatty  : uid=1000(system) Binder:472_3 expire 6 lines
+11-14 11:24:32.066   472   472 W NotificationHistory: Attempted to add notif for locked/gone/disabled user 0
+11-14 11:24:32.309   472  3589 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=cz.ondra.absplayer/.ui.MainActivity (has extras)} from uid 2000
+11-14 11:24:32.288   273  1722 I chatty  : uid=1041(audioserver) audio.service.r identical 5 lines
+11-14 11:24:32.310   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.312  4329  4331 I cmd     : oneway function results will be dropped but finished with status OK and parcel size 4
+11-14 11:24:32.333   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.358   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.380  3267  3278 I ondra.absplaye: Compiler allocated 5513KB to compile void cz.ondra.absplayer.ui.ReaderScreenKt.ReaderScreen(cz.ondra.absplayer.ui.MainViewModel, cz.ondra.absplayer.ui.Screen$Reader, androidx.compose.runtime.Composer, int)
+11-14 11:24:32.381   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.507   273  1722 I chatty  : uid=1041(audioserver) audio.service.r identical 6 lines
+11-14 11:24:32.533   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.545  3267  3267 I WebViewFactory: Loading com.google.android.webview version 90.0.4430.91 (code 443009131)
+11-14 11:24:32.568   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.592   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.596  3267  3267 W ondra.absplaye: Accessing hidden method Landroid/os/Trace;->isTagEnabled(J)Z (greylist, reflection, allowed)
+11-14 11:24:32.596  3267  3267 W ondra.absplaye: Accessing hidden method Landroid/os/Trace;->traceBegin(JLjava/lang/String;)V (greylist, reflection, allowed)
+11-14 11:24:32.596  3267  3267 W ondra.absplaye: Accessing hidden method Landroid/os/Trace;->traceEnd(J)V (greylist, reflection, allowed)
+11-14 11:24:32.596  3267  3267 W ondra.absplaye: Accessing hidden method Landroid/os/Trace;->asyncTraceBegin(JLjava/lang/String;I)V (greylist, reflection, allowed)
+11-14 11:24:32.596  3267  3267 W ondra.absplaye: Accessing hidden method Landroid/os/Trace;->asyncTraceEnd(JLjava/lang/String;I)V (greylist, reflection, allowed)
+11-14 11:24:32.608   472  3589 D CompatibilityChangeReporter: Compat change id reported: 135634846; UID 10063; state: DISABLED
+11-14 11:24:32.609   472   510 D CompatibilityChangeReporter: Compat change id reported: 143937733; UID 10063; state: ENABLED
+11-14 11:24:32.613   265   265 D Zygote  : Forked child process 4337
+11-14 11:24:32.614   472   510 I ActivityManager: Start proc 4337:com.google.android.webview:webview_service/u0a63 for service {com.google.android.webview/org.chromium.android_webview.services.VariationsSeedServer}
+11-14 11:24:32.615   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.616  3267  3267 I cr_LibraryLoader: Loaded native library version number "90.0.4430.91"
+11-14 11:24:32.618  3267  3267 I cr_CachingUmaRecorder: Flushed 4 samples from 4 histograms.
+11-14 11:24:32.620  4337  4337 W webview_servic: Unexpected CPU variant for X86 using defaults: x86
+11-14 11:24:32.622  4337  4337 E webview_servic: Not starting debugger since process cannot load the jdwp agent.
+11-14 11:24:32.625   472  3589 D CompatibilityChangeReporter: Compat change id reported: 136274596; UID 10076; state: ENABLED
+11-14 11:24:32.626   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.632   472  3589 D CompatibilityChangeReporter: Compat change id reported: 135634846; UID 10076; state: DISABLED
+11-14 11:24:32.632   472   510 D CompatibilityChangeReporter: Compat change id reported: 143937733; UID 10076; state: ENABLED
+11-14 11:24:32.636   843   843 D Zygote  : Forked child process 4357
+11-14 11:24:32.636   472   510 I ActivityManager: Start proc 4357:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0ai9000 for  {cz.ondra.absplayer/org.chromium.content.app.SandboxedProcessService0:0}
+11-14 11:24:32.639  4357  4357 W ocessService0:: Unexpected CPU variant for X86 using defaults: x86
+11-14 11:24:32.645  4357  4357 E ocessService0:: Not starting debugger since process cannot load the jdwp agent.
+11-14 11:24:32.648  4337  4337 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+11-14 11:24:32.651   472   774 D CompatibilityChangeReporter: Compat change id reported: 136274596; UID 10076; state: ENABLED
+11-14 11:24:32.648  4337  4337 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+11-14 11:24:32.660   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.661  4357  4357 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+11-14 11:24:32.661  4357  4357 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+11-14 11:24:32.664  4357  4357 I cr_ChildProcessService: Creating new ChildProcessService pid=4357
+11-14 11:24:32.683   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.699   472  4303 D ConnectivityService: requestNetwork for uid/pid:10076/3267 NetworkRequest [ TRACK_DEFAULT id=31, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10076 AdministratorUids: [] RequestorUid: 10076 RequestorPackageName: cz.ondra.absplayer] ]
+11-14 11:24:32.699   472   622 D ConnectivityService: NetReassign [31 : null → 100]
+11-14 11:24:32.699   472   618 D WifiNetworkFactory: got request NetworkRequest [ TRACK_DEFAULT id=31, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10076 AdministratorUids: [] RequestorUid: 10076 RequestorPackageName: cz.ondra.absplayer] ] with score 60 and providerId 2
+11-14 11:24:32.699   472   618 D UntrustedWifiNetworkFactory: got request NetworkRequest [ TRACK_DEFAULT id=31, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10076 AdministratorUids: [] RequestorUid: 10076 RequestorPackageName: cz.ondra.absplayer] ] with score 60 and providerId 2
+11-14 11:24:32.699   472   653 D Ethernet: got request NetworkRequest [ TRACK_DEFAULT id=31, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10076 AdministratorUids: [] RequestorUid: 10076 RequestorPackageName: cz.ondra.absplayer] ] with score 60 and providerId 2
+11-14 11:24:32.702   472   622 D ConnectivityService: NetReassign [no changes]
+11-14 11:24:32.706   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.717  3267  4384 W ondra.absplaye: Accessing hidden method Landroid/media/AudioManager;->getOutputLatency(I)I (greylist, reflection, allowed)
+11-14 11:24:32.719  3267  4384 W cr_media: Requires BLUETOOTH permission
+11-14 11:24:32.724  3267  4395 D HostConnection: HostConnection::get() New Host Connection established 0xbe277980, tid 4395
+11-14 11:24:32.726  3267  4395 D HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_vulkan_async_qsri ANDROID_EMU_read_color_buffer_dma ANDROID_EMU_hwc_color_transform GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_0 
+11-14 11:24:32.728  3267  4395 D EGL_emulation: eglCreateContext: 0xbe277830: maj 3 min 0 rcv 3
+11-14 11:24:32.728  3267  4395 D EGL_emulation: eglMakeCurrent: 0xbe277830: ver 3 0 (tinfo 0xbd911f90) (first time)
+11-14 11:24:32.729   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.730  4357  4381 I cr_LibraryLoader: Loaded native library version number "90.0.4430.91"
+11-14 11:24:32.730  4357  4381 I cr_CachingUmaRecorder: Flushed 1 samples from 1 histograms.
+11-14 11:24:32.734  4357  4381 W SystemServiceRegistry: No service published for: uimode
+11-14 11:24:32.752   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.775   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.796  3267  4395 D EGL_emulation: eglCreateContext: 0xbe277bb0: maj 3 min 0 rcv 3
+11-14 11:24:32.798   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.833   273  1722 I chatty  : uid=1041(audioserver) audio.service.r identical 1 line
+11-14 11:24:32.859   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:32.880  3267  4395 D EGL_emulation: eglCreateContext: 0xbe2788d0: maj 3 min 0 rcv 3
+11-14 11:24:32.882   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.009   273  1722 I chatty  : uid=1041(audioserver) audio.service.r identical 5 lines
+11-14 11:24:33.020   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.041  4337  4374 I cr_VariationsSeedFetch: Fetched first run seed in 176 ms
+11-14 11:24:33.043   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.270   472  3589 I ActivityManager: Killing 2044:com.android.externalstorage/u0a29 (adj 985): empty #17
+11-14 11:24:33.237   273  1722 I chatty  : uid=1041(audioserver) audio.service.r identical 8 lines
+11-14 11:24:33.248   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.275   265   265 I Zygote  : Process 2044 exited due to signal 9 (Killed)
+11-14 11:24:33.325   472   511 I libprocessgroup: Successfully killed process cgroup uid 10029 pid 2044 in 50ms
+11-14 11:24:33.325   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.338   325   433 D AudioFlinger: mixer(0xe7825030) throttle end: throttle time(11374)
+11-14 11:24:33.354   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.381   273  1722 I chatty  : uid=1041(audioserver) audio.service.r identical 1 line
+11-14 11:24:33.405   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.406   325   433 D AudioFlinger: mixer(0xe7825030) throttle end: throttle time(32)
+11-14 11:24:33.423   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.459   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.488  1141  1141 W katniss_interactor_CastIdRetrievalTask: Loading Cast Info...
+11-14 11:24:33.490  3753  4421 I DynamiteModule: Considering local module com.google.android.gms.cronet_dynamite:0 and remote module com.google.android.gms.cronet_dynamite:1611
+11-14 11:24:33.490  3753  4421 I DynamiteModule: Selected remote version of com.google.android.gms.cronet_dynamite, version >= 1611
+11-14 11:24:33.504   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.527   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.569  3753  4421 I cr_CronetLibraryLoader: Cronet version: 105.0.5195.35, arch: i686
+11-14 11:24:33.588   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.589   325   433 D AudioFlinger: mixer(0xe7825030) throttle end: throttle time(114)
+11-14 11:24:33.589  3753  4423 I TetheringManager: registerTetheringEventCallback:com.google.android.gms
+11-14 11:24:33.597   472  3380 D ConnectivityService: requestNetwork for uid/pid:10052/3753 NetworkRequest [ TRACK_DEFAULT id=33, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10052 AdministratorUids: [] RequestorUid: 10052 RequestorPackageName: com.google.android.gms] ]
+11-14 11:24:33.597   472   622 D ConnectivityService: NetReassign [33 : null → 100]
+11-14 11:24:33.597   472   618 D WifiNetworkFactory: got request NetworkRequest [ TRACK_DEFAULT id=33, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10052 AdministratorUids: [] RequestorUid: 10052 RequestorPackageName: com.google.android.gms] ] with score 60 and providerId 2
+11-14 11:24:33.597   472   618 D UntrustedWifiNetworkFactory: got request NetworkRequest [ TRACK_DEFAULT id=33, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10052 AdministratorUids: [] RequestorUid: 10052 RequestorPackageName: com.google.android.gms] ] with score 60 and providerId 2
+11-14 11:24:33.597   472   653 D Ethernet: got request NetworkRequest [ TRACK_DEFAULT id=33, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10052 AdministratorUids: [] RequestorUid: 10052 RequestorPackageName: com.google.android.gms] ] with score 60 and providerId 2
+11-14 11:24:33.598   472   622 D ConnectivityService: NetReassign [no changes]
+11-14 11:24:33.608   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.777   273  1722 I chatty  : uid=1041(audioserver) audio.service.r identical 9 lines
+11-14 11:24:33.823   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.825   325   433 D AudioFlinger: mixer(0xe7825030) throttle end: throttle time(174)
+11-14 11:24:33.828   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.840   273  1722 I chatty  : uid=1041(audioserver) audio.service.r identical 1 line
+11-14 11:24:33.874   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:33.886  3753  3764 I gle.android.gm: Background concurrent copying GC freed 15542(3620KB) AllocSpace objects, 219(9208KB) LOS objects, 36% free, 42MB/66MB, paused 3.867ms total 106.255ms
+11-14 11:24:33.890   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:34.038   273  1722 I chatty  : uid=1041(audioserver) audio.service.r identical 6 lines
+11-14 11:24:34.060   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:34.066   668   668 E AvrcpMediaPlayerWrapper: Timeout while waiting for metadata to sync for cz.ondra.absplayer
+11-14 11:24:34.066   668   668 E AvrcpMediaPlayerWrapper:   └ Current Metadata: { mediaId="currsong" title="Advice from a Caterpillar" artist="Alice's Adventures in Wonderland" album="Alice's Adventures in Wonderland" duration=2100000 trackPosition=1/1 }
+11-14 11:24:34.066   668   668 E AvrcpMediaPlayerWrapper:   └ Current Playstate: PlaybackState {state=3, position=961207, buffered position=1933152, speed=1.0, updated=121440, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:34.066   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(0): { mediaId="NowPlayingId0" title="The Rabbit Sends in a Little Bill" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=1/9 }
+11-14 11:24:34.066   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(1): { mediaId="NowPlayingId1" title="Advice from a Caterpillar" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=2/9 }
+11-14 11:24:34.066   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(2): { mediaId="NowPlayingId2" title="Pig and Pepper" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=3/9 }
+11-14 11:24:34.066   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(3): { mediaId="NowPlayingId3" title="A Mad Tea-Party" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=4/9 }
+11-14 11:24:34.066   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(4): { mediaId="NowPlayingId4" title="The Queen's Croquet-Ground" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=5/9 }
+11-14 11:24:34.066   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(5): { mediaId="NowPlayingId5" title="The Mock Turtle's Story" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=6/9 }
+11-14 11:24:34.066   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(6): { mediaId="NowPlayingId6" title="The Lobster Quadrille" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=7/9 }
+11-14 11:24:34.066   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(7): { mediaId="NowPlayingId7" title="Who Stole the Tarts?" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=8/9 }
+11-14 11:24:34.066   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(8): { mediaId="NowPlayingId8" title="Alice's Evidence" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=9/9 }
+11-14 11:24:34.067   668   668 V AvrcpMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:24:34.067   668   668 D AvrcpMediaPlayerList: sendMediaUpdate
+11-14 11:24:34.067   668   668 D AvrcpMediaPlayerList: sendMediaUpdate state=PlaybackState {state=3, position=961207, buffered position=1933152, speed=1.0, updated=121440, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:34.067   668   668 D AvrcpTargetService: onMediaUpdated: track_changed=false state=true queue=false
+11-14 11:24:34.067   668   668 D AvrcpNativeInterface: sendMediaUpdate: metadata=false playStatus=true queue=false
+11-14 11:24:34.067   668   668 D AvrcpTargetJni: sendMediaUpdateNative
+11-14 11:24:34.067   668   668 I bt_stack: [INFO:avrcp_service.cc(346)] virtual void bluetooth::avrcp::AvrcpService::SendMediaUpdate(bool, bool, bool) track_changed=0 :  play_state=1 :  queue=0
+11-14 11:24:34.095   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:34.340   273  1722 I chatty  : uid=1041(audioserver) audio.service.r identical 11 lines
+11-14 11:24:34.372   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:34.372   325   433 D AudioFlinger: mixer(0xe7825030) throttle end: throttle time(406)
+11-14 11:24:34.376   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:34.434   273  1722 I chatty  : uid=1041(audioserver) audio.service.r identical 1 line
+11-14 11:24:34.458   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:34.480  3753  3772 I ChimeraSrvcProxy: NullBinder for com.google.android.gms.auth.cryptauth.cryptauthservice.START triggering remote TransactionTooLargeException due to Service without Chimera impl
+11-14 11:24:34.482   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:34.493  1061  1583 E JavaBinder: !!! FAILED BINDER TRANSACTION !!!  (parcel size = 536)
+11-14 11:24:34.494  1061  1583 W GmsClient: IGmsServiceBroker.getService failed
+11-14 11:24:34.494  1061  1583 W GmsClient: android.os.DeadObjectException: Transaction failed on small parcel; remote process probably died
+11-14 11:24:34.494  1061  1583 W GmsClient: 	at android.os.BinderProxy.transactNative(Native Method)
+11-14 11:24:34.494  1061  1583 W GmsClient: 	at android.os.BinderProxy.transact(BinderProxy.java:540)
+11-14 11:24:34.494  1061  1583 W GmsClient: 	at nut.fj(:com.google.android.gms@223616104@22.36.16 (180706-476895098):5)
+11-14 11:24:34.494  1061  1583 W GmsClient: 	at nsz.s(:com.google.android.gms@223616104@22.36.16 (180706-476895098):13)
+11-14 11:24:34.494  1061  1583 W GmsClient: 	at ncr.run(:com.google.android.gms@223616104@22.36.16 (180706-476895098):5)
+11-14 11:24:34.494  1061  1583 W GmsClient: 	at android.os.Handler.handleCallback(Handler.java:938)
+11-14 11:24:34.494  1061  1583 W GmsClient: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+11-14 11:24:34.494  1061  1583 W GmsClient: 	at zla.hP(:com.google.android.gms@223616104@22.36.16 (180706-476895098):0)
+11-14 11:24:34.494  1061  1583 W GmsClient: 	at zla.dispatchMessage(:com.google.android.gms@223616104@22.36.16 (180706-476895098):11)
+11-14 11:24:34.494  1061  1583 W GmsClient: 	at android.os.Looper.loop(Looper.java:223)
+11-14 11:24:34.494  1061  1583 W GmsClient: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+11-14 11:24:34.521   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:34.923   273  1722 I chatty  : uid=1041(audioserver) audio.service.r identical 17 lines
+11-14 11:24:34.946   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:34.994   325   433 D AudioFlinger: mixer(0xe7825030) throttle end: throttle time(471)
+11-14 11:24:35.019   273  1722 W android.hardware.audio.service.ranchu: TinyalsaSink::write:125 pcm_write was late reading frames, dropping 22131 us of audio
+11-14 11:24:35.072  1207  1207 D NowPlayingListener: updateNowPlayingNotification with controller: NowPlayingMediaController {packageName = cz.ondra.absplayer, state = 3, metadata = Advice from a Caterpillar, Alice's Adventures in Wonderland, null}
+11-14 11:24:35.072  1207  1207 D NowPlayingListener: updateMetadata() called with: metadata description = [Advice from a Caterpillar, Alice's Adventures in Wonderland, null] and now playing listener: dqv@b111faa
+11-14 11:24:35.074   668   668 V AvrcpMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=3, position=971571, buffered position=1933152, speed=1.0, updated=122445, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:35.075  2442  2442 D BasicMediaStatusFactory: Supported media session actions: 4456443
+11-14 11:24:35.080  1207  1207 D NowPlayingManager: onMediaDataUpdated() called with: NowPlayingData [dqs@297dcb5, title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:35.083   472   472 W NotificationHistory: Attempted to add notif for locked/gone/disabled user 0
+11-14 11:24:35.084  1207  1207 D NowPlayingManager: onMediaDataUpdated: A notification for Now Playing Card has been posted with NowPlayingData [title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:35.084  1207  1207 D NowPlayingListener: updatePlayback() called with: state = [PlaybackState {state=3, position=971571, buffered position=1933152, speed=1.0, updated=122445, actions=4456443, custom actions=[], active item id=1, error=null}] and now playing listener: dqv@b111faa
+11-14 11:24:35.084  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate() called with: state = [3], stateChangeTimeMs = [122445], currentPosMs = [971571]
+11-14 11:24:35.084  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate: Skipped update, state: 3 was unchanged
+11-14 11:24:35.084  1207  1207 D NowPlayingListener: updateMetadata() called with: metadata description = [Advice from a Caterpillar, Alice's Adventures in Wonderland, null] and now playing listener: dqv@b111faa
+11-14 11:24:35.084  1207  1207 D NowPlayingManager: onMediaDataUpdated() called with: NowPlayingData [dqs@8e64f4a, title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:35.089  1207  1207 D NowPlayingManager: onMediaDataUpdated: A notification for Now Playing Card has been posted with NowPlayingData [title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:35.086   472   472 W NotificationHistory: Attempted to add notif for locked/gone/disabled user 0
+11-14 11:24:35.814   472   553 W ActivityManager: Unable to start service Intent { act=com.google.android.gms.drive.ApiService.RESET_AFTER_BOOT flg=0x4 cmp=com.google.android.gms/.drive.api.ApiService (has extras) } U=0: not found
+11-14 11:24:35.968   325   433 D AudioFlinger: mixer(0xe7825030) throttle end: throttle time(2)
+11-14 11:24:36.133  3753  3772 I ChimeraSrvcProxy: NullBinder for com.google.android.gms.languageprofile.service.START triggering remote TransactionTooLargeException due to Service without Chimera impl
+11-14 11:24:36.142  1920  2006 E JavaBinder: !!! FAILED BINDER TRANSACTION !!!  (parcel size = 556)
+11-14 11:24:36.142  1920  2006 W GmsClient: IGmsServiceBroker.getService failed
+11-14 11:24:36.142  1920  2006 W GmsClient: android.os.DeadObjectException: Transaction failed on small parcel; remote process probably died
+11-14 11:24:36.142  1920  2006 W GmsClient: 	at android.os.BinderProxy.transactNative(Native Method)
+11-14 11:24:36.142  1920  2006 W GmsClient: 	at android.os.BinderProxy.transact(BinderProxy.java:540)
+11-14 11:24:36.142  1920  2006 W GmsClient: 	at qjo.v(PG:14)
+11-14 11:24:36.142  1920  2006 W GmsClient: 	at qhf.run(PG:5)
+11-14 11:24:36.142  1920  2006 W GmsClient: 	at android.os.Handler.handleCallback(Handler.java:938)
+11-14 11:24:36.142  1920  2006 W GmsClient: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+11-14 11:24:36.142  1920  2006 W GmsClient: 	at android.os.Looper.loop(Looper.java:223)
+11-14 11:24:36.142  1920  2006 W GmsClient: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+11-14 11:24:37.082   668   668 E AvrcpMediaPlayerWrapper: Timeout while waiting for metadata to sync for cz.ondra.absplayer
+11-14 11:24:37.083   668   668 E AvrcpMediaPlayerWrapper:   └ Current Metadata: { mediaId="currsong" title="Advice from a Caterpillar" artist="Alice's Adventures in Wonderland" album="Alice's Adventures in Wonderland" duration=2100000 trackPosition=1/1 }
+11-14 11:24:37.083   668   668 E AvrcpMediaPlayerWrapper:   └ Current Playstate: PlaybackState {state=3, position=973582, buffered position=1933152, speed=1.0, updated=124456, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:37.083   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(0): { mediaId="NowPlayingId0" title="The Rabbit Sends in a Little Bill" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=1/9 }
+11-14 11:24:37.083   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(1): { mediaId="NowPlayingId1" title="Advice from a Caterpillar" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=2/9 }
+11-14 11:24:37.083   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(2): { mediaId="NowPlayingId2" title="Pig and Pepper" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=3/9 }
+11-14 11:24:37.083   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(3): { mediaId="NowPlayingId3" title="A Mad Tea-Party" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=4/9 }
+11-14 11:24:37.083   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(4): { mediaId="NowPlayingId4" title="The Queen's Croquet-Ground" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=5/9 }
+11-14 11:24:37.083   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(5): { mediaId="NowPlayingId5" title="The Mock Turtle's Story" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=6/9 }
+11-14 11:24:37.083   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(6): { mediaId="NowPlayingId6" title="The Lobster Quadrille" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=7/9 }
+11-14 11:24:37.083   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(7): { mediaId="NowPlayingId7" title="Who Stole the Tarts?" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=8/9 }
+11-14 11:24:37.083   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(8): { mediaId="NowPlayingId8" title="Alice's Evidence" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=9/9 }
+11-14 11:24:37.084   668   668 V AvrcpMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:24:37.084   668   668 D AvrcpMediaPlayerList: sendMediaUpdate
+11-14 11:24:37.084   668   668 D AvrcpMediaPlayerList: sendMediaUpdate state=PlaybackState {state=3, position=973584, buffered position=1933152, speed=1.0, updated=124458, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:37.084   668   668 D AvrcpTargetService: onMediaUpdated: track_changed=false state=true queue=false
+11-14 11:24:37.084   668   668 D AvrcpNativeInterface: sendMediaUpdate: metadata=false playStatus=true queue=false
+11-14 11:24:37.084   668   668 D AvrcpTargetJni: sendMediaUpdateNative
+11-14 11:24:37.084   668   668 I bt_stack: [INFO:avrcp_service.cc(346)] virtual void bluetooth::avrcp::AvrcpService::SendMediaUpdate(bool, bool, bool) track_changed=0 :  play_state=1 :  queue=0
+11-14 11:24:38.073  1207  1207 D NowPlayingListener: updateNowPlayingNotification with controller: NowPlayingMediaController {packageName = cz.ondra.absplayer, state = 3, metadata = Advice from a Caterpillar, Alice's Adventures in Wonderland, null}
+11-14 11:24:38.073  1207  1207 D NowPlayingListener: updateMetadata() called with: metadata description = [Advice from a Caterpillar, Alice's Adventures in Wonderland, null] and now playing listener: dqv@b111faa
+11-14 11:24:38.073   668   668 V AvrcpMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=3, position=974576, buffered position=1933152, speed=1.0, updated=125446, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:38.076  1207  1207 D NowPlayingManager: onMediaDataUpdated() called with: NowPlayingData [dqs@3747ebb, title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:38.078   472   472 W NotificationHistory: Attempted to add notif for locked/gone/disabled user 0
+11-14 11:24:38.078  2442  2442 D BasicMediaStatusFactory: Supported media session actions: 4456443
+11-14 11:24:38.078  1207  1207 D NowPlayingManager: onMediaDataUpdated: A notification for Now Playing Card has been posted with NowPlayingData [title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:38.078  1207  1207 D NowPlayingListener: updatePlayback() called with: state = [PlaybackState {state=3, position=974576, buffered position=1933152, speed=1.0, updated=125446, actions=4456443, custom actions=[], active item id=1, error=null}] and now playing listener: dqv@b111faa
+11-14 11:24:38.078  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate() called with: state = [3], stateChangeTimeMs = [125446], currentPosMs = [974576]
+11-14 11:24:38.078  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate: Skipped update, state: 3 was unchanged
+11-14 11:24:38.078  1207  1207 D NowPlayingListener: updateMetadata() called with: metadata description = [Advice from a Caterpillar, Alice's Adventures in Wonderland, null] and now playing listener: dqv@b111faa
+11-14 11:24:38.079  1207  1207 D NowPlayingManager: onMediaDataUpdated() called with: NowPlayingData [dqs@6d91fd8, title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:38.081  1207  1207 D NowPlayingManager: onMediaDataUpdated: A notification for Now Playing Card has been posted with NowPlayingData [title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:39.502  3753  3772 I ChimeraSrvcProxy: NullBinder for com.google.android.gms.auth.cryptauth.cryptauthservice.START triggering remote TransactionTooLargeException due to Service without Chimera impl
+11-14 11:24:39.511  1061  1583 E JavaBinder: !!! FAILED BINDER TRANSACTION !!!  (parcel size = 536)
+11-14 11:24:39.512  1061  1583 W GmsClient: IGmsServiceBroker.getService failed
+11-14 11:24:39.512  1061  1583 W GmsClient: android.os.DeadObjectException: Transaction failed on small parcel; remote process probably died
+11-14 11:24:39.512  1061  1583 W GmsClient: 	at android.os.BinderProxy.transactNative(Native Method)
+11-14 11:24:39.512  1061  1583 W GmsClient: 	at android.os.BinderProxy.transact(BinderProxy.java:540)
+11-14 11:24:39.512  1061  1583 W GmsClient: 	at nut.fj(:com.google.android.gms@223616104@22.36.16 (180706-476895098):5)
+11-14 11:24:39.512  1061  1583 W GmsClient: 	at nsz.s(:com.google.android.gms@223616104@22.36.16 (180706-476895098):13)
+11-14 11:24:39.512  1061  1583 W GmsClient: 	at ncr.run(:com.google.android.gms@223616104@22.36.16 (180706-476895098):5)
+11-14 11:24:39.512  1061  1583 W GmsClient: 	at android.os.Handler.handleCallback(Handler.java:938)
+11-14 11:24:39.512  1061  1583 W GmsClient: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+11-14 11:24:39.512  1061  1583 W GmsClient: 	at zla.hP(:com.google.android.gms@223616104@22.36.16 (180706-476895098):0)
+11-14 11:24:39.512  1061  1583 W GmsClient: 	at zla.dispatchMessage(:com.google.android.gms@223616104@22.36.16 (180706-476895098):11)
+11-14 11:24:39.512  1061  1583 W GmsClient: 	at android.os.Looper.loop(Looper.java:223)
+11-14 11:24:39.512  1061  1583 W GmsClient: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+11-14 11:24:40.076   668   668 E AvrcpMediaPlayerWrapper: Timeout while waiting for metadata to sync for cz.ondra.absplayer
+11-14 11:24:40.076   668   668 E AvrcpMediaPlayerWrapper:   └ Current Metadata: { mediaId="currsong" title="Advice from a Caterpillar" artist="Alice's Adventures in Wonderland" album="Alice's Adventures in Wonderland" duration=2100000 trackPosition=1/1 }
+11-14 11:24:40.076   668   668 E AvrcpMediaPlayerWrapper:   └ Current Playstate: PlaybackState {state=3, position=976580, buffered position=1933152, speed=1.0, updated=127450, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:40.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(0): { mediaId="NowPlayingId0" title="The Rabbit Sends in a Little Bill" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=1/9 }
+11-14 11:24:40.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(1): { mediaId="NowPlayingId1" title="Advice from a Caterpillar" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=2/9 }
+11-14 11:24:40.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(2): { mediaId="NowPlayingId2" title="Pig and Pepper" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=3/9 }
+11-14 11:24:40.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(3): { mediaId="NowPlayingId3" title="A Mad Tea-Party" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=4/9 }
+11-14 11:24:40.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(4): { mediaId="NowPlayingId4" title="The Queen's Croquet-Ground" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=5/9 }
+11-14 11:24:40.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(5): { mediaId="NowPlayingId5" title="The Mock Turtle's Story" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=6/9 }
+11-14 11:24:40.077   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(6): { mediaId="NowPlayingId6" title="The Lobster Quadrille" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=7/9 }
+11-14 11:24:40.077   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(7): { mediaId="NowPlayingId7" title="Who Stole the Tarts?" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=8/9 }
+11-14 11:24:40.077   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(8): { mediaId="NowPlayingId8" title="Alice's Evidence" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=9/9 }
+11-14 11:24:40.077   668   668 V AvrcpMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:24:40.077   668   668 D AvrcpMediaPlayerList: sendMediaUpdate
+11-14 11:24:40.077   668   668 D AvrcpMediaPlayerList: sendMediaUpdate state=PlaybackState {state=3, position=976580, buffered position=1933152, speed=1.0, updated=127450, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:40.077   668   668 D AvrcpTargetService: onMediaUpdated: track_changed=false state=true queue=false
+11-14 11:24:40.077   668   668 D AvrcpNativeInterface: sendMediaUpdate: metadata=false playStatus=true queue=false
+11-14 11:24:40.077   668   668 D AvrcpTargetJni: sendMediaUpdateNative
+11-14 11:24:40.077   668   668 I bt_stack: [INFO:avrcp_service.cc(346)] virtual void bluetooth::avrcp::AvrcpService::SendMediaUpdate(bool, bool, bool) track_changed=0 :  play_state=1 :  queue=0
+11-14 11:24:41.074  1207  1207 D NowPlayingListener: updateNowPlayingNotification with controller: NowPlayingMediaController {packageName = cz.ondra.absplayer, state = 3, metadata = Advice from a Caterpillar, Alice's Adventures in Wonderland, null}
+11-14 11:24:41.074  1207  1207 D NowPlayingListener: updateMetadata() called with: metadata description = [Advice from a Caterpillar, Alice's Adventures in Wonderland, null] and now playing listener: dqv@b111faa
+11-14 11:24:41.074   668   668 V AvrcpMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=3, position=977571, buffered position=1933152, speed=1.0, updated=128447, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:41.074  1207  1207 D NowPlayingManager: onMediaDataUpdated() called with: NowPlayingData [dqs@b368f31, title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:41.075  2442  2442 D BasicMediaStatusFactory: Supported media session actions: 4456443
+11-14 11:24:41.077  1207  1207 D NowPlayingManager: onMediaDataUpdated: A notification for Now Playing Card has been posted with NowPlayingData [title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:41.077  1207  1207 D NowPlayingListener: updatePlayback() called with: state = [PlaybackState {state=3, position=977571, buffered position=1933152, speed=1.0, updated=128447, actions=4456443, custom actions=[], active item id=1, error=null}] and now playing listener: dqv@b111faa
+11-14 11:24:41.077  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate() called with: state = [3], stateChangeTimeMs = [128447], currentPosMs = [977571]
+11-14 11:24:41.077  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate: Skipped update, state: 3 was unchanged
+11-14 11:24:41.077  1207  1207 D NowPlayingListener: updateMetadata() called with: metadata description = [Advice from a Caterpillar, Alice's Adventures in Wonderland, null] and now playing listener: dqv@b111faa
+11-14 11:24:41.078  1207  1207 D NowPlayingManager: onMediaDataUpdated() called with: NowPlayingData [dqs@6c21616, title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:41.079  1207  1207 D NowPlayingManager: onMediaDataUpdated: A notification for Now Playing Card has been posted with NowPlayingData [title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:41.171  3753  3772 I ChimeraSrvcProxy: NullBinder for com.google.android.gms.languageprofile.service.START triggering remote TransactionTooLargeException due to Service without Chimera impl
+11-14 11:24:41.180  1920  2006 E JavaBinder: !!! FAILED BINDER TRANSACTION !!!  (parcel size = 556)
+11-14 11:24:41.180  1920  2006 W GmsClient: IGmsServiceBroker.getService failed
+11-14 11:24:41.180  1920  2006 W GmsClient: android.os.DeadObjectException: Transaction failed on small parcel; remote process probably died
+11-14 11:24:41.180  1920  2006 W GmsClient: 	at android.os.BinderProxy.transactNative(Native Method)
+11-14 11:24:41.180  1920  2006 W GmsClient: 	at android.os.BinderProxy.transact(BinderProxy.java:540)
+11-14 11:24:41.180  1920  2006 W GmsClient: 	at qjo.v(PG:14)
+11-14 11:24:41.180  1920  2006 W GmsClient: 	at qhf.run(PG:5)
+11-14 11:24:41.180  1920  2006 W GmsClient: 	at android.os.Handler.handleCallback(Handler.java:938)
+11-14 11:24:41.180  1920  2006 W GmsClient: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+11-14 11:24:41.180  1920  2006 W GmsClient: 	at android.os.Looper.loop(Looper.java:223)
+11-14 11:24:41.180  1920  2006 W GmsClient: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+11-14 11:24:43.075   668   668 E AvrcpMediaPlayerWrapper: Timeout while waiting for metadata to sync for cz.ondra.absplayer
+11-14 11:24:43.076   668   668 E AvrcpMediaPlayerWrapper:   └ Current Metadata: { mediaId="currsong" title="Advice from a Caterpillar" artist="Alice's Adventures in Wonderland" album="Alice's Adventures in Wonderland" duration=2100000 trackPosition=1/1 }
+11-14 11:24:43.076   668   668 E AvrcpMediaPlayerWrapper:   └ Current Playstate: PlaybackState {state=3, position=979574, buffered position=1933152, speed=1.0, updated=130450, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:43.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(0): { mediaId="NowPlayingId0" title="The Rabbit Sends in a Little Bill" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=1/9 }
+11-14 11:24:43.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(1): { mediaId="NowPlayingId1" title="Advice from a Caterpillar" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=2/9 }
+11-14 11:24:43.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(2): { mediaId="NowPlayingId2" title="Pig and Pepper" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=3/9 }
+11-14 11:24:43.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(3): { mediaId="NowPlayingId3" title="A Mad Tea-Party" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=4/9 }
+11-14 11:24:43.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(4): { mediaId="NowPlayingId4" title="The Queen's Croquet-Ground" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=5/9 }
+11-14 11:24:43.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(5): { mediaId="NowPlayingId5" title="The Mock Turtle's Story" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=6/9 }
+11-14 11:24:43.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(6): { mediaId="NowPlayingId6" title="The Lobster Quadrille" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=7/9 }
+11-14 11:24:43.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(7): { mediaId="NowPlayingId7" title="Who Stole the Tarts?" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=8/9 }
+11-14 11:24:43.076   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(8): { mediaId="NowPlayingId8" title="Alice's Evidence" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=9/9 }
+11-14 11:24:43.076   668   668 V AvrcpMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:24:43.076   668   668 D AvrcpMediaPlayerList: sendMediaUpdate
+11-14 11:24:43.076   668   668 D AvrcpMediaPlayerList: sendMediaUpdate state=PlaybackState {state=3, position=979574, buffered position=1933152, speed=1.0, updated=130450, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:43.076   668   668 D AvrcpTargetService: onMediaUpdated: track_changed=false state=true queue=false
+11-14 11:24:43.076   668   668 D AvrcpNativeInterface: sendMediaUpdate: metadata=false playStatus=true queue=false
+11-14 11:24:43.076   668   668 D AvrcpTargetJni: sendMediaUpdateNative
+11-14 11:24:43.076   668   668 I bt_stack: [INFO:avrcp_service.cc(346)] virtual void bluetooth::avrcp::AvrcpService::SendMediaUpdate(bool, bool, bool) track_changed=0 :  play_state=1 :  queue=0
+11-14 11:24:44.075  1207  1207 D NowPlayingListener: updateNowPlayingNotification with controller: NowPlayingMediaController {packageName = cz.ondra.absplayer, state = 3, metadata = Advice from a Caterpillar, Alice's Adventures in Wonderland, null}
+11-14 11:24:44.075  1207  1207 D NowPlayingListener: updateMetadata() called with: metadata description = [Advice from a Caterpillar, Alice's Adventures in Wonderland, null] and now playing listener: dqv@b111faa
+11-14 11:24:44.075   668   668 V AvrcpMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=3, position=982186, buffered position=1933152, speed=1.0, updated=131448, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:44.076  2442  2442 D BasicMediaStatusFactory: Supported media session actions: 4456443
+11-14 11:24:44.076  1207  1207 D NowPlayingManager: onMediaDataUpdated() called with: NowPlayingData [dqs@e624b97, title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:44.078  1207  1207 D NowPlayingManager: onMediaDataUpdated: A notification for Now Playing Card has been posted with NowPlayingData [title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:44.078  1207  1207 D NowPlayingListener: updatePlayback() called with: state = [PlaybackState {state=3, position=982186, buffered position=1933152, speed=1.0, updated=131448, actions=4456443, custom actions=[], active item id=1, error=null}] and now playing listener: dqv@b111faa
+11-14 11:24:44.078  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate() called with: state = [3], stateChangeTimeMs = [131448], currentPosMs = [982186]
+11-14 11:24:44.078  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate: Skipped update, state: 3 was unchanged
+11-14 11:24:44.078  1207  1207 D NowPlayingListener: updateMetadata() called with: metadata description = [Advice from a Caterpillar, Alice's Adventures in Wonderland, null] and now playing listener: dqv@b111faa
+11-14 11:24:44.079  1207  1207 D NowPlayingManager: onMediaDataUpdated() called with: NowPlayingData [dqs@ac6184, title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:44.080  1207  1207 D NowPlayingManager: onMediaDataUpdated: A notification for Now Playing Card has been posted with NowPlayingData [title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:44.515  3753  3772 I ChimeraSrvcProxy: NullBinder for com.google.android.gms.auth.cryptauth.cryptauthservice.START triggering remote TransactionTooLargeException due to Service without Chimera impl
+11-14 11:24:44.524  1061  1583 E JavaBinder: !!! FAILED BINDER TRANSACTION !!!  (parcel size = 536)
+11-14 11:24:44.524  1061  1583 W GmsClient: IGmsServiceBroker.getService failed
+11-14 11:24:44.524  1061  1583 W GmsClient: android.os.DeadObjectException: Transaction failed on small parcel; remote process probably died
+11-14 11:24:44.524  1061  1583 W GmsClient: 	at android.os.BinderProxy.transactNative(Native Method)
+11-14 11:24:44.524  1061  1583 W GmsClient: 	at android.os.BinderProxy.transact(BinderProxy.java:540)
+11-14 11:24:44.524  1061  1583 W GmsClient: 	at nut.fj(:com.google.android.gms@223616104@22.36.16 (180706-476895098):5)
+11-14 11:24:44.524  1061  1583 W GmsClient: 	at nsz.s(:com.google.android.gms@223616104@22.36.16 (180706-476895098):13)
+11-14 11:24:44.524  1061  1583 W GmsClient: 	at ncr.run(:com.google.android.gms@223616104@22.36.16 (180706-476895098):5)
+11-14 11:24:44.524  1061  1583 W GmsClient: 	at android.os.Handler.handleCallback(Handler.java:938)
+11-14 11:24:44.524  1061  1583 W GmsClient: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+11-14 11:24:44.524  1061  1583 W GmsClient: 	at zla.hP(:com.google.android.gms@223616104@22.36.16 (180706-476895098):0)
+11-14 11:24:44.524  1061  1583 W GmsClient: 	at zla.dispatchMessage(:com.google.android.gms@223616104@22.36.16 (180706-476895098):11)
+11-14 11:24:44.524  1061  1583 W GmsClient: 	at android.os.Looper.loop(Looper.java:223)
+11-14 11:24:44.524  1061  1583 W GmsClient: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+11-14 11:24:44.527  1141  1141 D RetryBindingHandler: Handle WHAT_RETRY_GET_LOCAL_CLOUDCAST_SERVICE_INFO message
+11-14 11:24:44.528  2442  2442 E cr_LocalGrpcAuthService: Calling package not allowed.
+11-14 11:24:44.528  1141  1141 E LocalGrpcAuthClientImpl: invalid message
+11-14 11:24:44.528  1141  1141 D RetryBindingHandler: retry get auth info
+11-14 11:24:44.528  1141  1141 D RetryBindingHandler: send message in 32000 ms
+11-14 11:24:44.528  1141  1141 E cr_AssistantManagerInternal$AssistantLocalGrpcAuthCallback: the port or token cannot be retrieved from local grpc client
+11-14 11:24:44.932   428   428 E netmgr  : qemu_pipe_open_ns:62: Could not connect to the 'pipe:qemud:network' service: Invalid argument
+11-14 11:24:44.932   428   428 E netmgr  : Failed to open QEMU pipe 'qemud:network': Invalid argument
+11-14 11:24:45.009   437   437 E wifi_forwarder: qemu_pipe_open_ns:62: Could not connect to the 'pipe:qemud:wififorward' service: Invalid argument
+11-14 11:24:45.009   437   437 E wifi_forwarder: RemoteConnection failed to initialize: RemoteConnection failed to open pipe
+11-14 11:24:46.078   668   668 E AvrcpMediaPlayerWrapper: Timeout while waiting for metadata to sync for cz.ondra.absplayer
+11-14 11:24:46.078   668   668 E AvrcpMediaPlayerWrapper:   └ Current Metadata: { mediaId="currsong" title="Advice from a Caterpillar" artist="Alice's Adventures in Wonderland" album="Alice's Adventures in Wonderland" duration=2100000 trackPosition=1/1 }
+11-14 11:24:46.078   668   668 E AvrcpMediaPlayerWrapper:   └ Current Playstate: PlaybackState {state=3, position=984190, buffered position=1933152, speed=1.0, updated=133452, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:46.078   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(0): { mediaId="NowPlayingId0" title="The Rabbit Sends in a Little Bill" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=1/9 }
+11-14 11:24:46.078   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(1): { mediaId="NowPlayingId1" title="Advice from a Caterpillar" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=2/9 }
+11-14 11:24:46.078   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(2): { mediaId="NowPlayingId2" title="Pig and Pepper" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=3/9 }
+11-14 11:24:46.078   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(3): { mediaId="NowPlayingId3" title="A Mad Tea-Party" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=4/9 }
+11-14 11:24:46.078   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(4): { mediaId="NowPlayingId4" title="The Queen's Croquet-Ground" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=5/9 }
+11-14 11:24:46.078   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(5): { mediaId="NowPlayingId5" title="The Mock Turtle's Story" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=6/9 }
+11-14 11:24:46.078   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(6): { mediaId="NowPlayingId6" title="The Lobster Quadrille" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=7/9 }
+11-14 11:24:46.078   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(7): { mediaId="NowPlayingId7" title="Who Stole the Tarts?" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=8/9 }
+11-14 11:24:46.078   668   668 E AvrcpMediaPlayerWrapper:   └ QueueItem(8): { mediaId="NowPlayingId8" title="Alice's Evidence" artist="Alice's Adventures in Wonderland" album="" duration=0 trackPosition=9/9 }
+11-14 11:24:46.079   668   668 V AvrcpMediaPlayerWrapper: trySendMediaUpdate(): Metadata has been updated for cz.ondra.absplayer
+11-14 11:24:46.079   668   668 D AvrcpMediaPlayerList: sendMediaUpdate
+11-14 11:24:46.079   668   668 D AvrcpMediaPlayerList: sendMediaUpdate state=PlaybackState {state=3, position=984190, buffered position=1933152, speed=1.0, updated=133452, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:46.079   668   668 D AvrcpTargetService: onMediaUpdated: track_changed=false state=true queue=false
+11-14 11:24:46.079   668   668 D AvrcpNativeInterface: sendMediaUpdate: metadata=false playStatus=true queue=false
+11-14 11:24:46.079   668   668 D AvrcpTargetJni: sendMediaUpdateNative
+11-14 11:24:46.079   668   668 I bt_stack: [INFO:avrcp_service.cc(346)] virtual void bluetooth::avrcp::AvrcpService::SendMediaUpdate(bool, bool, bool) track_changed=0 :  play_state=1 :  queue=0
+11-14 11:24:46.095  1141  4282 D BindingManager: with
+11-14 11:24:46.096  2442  2442 W cr_GrpcIpcUidPolicy: Signaure hash T3FWTW4FrfZGfnxVLvvYYYrf02Ws4NZTsvI808lwDxA= not in whitelisted signatures
+11-14 11:24:46.096  2442  2442 E cr_GrpcIpcUidPolicy: Unauthorized access attempt from com.google.android.katniss
+11-14 11:24:46.096  2442  2442 E cr_GrpcIpcSocketService: Calling package not allowed.
+11-14 11:24:46.096  1141  1141 E GrpcIpcSocketClientImpl: invalid message
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097055    4282 grpc_ipc_socket_client.cc:77] Error for usonia-ipc-socket
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097106    4282 android_grpc_builder.cc:149] Could not get a socket for binder:com.google.android.apps.mediashell:usonia-ipc-socket
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097121    4282 grpc_manager_impl.cc:634] GRPC[uri=]: Grpc cannot connect to host {UNDEFINED}
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097133    4282 grpc_manager_impl.cc:782] GRPC[uri=]: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 W native  : W0000 00:00:1794655486.097139    4282 grpc_auth_manager_with_grpc_ipc.cc:65] IPC for Auth.AuthReadyStreaming closed: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097148    4282 grpc_manager_impl.cc:782] GRPC[uri=]: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 W native  : W0000 00:00:1794655486.097152    4282 distributed_service_discovery_with_grpc_ipc.cc:150] IPC for DistributedServiceDiscovery.AddService closed: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097157    4282 grpc_manager_impl.cc:782] GRPC[uri=]: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 W native  : W0000 00:00:1794655486.097161    4282 distributed_service_discovery_with_grpc_ipc.cc:64] IPC for DistributedServiceDiscovery.UpdateObservers closed: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097167    4282 grpc_manager_impl.cc:782] GRPC[uri=]: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 W native  : W0000 00:00:1794655486.097171    4282 distributed_service_discovery_with_grpc_ipc.cc:251] IPC for DistributedServiceDiscovery.GetIamMode closed: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097177    4282 grpc_manager_impl.cc:782] GRPC[uri=]: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 W native  : W0000 00:00:1794655486.097181    4282 metrics_recorder_with_grpc_ipc.cc:164] IPC for MetricsRecorder.RecordMetrics closed: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097187    4282 grpc_manager_impl.cc:782] GRPC[uri=]: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 W native  : W0000 00:00:1794655486.097191    4282 synchronous_sound_player_with_grpc_ipc.cc:173] IPC for SynchronousSoundPlayer.UpdateSound closed: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097197    4282 grpc_manager_impl.cc:782] GRPC[uri=]: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097201    4282 ipc_common.h:486] Error in fetching local device info: [error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097207    4282 grpc_manager_impl.cc:782] GRPC[uri=]: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 W native  : W0000 00:00:1794655486.097211    4282 directory_service_with_grpc_ipc.cc:123] IPC for DirectoryService.ObserveCommonTime closed: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097217    4282 grpc_manager_impl.cc:782] GRPC[uri=]: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097221    4282 directory_service_with_grpc_ipc.cc:277] IPC for DirectoryService.UpdateStateObservers closed: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097227    4282 grpc_manager_impl.cc:782] GRPC[uri=]: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097231    4282 directory_service_with_grpc_ipc.cc:378] IPC for DirectoryService.UpdateMessageObservers closed: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 E native  : E0000 00:00:1794655486.097236    4282 grpc_manager_impl.cc:782] GRPC[uri=]: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.097  1141  4282 W native  : W0000 00:00:1794655486.097241    4282 state_manager_with_grpc_ipc.cc:74] IPC for StateManager.ReceiveStateUpdates closed: status=[error_code=RESOURCE_EXHAUSTED, error_message=Cannot create a channel. Call to binder:com.google.android.apps.mediashell:usonia-ipc-socket ignored.]
+11-14 11:24:46.196  3753  3772 I ChimeraSrvcProxy: NullBinder for com.google.android.gms.languageprofile.service.START triggering remote TransactionTooLargeException due to Service without Chimera impl
+11-14 11:24:46.205  1920  2006 E JavaBinder: !!! FAILED BINDER TRANSACTION !!!  (parcel size = 556)
+11-14 11:24:46.205  1920  2006 W GmsClient: IGmsServiceBroker.getService failed
+11-14 11:24:46.205  1920  2006 W GmsClient: android.os.DeadObjectException: Transaction failed on small parcel; remote process probably died
+11-14 11:24:46.205  1920  2006 W GmsClient: 	at android.os.BinderProxy.transactNative(Native Method)
+11-14 11:24:46.205  1920  2006 W GmsClient: 	at android.os.BinderProxy.transact(BinderProxy.java:540)
+11-14 11:24:46.205  1920  2006 W GmsClient: 	at qjo.v(PG:14)
+11-14 11:24:46.205  1920  2006 W GmsClient: 	at qhf.run(PG:5)
+11-14 11:24:46.205  1920  2006 W GmsClient: 	at android.os.Handler.handleCallback(Handler.java:938)
+11-14 11:24:46.205  1920  2006 W GmsClient: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+11-14 11:24:46.205  1920  2006 W GmsClient: 	at android.os.Looper.loop(Looper.java:223)
+11-14 11:24:46.205  1920  2006 W GmsClient: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+11-14 11:24:44.078   472   472 I chatty  : uid=1000(system) Binder:472_3 identical 4 lines
+11-14 11:24:44.080   472   472 W NotificationHistory: Attempted to add notif for locked/gone/disabled user 0
+11-14 11:24:46.734   472  3473 I ActivityManager: Killing 2303:com.android.dynsystem/1000 (adj 985): empty #17
+11-14 11:24:46.738   265   265 I Zygote  : Process 2303 exited due to signal 9 (Killed)
+11-14 11:24:46.745  1061  4439 I PTCommittedOperation: Receive new configuration for com.google.android.libraries.surveys#com.google.android.gms
+11-14 11:24:46.746  1061  4439 I GCoreUlr: ULR code skipped on unsupported form factor.
+11-14 11:24:46.747  3753  4451 W ModuleInitIntentOp: Dropping unexpected action com.google.android.gms.phenotype.COMMITTED
+11-14 11:24:46.747  3753  4451 W ModuleInitIntentOp: Dropping unexpected action com.google.android.gms.phenotype.COMMITTED
+11-14 11:24:46.753  3753  4455 I SyncIntentOperation: (REDACTED) Handling the intent: %s.
+11-14 11:24:46.755  3753  4456 W ModuleInitIntentOp: Dropping unexpected action com.google.android.gms.phenotype.COMMITTED
+11-14 11:24:46.755  3753  4452 I MdiSyncModule: flag handling is skipping irrelevant intent.
+11-14 11:24:46.759  3753  4456 I GmsSyncPolicyEngine: (REDACTED) Periodic sync %d disabled by policy, cancelled.
+11-14 11:24:46.759  3753  4456 I GmsSyncPolicyEngine: (REDACTED) Periodic sync %d disabled by policy, cancelled.
+11-14 11:24:46.781   472   511 I libprocessgroup: Successfully killed process cgroup uid 1000 pid 2303 in 44ms
+11-14 11:24:47.075  1207  1207 D NowPlayingListener: updateNowPlayingNotification with controller: NowPlayingMediaController {packageName = cz.ondra.absplayer, state = 3, metadata = Advice from a Caterpillar, Alice's Adventures in Wonderland, null}
+11-14 11:24:47.075  1207  1207 D NowPlayingListener: updateMetadata() called with: metadata description = [Advice from a Caterpillar, Alice's Adventures in Wonderland, null] and now playing listener: dqv@b111faa
+11-14 11:24:47.076   668   668 V AvrcpMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=3, position=985187, buffered position=1933152, speed=1.0, updated=134449, actions=4456443, custom actions=[], active item id=1, error=null}
+11-14 11:24:47.077  2442  2442 D BasicMediaStatusFactory: Supported media session actions: 4456443
+11-14 11:24:47.078  1207  1207 D NowPlayingManager: onMediaDataUpdated() called with: NowPlayingData [dqs@f33ed6d, title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:47.079  1207  1207 D NowPlayingManager: onMediaDataUpdated: A notification for Now Playing Card has been posted with NowPlayingData [title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:47.079  1207  1207 D NowPlayingListener: updatePlayback() called with: state = [PlaybackState {state=3, position=985187, buffered position=1933152, speed=1.0, updated=134449, actions=4456443, custom actions=[], active item id=1, error=null}] and now playing listener: dqv@b111faa
+11-14 11:24:47.079  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate() called with: state = [3], stateChangeTimeMs = [134449], currentPosMs = [985187]
+11-14 11:24:47.079  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate: Skipped update, state: 3 was unchanged
+11-14 11:24:47.079  1207  1207 D NowPlayingListener: updateMetadata() called with: metadata description = [Advice from a Caterpillar, Alice's Adventures in Wonderland, null] and now playing listener: dqv@b111faa
+11-14 11:24:47.079  1207  1207 D NowPlayingManager: onMediaDataUpdated() called with: NowPlayingData [dqs@ac17da2, title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:47.080   472   472 W NotificationHistory: Attempted to add notif for locked/gone/disabled user 0
+11-14 11:24:47.081  1207  1207 D NowPlayingManager: onMediaDataUpdated: A notification for Now Playing Card has been posted with NowPlayingData [title=Advice from a Caterpillar, artist=Alice's Adventures in Wonderland]
+11-14 11:24:47.353   284   310 D goldfish-address-space: claimShared: Ask to claim region [0x3fc7ea000 0x3fcfd3000]
+11-14 11:24:47.360   155   155 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device manifest.
+11-14 11:24:47.361  4462  4462 I Gralloc4: mapper 4.x is not supported
+11-14 11:24:47.365  4462  4462 D HostConnection: createUnique: call
+11-14 11:24:47.365  4462  4462 D HostConnection: HostConnection::get() New Host Connection established 0xecb40ef0, tid 4462
+11-14 11:24:47.365  4462  4462 D goldfish-address-space: allocate: Ask for block of size 0x100
+11-14 11:24:47.366  4462  4462 D goldfish-address-space: allocate: ioctl allocate returned offset 0x3fbffe000 size 0x2000
+11-14 11:24:47.370  4462  4462 D HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_vulkan_async_qsri ANDROID_EMU_read_color_buffer_dma ANDROID_EMU_hwc_color_transform GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_0 
+11-14 11:24:47.081   472   472 W NotificationHistory: Attempted to add notif for locked/gone/disabled user 0
+11-14 11:24:47.538   472  1285 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=cz.ondra.absplayer/.ui.MainActivity (has extras)} from uid 2000
+11-14 11:24:47.543   472  4084 I WifiService: releaseWifiLock uid=10076
+11-14 11:24:47.545   460   460 I hostapd : wlan1: STA-OPMODE-SMPS-MODE-CHANGED 02:15:b2:00:00:00 dynamic
+11-14 11:24:47.545  2442  2442 D BasicMediaStatusFactory: Supported media session actions: 4456445
+11-14 11:24:47.546   668   668 V AvrcpMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=2, position=985652, buffered position=1933152, speed=0.0, updated=134917, actions=4456445, custom actions=[], active item id=1, error=null}
+11-14 11:24:47.549  2442  2442 D BasicMediaStatusFactory: Supported media session actions: 4456445
+11-14 11:24:47.552   668   668 V AvrcpMediaPlayerWrapper: onPlaybackStateChanged(): cz.ondra.absplayer : PlaybackState {state=2, position=985652, buffered position=1933152, speed=0.0, updated=134919, actions=4456445, custom actions=[], active item id=1, error=null}
+11-14 11:24:47.552  1207  1207 D NowPlayingListener: updatePlayback() called with: state = [PlaybackState {state=2, position=985652, buffered position=1933152, speed=0.0, updated=134917, actions=4456445, custom actions=[], active item id=1, error=null}] and now playing listener: dqv@b111faa
+11-14 11:24:47.552  1207  1207 D NowPlayingManager: onClientPlaybackStateUpdate() called with: state = [2], stateChangeTimeMs = [134917], currentPosMs = [985652]
+11-14 11:24:47.552  1207  1207 D NowPlayingManager: A notification for Now Playing Card has been canceled
+11-14 11:24:47.552  1207  1207 D NowPlayingManager: onClientChanged() called
+11-14 11:24:47.553  1207  1207 D NowPlayingManager: A notification for Now Playing Card has been canceled
+11-14 11:24:47.553   472   472 W TelecomManager: Telecom Service not found.
