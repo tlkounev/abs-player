@@ -153,10 +153,22 @@ class RemoteTarget(private val app: App, device: PairedDevice) : PlaybackTarget 
     }
 
     private var lastLocate = 0L
+    /** The chapter list we have and its key (the receiver leaves the list out while it is unchanged). */
+    private var knownChapters: Pair<String, List<cz.ondra.absplayer.player.ChapterInfo>>? = null
+
+    private fun withChapters(np: NowPlaying): NowPlaying {
+        val known = knownChapters
+        if (np.chaptersOmitted) {
+            return if (known != null && known.first == np.chaptersKey) np.copy(chapters = known.second, chaptersOmitted = false)
+            else np.also { knownChapters = null } // should not happen: ask for the full list next time
+        }
+        np.chaptersKey?.let { knownChapters = it to np.chapters }
+        return np
+    }
 
     suspend fun refresh() {
         try {
-            _state.value = request("/state", null)
+            _state.value = request("/state" + (knownChapters?.let { "?chapters=${it.first}" } ?: ""), null)
             online.value = true
         } catch (e: Exception) {
             // not on its port any more? (the receiver moved to the next port) – look, at most every 20 s
@@ -181,7 +193,7 @@ class RemoteTarget(private val app: App, device: PairedDevice) : PlaybackTarget 
 
     private suspend fun request(path: String, cmd: Command?): NowPlaying = withContext(Dispatchers.IO) {
         val text = RemoteHttp.signed(device, if (cmd != null) "POST" else "GET", path, cmd?.let { RemoteHttp.json.encodeToString(it) })
-        RemoteHttp.json.decodeFromString(NowPlaying.serializer(), text)
+        withChapters(RemoteHttp.json.decodeFromString(NowPlaying.serializer(), text))
     }
 
     private fun send(cmd: Command) {

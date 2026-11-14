@@ -6,6 +6,7 @@ on:
     paths:
       - "win/**"
       - "reader/**"
+      - "i18n/**"
       - ".github/workflows/win.yml"
   workflow_dispatch:
 
@@ -24,6 +25,9 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
+      - name: Texts up to date (i18n/strings.py → generated files)
+        run: python3 ../i18n/gen.py --check
+
       - name: Protocol tests
         run: node --test test/remote.test.js
 

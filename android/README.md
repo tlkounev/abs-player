@@ -1,7 +1,7 @@
 # ABS Player for Android
 
 An Audiobookshelf client for the phone, Android Auto and Android TV / Google TV – all in one APK.
-Version 1.6.7.
+Version 1.6.8.
 
 **[⬇ Download ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)
@@ -166,7 +166,7 @@ builds the APK on GitHub Actions and signs it with a fixed key from the reposito
 Without them the APK is signed with a debug key and no release (`android-v…` tag) is created, because such an
 APK cannot be installed over the previous version.
 
-App texts live in `i18n/strings.py`; `python3 i18n/gen.py` generates `I18nData.kt` from them.
+App texts (shared with the Windows app) live in [`/i18n/strings.py`](../i18n/strings.py); `python3 i18n/gen.py` (from the repository root) generates `I18nData.kt` and the texts of `win/src/i18n.js`.
 
 ## Code map
 

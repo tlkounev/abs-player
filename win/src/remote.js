@@ -205,7 +205,13 @@ function createReceiver(opts) {
       if (!ok) return;
       const sign = { key: ok.link.key, nonce: ok.nonce };
       try {
-        if (req.method === 'GET' && url === '/state') return send(res, 200, await opts.state(), sign);
+        if (req.method === 'GET' && url === '/state') {
+          // asked every second: the chapter list goes only when the client does not have it yet
+          const np = await opts.state();
+          const key = chaptersKey(np);
+          const known = new URL(req.url, 'http://x').searchParams.get('chapters');
+          return send(res, 200, known === key ? { ...np, chapters: [], chaptersKey: key, chaptersOmitted: true } : { ...np, chaptersKey: key }, sign);
+        }
         if (req.method === 'POST' && url === '/cmd') return send(res, 200, await opts.command(JSON.parse(text || '{}')), sign);
         if (req.method === 'DELETE' && url === '/pair') { opts.removeLink(ok.link.clientId); return send(res, 200, { ok: true }, sign); }
         return send(res, 404, { error: 'Unknown request' }, sign);
@@ -242,6 +248,11 @@ function createReceiver(opts) {
       server = null;
     }
   };
+}
+
+/** Identifies a chapter list (the receiver leaves it out of /state while the client has it). */
+function chaptersKey(np) {
+  return L.sha256Hex((np.itemId || '') + '|' + JSON.stringify(np.chapters || [])).slice(0, 12);
 }
 
 // ---------------------------------------------------------------- client (remote device)
@@ -332,7 +343,21 @@ function deviceUrl(d, path) {
   return `http://${host}:${d.port}${path}`;
 }
 
-const remoteState = (d) => signed(d, 'GET', '/state', null, 3000);
+/** Chapter list per device and its key: /state leaves the list out while it is unchanged. */
+const knownChapters = new Map();
+
+async function remoteState(d) {
+  const id = d.deviceId || d.host;
+  const known = knownChapters.get(id);
+  const np = await signed(d, 'GET', '/state' + (known ? '?chapters=' + known.key : ''), null, 3000);
+  if (np && np.chaptersOmitted) {
+    if (known && known.key === np.chaptersKey) return { ...np, chapters: known.chapters, chaptersOmitted: false };
+    knownChapters.delete(id); // should not happen: ask for the full list next time
+  } else if (np && np.chaptersKey) {
+    knownChapters.set(id, { key: np.chaptersKey, chapters: np.chapters || [] });
+  }
+  return np;
+}
 const remoteCmd = (d, cmd) => signed(d, 'POST', '/cmd', cmd, 10000);
 const remoteInfo = (host, port, timeoutMs) => request('GET', deviceUrl({ host, port }, '/info'), null, null, timeoutMs || 3000);
 /** Tells the receiver to forget this controller (best effort – it may be off). */

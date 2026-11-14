@@ -92,7 +92,7 @@ class ReceiverServer(
                 else try {
                     when {
                         // a StateFlow value – no need to wait for the main thread (that made taking over control slow)
-                        get && s.uri == "/state" -> ok(NowPlaying.serializer(), PlaybackHub.state.value, auth)
+                        get && s.uri == "/state" -> ok(NowPlaying.serializer(), withoutKnownChapters(PlaybackHub.state.value, s.parameters["chapters"]?.firstOrNull()), auth)
                         post && s.uri == "/cmd" -> ok(NowPlaying.serializer(), command(json.decodeFromString(Command.serializer(), text)), auth)
                         delete && s.uri == "/pair" -> {
                             onMain { app.settings.receiverLinks = app.settings.receiverLinks.filter { it.clientId != auth.link.clientId } }
@@ -120,6 +120,22 @@ class ReceiverServer(
         version = PROTOCOL_VERSION,
         time = System.currentTimeMillis(),
     )
+
+    private var keyed: Pair<List<cz.ondra.absplayer.player.ChapterInfo>, String>? = null
+
+    /** /state is asked every second: the chapter list goes only when the client does not have it yet. */
+    @Synchronized
+    private fun withoutKnownChapters(np: NowPlaying, known: String?): NowPlaying {
+        val key = keyed?.takeIf { it.first === np.chapters }?.second
+            ?: chaptersKey(np).also { keyed = np.chapters to it }
+        return if (known == key) np.copy(chapters = emptyList(), chaptersKey = key, chaptersOmitted = true)
+        else np.copy(chaptersKey = key)
+    }
+
+    private fun chaptersKey(np: NowPlaying): String =
+        LinkCrypto.sha256Hex((np.itemId ?: "") + "|" + json.encodeToString(
+            kotlinx.serialization.builtins.ListSerializer(cz.ondra.absplayer.player.ChapterInfo.serializer()), np.chapters,
+        )).take(12)
 
     /** Checks the request signature: [Signed], or the refusal to send. */
     @Synchronized

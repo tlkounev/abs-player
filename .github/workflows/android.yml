@@ -6,6 +6,7 @@ on:
     paths:
       - "android/**"
       - "reader/**"
+      - "i18n/**"
       - ".github/workflows/android.yml"
   workflow_dispatch:
 
@@ -44,6 +45,9 @@ jobs:
           fi
 
       # The runner image ships the Android SDK; AGP installs missing platform packages itself.
+      - name: Texts up to date (i18n/strings.py → generated files)
+        run: python3 ../i18n/gen.py --check
+
       - name: Build release APK
         env:
           ABS_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}

@@ -1,7 +1,7 @@
 # ABS Player for Windows
 
 The Audiobookshelf web client as a desktop app with a mini player in the Windows notification area.
-Version 1.3.6.
+Version 1.3.7.
 
 **[⬇ Download ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)
@@ -128,3 +128,6 @@ npm test           # automated tests against a mock of the Audiobookshelf player
 ```
 
 The Windows installer can also be built on Linux (electron-builder needs Wine).
+
+App texts are shared with the Android app: edit [`/i18n/strings.py`](../i18n/strings.py) and run `python3 i18n/gen.py`
+from the repository root – it rewrites the text block of `src/i18n.js`.

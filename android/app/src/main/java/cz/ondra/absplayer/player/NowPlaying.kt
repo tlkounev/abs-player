@@ -31,6 +31,10 @@ data class NowPlaying(
     /** Short status line, e.g. "Position taken over from: Windows". */
     val info: String? = null,
     val error: String? = null,
+    /** Identifies [chapters]; a client that already has them sends it back and gets the state without them. */
+    val chaptersKey: String? = null,
+    /** [chapters] left out: they are the ones of [chaptersKey] the client sent. */
+    val chaptersOmitted: Boolean = false,
 ) {
     val chapterIndex: Int
         get() {

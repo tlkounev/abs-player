@@ -72,6 +72,26 @@ test('info, pairing, state and commands', async () => {
 
     const np = await remote.remoteState(d);
     assert.equal(np.itemId, 'li_1');
+    assert.equal(np.chapters.length, 2);
+    // the second /state leaves the unchanged chapter list out; the client fills it in
+    const raw = [];
+    const orig = global.fetch;
+    global.fetch = async (u, o) => { const r = await orig(u, o); raw.push({ u: String(u), body: await r.clone().json().catch(() => null) }); return r; };
+    try {
+      const np2 = await remote.remoteState(d);
+      assert.ok(raw[0].u.includes('?chapters='));
+      assert.equal(raw[0].body.chaptersOmitted, true);
+      assert.deepEqual(raw[0].body.chapters, []);
+      assert.equal(np2.chapters.length, 2);
+      assert.equal(np2.chapters[1].title, 'Dvě');
+      // a changed list comes whole again
+      p.st.chapters = [...p.st.chapters, { title: 'Tři', startSec: 3600, endSec: 4000 }];
+      const np3 = await remote.remoteState(d);
+      assert.equal(np3.chapters.length, 3);
+      assert.equal(raw[1].body.chaptersOmitted, undefined);
+    } finally {
+      global.fetch = orig;
+    }
 
     await remote.remoteCmd(d, remote.popupCmdToRemote('playPause'));
     assert.equal(p.st.isPlaying, true);
