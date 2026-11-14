@@ -19,7 +19,7 @@ const chNames = ['Down the Rabbit-Hole', 'The Pool of Tears', 'A Caucus-Race and
   'Advice from a Caterpillar', 'Pig and Pepper', 'A Mad Tea-Party', "The Queen's Croquet-Ground", "The Mock Turtle's Story",
   'The Lobster Quadrille', 'Who Stole the Tarts?', "Alice's Evidence"];
 let t = 0;
-const chapters = chNames.map((title, i) => { const n = (4 + (i % 3)) * 60 * 1.7; const c = { n: i + 1, title, start: t, end: t + n }; t += n; return c; });
+const chapters = chNames.map((title, i) => { const n = (22 + (i * 7) % 15) * 60; const c = { n: i + 1, title, start: t, end: t + n }; t += n; return c; });
 const cur = chapters[4];
 let state = {
   ready: true, loggedIn: true,

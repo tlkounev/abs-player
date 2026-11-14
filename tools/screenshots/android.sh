@@ -16,17 +16,21 @@ for c in "enter" "clock -e hhmm 0941" "battery -e level 100 -e plugged false" \
   adb shell am broadcast -a com.android.systemui.demo -e command $c >/dev/null
 done
 
+# a friendly device name for "Play on"
+if [ "$DEV" = tv ]; then NAME="Living Room TV"; else NAME="Pixel 8"; fi
+adb shell settings put global device_name "'$NAME'"
+
 go --es demo lang --es code en; sleep 6
 go --es demo login --es server http://10.0.2.2:13378 --es user demo --es pass demo
 sleep 15
-go --es demo home --ei tab 0;            shot 1-continue 8
+go --es demo home --ei tab 0;            shot 1-continue 12
 go --es demo book --es title Alice;      shot 2-book 6
 go --es demo play --es title Alice;      sleep 6
 go --es demo player;                     shot 3-player 5
 go --es demo devices;                    shot 4-play-on 4
-go --es demo home --ei tab 2;            shot 5-library 6
-go --es demo home --ei tab 1;            shot 6-added 6
-go --es demo reader --es title Alice;    shot 7-reader 15
+go --es demo home --ei tab 2;            shot 5-library 14
+go --es demo home --ei tab 1;            shot 6-added 10
+go --es demo reader --es title Alice --es mode fromAudio; shot 7-reader 15
 go --es demo pause
 adb logcat -d -t 400 > "$OUT/$DEV-logcat.txt" 2>/dev/null || true
 ls -la "$OUT"

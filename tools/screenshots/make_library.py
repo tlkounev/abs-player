@@ -76,19 +76,19 @@ def cover(path, b):
     img.save(path, quality=90)
 
 
-def audio(path, chapters, minutes=4):
+def audio(path, chapters, minutes=22):
     meta = [";FFMETADATA1"]
     t = 0
     for i, c in enumerate(chapters):
-        n = (minutes + (i % 3)) * 60 * 1000
+        n = (minutes + (i * 7) % 15) * 60 * 1000
         meta += ["[CHAPTER]", "TIMEBASE=1/1000", f"START={t}", f"END={t + n}", f"title={c}"]
         t += n
     mf = path + ".meta"
     open(mf, "w").write("\n".join(meta) + "\n")
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "lavfi", "-t", str(t / 1000),
-                    "-i", "anoisesrc=color=brown:amplitude=0.002:sample_rate=22050",
+                    "-i", "anoisesrc=color=brown:amplitude=0.002:sample_rate=8000",
                     "-i", mf, "-map_metadata", "1", "-map_chapters", "1",
-                    "-ac", "1", "-c:a", "aac", "-b:a", "16k", path], check=True)
+                    "-ac", "1", "-c:a", "aac", "-b:a", "8k", path], check=True)
     os.remove(mf)
 
 

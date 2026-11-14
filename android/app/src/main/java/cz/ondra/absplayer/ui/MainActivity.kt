@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
             "play" -> find()?.let { vm.play(it.id, i.getStringExtra("at")?.toDoubleOrNull()) }
             "pause" -> vm.target.value.pause()
             "player" -> if (vm.stack.lastOrNull() != Screen.Player) vm.push(Screen.Player)
-            "reader" -> find()?.let { vm.push(Screen.Reader(it.id, it.title)) }
+            "reader" -> find()?.let { vm.push(Screen.Reader(it.id, it.title, i.getStringExtra("mode") ?: "saved")) }
             "devices" -> vm.sheet = Sheet.Devices
             "lang" -> i.getStringExtra("code")?.let { cz.ondra.absplayer.L.set(this, it) }
             "back" -> vm.pop()
