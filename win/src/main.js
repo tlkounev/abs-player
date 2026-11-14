@@ -46,7 +46,22 @@ function saveConfig(cfg) {
 let config = loadConfig();
 if (!config.deviceId) { config.deviceId = crypto.randomUUID(); saveConfig(config); }
 if (!Array.isArray(config.paired)) config.paired = [];
-if (!Array.isArray(config.receiverSecrets)) config.receiverSecrets = [];
+if (!Array.isArray(config.receiverLinks)) config.receiverLinks = [];
+// protocol v2 → v3: shared secrets become signing keys (both sides derive the same), nothing has to be paired again
+{
+  const L = require('./linkcrypto');
+  let migrated = false;
+  for (const s of Array.isArray(config.receiverSecrets) ? config.receiverSecrets : []) {
+    const l = L.legacyLink(s.secret);
+    if (!config.receiverLinks.some((x) => x.clientId === l.clientId)) config.receiverLinks.push({ ...l, name: s.name || '', at: s.at || Date.now() });
+    migrated = true;
+  }
+  if (migrated) delete config.receiverSecrets;
+  for (const d of config.paired) {
+    if (d.secret && !d.key) { Object.assign(d, L.legacyLink(d.secret)); delete d.secret; migrated = true; }
+  }
+  if (migrated) saveConfig(config);
+}
 
 let notifyIcon = null;
 let mainWin = null;
@@ -679,9 +694,13 @@ const receiver = remote.createReceiver({
   deviceId: config.deviceId,
   name: () => deviceName(),
   code: () => pairingCode,
-  getSecrets: () => config.receiverSecrets.map((s) => s.secret),
-  addSecret: (secret, from) => {
-    config.receiverSecrets.push({ secret, name: from || '', at: Date.now() });
+  getLinks: () => config.receiverLinks,
+  addLink: (l) => {
+    config.receiverLinks.push({ clientId: l.clientId, key: l.key, name: l.name || '', at: Date.now() });
+    saveConfig(config);
+  },
+  removeLink: (clientId) => {
+    config.receiverLinks = config.receiverLinks.filter((l) => l.clientId !== clientId);
     saveConfig(config);
   },
   info: async () => {
@@ -701,9 +720,11 @@ const discovery = remote.createDiscovery({
     for (const f of discovery.list()) {
       const p = config.paired.find((d) => d.deviceId && d.deviceId === f.deviceId);
       if (p && f.host && (p.host !== f.host || p.port !== f.port)) {
-        // an mDNS record can be stale (other port) – take over only what really answers
-        remote.locate(f.host, f.port, p.deviceId).then((hit) => {
-          if (hit && (p.host !== f.host || p.port !== hit.port)) { p.host = f.host; p.port = hit.port; saveConfig(config); }
+        // an mDNS record can be stale (other port) or made up (the deviceId is public): take over only an
+        // address where the paired device proves itself with our key
+        remote.locate(f.host, f.port, p.deviceId).then(async (hit) => {
+          if (!hit || (p.host === f.host && p.port === hit.port)) return;
+          if (await remote.verifyAt(p, f.host, hit.port)) { p.host = f.host; p.port = hit.port; saveConfig(config); }
         });
       }
     }
@@ -731,14 +752,16 @@ ipcMain.handle('devices:get', async () => {
         if (e.status || Date.now() - (lastLocate.get(d.deviceId) || 0) < 20000) throw e;
         lastLocate.set(d.deviceId, Date.now());
         const hit = await remote.locate(d.host, d.port, d.deviceId);
-        if (!hit || hit.port === d.port) throw e;
+        if (!hit || hit.port === d.port || !(await remote.verifyAt(d, d.host, hit.port))) throw e;
         d.port = hit.port;
         saveConfig(config);
         return remote.remoteState(d);
       });
       return { id: d.deviceId, name: d.name, kind: d.kind || 'tv', host: d.host, online: true, title: np.itemId ? np.title : null, isPlaying: !!np.isPlaying };
     } catch (e) {
-      return { id: d.deviceId, name: d.name, kind: d.kind || 'tv', host: d.host, online: false };
+      // an old app version on the device, or a device that does not prove its identity
+      const problem = e.code === 'peerUpdate' || e.code === 'identity' ? e.code : null;
+      return { id: d.deviceId, name: d.name, kind: d.kind || 'tv', host: d.host, online: false, problem };
     }
   }));
   const discovered = discovery.list()
@@ -792,6 +815,9 @@ ipcMain.handle('devices:rename', (_e, id, name) => {
 });
 
 ipcMain.handle('devices:unpair', (_e, id) => {
+  // the receiver forgets this PC too (if it is on)
+  const old = config.paired.find((d) => d.deviceId === id);
+  if (old) remote.remoteUnpair(old).catch(() => {});
   if (currentTarget === id) currentTarget = 'local';
   config.paired = config.paired.filter((d) => d.deviceId !== id);
   saveConfig(config);

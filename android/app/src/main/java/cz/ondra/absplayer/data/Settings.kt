@@ -12,12 +12,27 @@ import java.util.UUID
 data class PairedDevice(
     val deviceId: String,
     val name: String,
-    val secret: String,
+    /** Protocol v2 pairings only (the signing key is derived from it). */
+    val secret: String = "",
     val host: String,
     val port: Int,
     /** "tv" | "pc" */
     val kind: String = "tv",
-)
+    /** Our id at the receiver and the shared signing key (base64), from pairing v3. */
+    val clientId: String? = null,
+    val key: String? = null,
+) {
+    /** (clientId, key) for signed requests. */
+    fun link(): Pair<String, String>? = when {
+        clientId != null && key != null -> clientId to key
+        secret.isNotEmpty() -> cz.ondra.absplayer.remote.LinkCrypto.legacyLink(secret)
+        else -> null
+    }
+}
+
+/** A phone / PC allowed to control this receiver (TV). */
+@Serializable
+data class ReceiverLink(val clientId: String, val key: String, val name: String = "", val at: Long = 0)
 
 data class LocalProgress(val positionSec: Double, val updatedAt: Long, val synced: Boolean)
 
@@ -133,9 +148,20 @@ class Settings(context: Context) {
         pairedDevices = pairedDevices.filter { it.deviceId != deviceId }
     }
 
-    // --- TV: secrets of phones allowed to control this receiver ---
+    // --- TV: phones / PCs allowed to control this receiver ---
 
-    var receiverSecrets: Set<String>
-        get() = prefs.getStringSet("rxSecrets", emptySet()) ?: emptySet()
-        set(v) = prefs.edit().putStringSet("rxSecrets", v).apply()
+    var receiverLinks: List<ReceiverLink>
+        get() {
+            val links = prefs.getString("rxLinks", null)?.let {
+                runCatching { json.decodeFromString<List<ReceiverLink>>(it) }.getOrNull()
+            } ?: emptyList()
+            // protocol v2 → v3: the old shared secrets become signing keys (the phones derive the same)
+            val old = prefs.getStringSet("rxSecrets", null) ?: return links
+            val migrated = links + old.map { s ->
+                cz.ondra.absplayer.remote.LinkCrypto.legacyLink(s).let { (id, key) -> ReceiverLink(id, key) }
+            }.filter { m -> links.none { it.clientId == m.clientId } }
+            prefs.edit().putString("rxLinks", json.encodeToString(migrated)).remove("rxSecrets").apply()
+            return migrated
+        }
+        set(v) = prefs.edit().putString("rxLinks", json.encodeToString(v)).apply()
 }

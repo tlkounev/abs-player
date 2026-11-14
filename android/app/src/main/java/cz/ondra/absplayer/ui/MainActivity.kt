@@ -29,7 +29,8 @@ class MainActivity : ComponentActivity() {
      */
     private val localNetLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         vm.localNetworkOk = ok
-        if (ok) (application as App).targets.discovery.let { it.stop(); it.start() }
+        // search again only if "Play on" is open (the network is searched only while the user looks for devices)
+        if (ok) (application as App).targets.discovery.let { if (it.isRunning) { it.stop(); it.start() } }
     }
 
     fun ensureLocalNetwork(ask: Boolean) {

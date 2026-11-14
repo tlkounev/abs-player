@@ -1,7 +1,7 @@
 # ABS Player for Android
 
 An Audiobookshelf client for the phone, Android Auto and Android TV / Google TV – all in one APK.
-Version 1.6.5.
+Version 1.6.6.
 
 **[⬇ Download ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)
@@ -101,6 +101,11 @@ Version 1.6.5.
   When a receiver moves to another port (8765 taken on the TV → 8766), paired devices find it again;
   mDNS records are verified before use.
 - The Audiobookshelf password is needed only for a TV that is not signed in to your account yet.
+  The sign-in the TV receives travels encrypted (key exchange confirmed by the pairing code).
+- Requests and answers between paired devices are signed with a key both sides got at pairing; no secret
+  travels on the network. Removing a device with × also removes this phone on that device.
+- Devices paired with an older version keep working, but both sides need this version (1.6.6 / Windows 1.3.4)
+  or newer; an older one is shown as "Update ABS Player on the other device".
 - The TV plays from the server itself (own sign-in, own sync) – no Chromecast.
 
 ## Position sync

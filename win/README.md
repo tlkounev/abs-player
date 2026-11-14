@@ -1,7 +1,7 @@
 # ABS Player for Windows
 
 The Audiobookshelf web client as a desktop app with a mini player in the Windows notification area.
-Version 1.3.3.
+Version 1.3.4.
 
 **[⬇ Download ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)
@@ -55,6 +55,10 @@ On the first start enter the address of your Audiobookshelf server and sign in a
   sign-in; the password is not stored).
 - **Finding a receiver:** when nothing answers on the given port, ports 8765–8774 are tried (the TV takes the
   first free one). A paired device that moved to another port is found again automatically.
+- **Security:** pairing is a key exchange confirmed by the code (the sign-in a TV gets travels encrypted);
+  then every request and answer is signed with the shared key, so no secret travels on the network and a
+  device that only claims to be your TV is not believed. Removing a device with × removes this PC there too.
+  Both sides need ABS Player for Windows 1.3.4 / Android 1.6.6 or newer.
 - **Renaming:** the pencil turns the row into a field (Enter saves, Esc cancels). The name of this PC is sent
   to the other devices; the name of a paired device applies only here.
 - **This PC as a receiver:** a phone with ABS Player can send playback here. The pairing code and address

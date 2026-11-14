@@ -47,8 +47,8 @@
 
 | | Platform | Version | Download |
 |---|---|---|---|
-| [**Android**](android/README.md) | Phone, Android Auto, Android TV / Google TV – one APK | 1.6.5 | [ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk) |
-| [**Windows**](win/README.md) | Windows 10 / 11, tray mini player + the full Audiobookshelf web app | 1.3.3 | [ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe) |
+| [**Android**](android/README.md) | Phone, Android Auto, Android TV / Google TV – one APK | 1.6.6 | [ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk) |
+| [**Windows**](win/README.md) | Windows 10 / 11, tray mini player + the full Audiobookshelf web app | 1.3.4 | [ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe) |
 
 You need your own Audiobookshelf server; the apps sign in with your usual Audiobookshelf account.
 
@@ -125,9 +125,14 @@ On the first start enter the address of your Audiobookshelf server.
   You can also type the IP address.
 - Switching pauses the current device, saves the position to the server and starts the receiver
   from there. The receiver streams from your Audiobookshelf server with its own sign-in.
+- Pairing is an ECDH key exchange confirmed by the code, so the ABS sign-in a TV receives is encrypted.
+  After that every request and every answer is signed with the shared key (HMAC, with a timestamp and a
+  one-time nonce). No secret travels on the network, and a device that only claims to be your TV is not
+  believed. Unpairing removes the key on both sides.
 - Everything stays on your local network: HTTP + JSON, see
-  [`Protocol.kt`](android/app/src/main/java/cz/ondra/absplayer/remote/Protocol.kt) and
-  [`remote.js`](win/src/remote.js).
+  [`Protocol.kt`](android/app/src/main/java/cz/ondra/absplayer/remote/Protocol.kt),
+  [`LinkCrypto.kt`](android/app/src/main/java/cz/ondra/absplayer/remote/LinkCrypto.kt) and
+  [`remote.js`](win/src/remote.js) / [`linkcrypto.js`](win/src/linkcrypto.js).
 
 ## Repository
 

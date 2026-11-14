@@ -116,6 +116,9 @@ class Discovery(context: Context) {
         false
     }
 
+    /** Searching right now (the "Play on" panel is open). */
+    val isRunning: Boolean get() = listener != null
+
     fun start() {
         scan()
         if (listener != null) return

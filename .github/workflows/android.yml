@@ -50,7 +50,7 @@ jobs:
         run: |
           chmod +x gradlew
           set -o pipefail
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
+          ./gradlew testReleaseUnitTest assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
 
       # Compile errors as annotations, so they are readable from the run summary / API.
       - name: Report errors

@@ -994,7 +994,7 @@ function buildDevices() {
   rows.textContent = '';
   rows.append(devRow(ICON_PC, devData.local.name, tr('thisDevice'), devData.current === 'local', false, () => selectDevice('local'), null, 'local'));
   for (const d of devData.paired) {
-    const sub = !d.online ? tr('offline') + ' (' + d.host + ')' : d.title ? tr(d.isPlaying ? 'playingT' : 'pausedT', { t: d.title }) : tr('ready');
+    const sub = d.problem ? tr(d.problem) : !d.online ? tr('offline') + ' (' + d.host + ')' : d.title ? tr(d.isPlaying ? 'playingT' : 'pausedT', { t: d.title }) : tr('ready');
     rows.append(devRow(d.kind === 'pc' ? ICON_PC : ICON_TV, d.name, sub, devData.current === d.id, !d.online,
       d.online || devData.current === d.id ? () => selectDevice(d.id) : null,
       async () => { await window.abs.unpair(d.id); loadDevices(); }, d.id));
@@ -1091,7 +1091,7 @@ $('pBtn').onclick = async () => {
   }
   const err = res && res.error;
   if (err === 'needPassword') { pairInfo = Object.assign({}, pairInfo, { needsPassword: true }); }
-  $('pErr').textContent = err === 'needPassword' ? tr('needPass') : err === 'badPassword' ? tr('badPassword') : err === 'login' ? tr('login') : err === 'noResponse' ? tr('noResponse') : (err || tr('noResponse'));
+  $('pErr').textContent = err === 'needPassword' ? tr('needPass') : err === 'badPassword' ? tr('badPassword') : err === 'login' ? tr('login') : err === 'noResponse' ? tr('noResponse') : err === 'peerUpdate' ? tr('peerUpdate') : err === 'identity' ? tr('identity') : (err || tr('noResponse'));
   $('pErr').classList.remove('hidden');
   updatePairBtn();
 };

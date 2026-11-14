@@ -3,22 +3,28 @@ package cz.ondra.absplayer.remote
 import kotlinx.serialization.Serializable
 
 /**
- * Phone ⇄ TV protocol (plain HTTP + JSON on the LAN; the TV advertises itself over mDNS as
- * [SERVICE_TYPE]). Everything except /info and /pair needs the `X-Secret` header the TV handed
- * out at pairing.
+ * Phone ⇄ TV protocol v3 (HTTP + JSON on the LAN; receivers advertise themselves over mDNS as
+ * [SERVICE_TYPE]). Pairing and request signing: see [LinkCrypto].
  *
- *   GET  /info   -> InfoResponse
- *   POST /pair   PairRequest -> PairResponse   (needs the code shown on the receiver)
- *   GET  /state  -> NowPlaying
- *   POST /cmd    Command -> NowPlaying
+ *   GET    /info         -> InfoResponse
+ *   POST   /pair/start   PairStart -> PairStartResponse
+ *   POST   /pair/finish  PairFinish (box: PairPayload) -> PairFinishResponse (box: PairResult)
+ *   GET    /state        -> NowPlaying                 (signed)
+ *   POST   /cmd          Command -> NowPlaying         (signed)
+ *   DELETE /pair         forget this controller        (signed)
  *
+ * No secret travels after pairing and the receiver signs its answers, so a device that only claims a
+ * paired deviceId (public in /info) learns nothing and is not believed.
  * Receivers: the Google TV app (kind "tv") and ABS Player for Windows (kind "pc").
- * A TV plays on its own login, so pairing hands it a token pair unless it is already signed in
- * to the same account. The PC uses the login of its ABS web window and needs no tokens.
+ * A TV plays on its own login, so pairing hands it a token pair (inside the encrypted box) unless it
+ * is already signed in to the same account. The PC uses the login of its ABS web window.
  */
 const val SERVICE_TYPE = "_absplayer._tcp"
 const val DEFAULT_PORT = 8765
-const val PROTOCOL_VERSION = 2
+const val PROTOCOL_VERSION = 3
+
+/** Allowed difference of a request's time from the receiver's clock (clients follow /info's time). */
+const val MAX_SKEW_MS = 120_000L
 
 @Serializable
 data class InfoResponse(
@@ -27,27 +33,41 @@ data class InfoResponse(
     val loggedIn: Boolean,
     val server: String? = null,
     val username: String? = null,
-    val version: Int = PROTOCOL_VERSION,
+    val version: Int = 2,
     /** "tv" | "pc" */
     val kind: String = "tv",
     /** Receiver plays on credentials handed over at pairing (TV), not on its own login (PC). */
     val acceptsTokens: Boolean = true,
+    /** The receiver's clock (ms) – signed requests carry its time. */
+    val time: Long? = null,
 )
 
 @Serializable
-data class PairRequest(
-    val code: String,
+data class PairStart(val clientPub: String)
+
+@Serializable
+data class PairStartResponse(val pairId: String, val receiverPub: String)
+
+@Serializable
+data class PairFinish(val pairId: String, val proof: String, val box: String)
+
+@Serializable
+data class PairFinishResponse(val proof: String, val box: String)
+
+/** Inside the client's box: who pairs, and for a TV the token pair it should play on. */
+@Serializable
+data class PairPayload(
     val server: String,
     val username: String,
     val userId: String? = null,
-    /** Null when the receiver needs no credentials (already signed in to this account, or PC). */
     val accessToken: String? = null,
     val refreshToken: String? = null,
-    val phoneName: String = "",
+    val name: String = "",
 )
 
+/** Inside the receiver's box. */
 @Serializable
-data class PairResponse(val secret: String, val deviceId: String, val name: String)
+data class PairResult(val clientId: String, val deviceId: String, val name: String)
 
 @Serializable
 data class Command(
@@ -58,7 +78,13 @@ data class Command(
 )
 
 @Serializable
-data class ErrorResponse(val error: String)
+data class ErrorResponse(
+    val error: String,
+    /** Machine-readable: "needPassword" | "expired" | "updateNeeded"… */
+    val code: String? = null,
+    /** With error "clock": the receiver's time. */
+    val time: Long? = null,
+)
 
 /** Server URLs typed on different devices may differ in case or a trailing slash. */
 fun sameServer(a: String?, b: String?): Boolean =
