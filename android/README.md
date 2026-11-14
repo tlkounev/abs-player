@@ -1,7 +1,7 @@
 # ABS Player for Android
 
 An Audiobookshelf client for the phone, Android Auto and Android TV / Google TV – all in one APK.
-Version 1.6.6.
+Version 1.6.7.
 
 **[⬇ Download ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)

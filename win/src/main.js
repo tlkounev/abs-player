@@ -316,16 +316,22 @@ async function pageExec(code) {
   if (!mainWin || mainWin.isDestroyed()) return null;
   const wc = mainWin.webContents;
   if (wc.isLoading() && !isServerUrl(wc.getURL())) return null;
+  // the bridge is injected only when the page does not have it yet (a new page load), not on every call
+  const run = () => wc.executeJavaScript(`(async () => window.__absPlayer ? { v: await (${code}) } : { missing: true })()`, true);
   try {
-    await wc.executeJavaScript(BRIDGE, true);
-    return await wc.executeJavaScript(code, true);
+    let r = await run();
+    if (r && r.missing) {
+      await wc.executeJavaScript(BRIDGE, true);
+      r = await run();
+    }
+    return r && !r.missing ? r.v : null;
   } catch (e) {
     return null;
   }
 }
 
-const localState = () => pageExec('window.__absPlayer ? window.__absPlayer.state() : null');
-const localCmd = (name, arg) => pageExec(`window.__absPlayer ? window.__absPlayer.cmd(${JSON.stringify(name)}, ${JSON.stringify(arg ?? null)}) : false`);
+const localState = () => pageExec('window.__absPlayer.state()');
+const localCmd = (name, arg) => pageExec(`window.__absPlayer.cmd(${JSON.stringify(name)}, ${JSON.stringify(arg ?? null)})`);
 
 // ---------- playback target: this PC or a paired device ----------
 let currentTarget = 'local';

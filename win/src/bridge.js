@@ -237,11 +237,21 @@
 
   // ---------- state for the mini player / remote devices ----------
 
+  // since when the page has no player component where we look for it
+  let missingSince = 0;
+
   async function state() {
     const s = store();
     const loggedIn = !!(s && s.state.user && s.state.user.user);
     const vm = findPlayer();
-    if (!vm) return { ready: false, loggedIn };
+    if (!vm) {
+      // The ABS web app keeps its player in the layout once signed in. Still missing after 20 s (or no Nuxt app
+      // at all) = this ABS version is built differently: say so instead of "Loading…" for ever.
+      if (!missingSince) missingSince = Date.now();
+      const broken = Date.now() - missingSince > 20000 && (loggedIn || !window.$nuxt);
+      return { ready: false, loggedIn, broken };
+    }
+    missingSince = 0;
     const item = vm.streamLibraryItem;
     if (!item) {
       return { ready: true, loggedIn, item: null, inProgress: loggedIn ? (await inProgress()).slice(0, 3) : [] };

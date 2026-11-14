@@ -468,7 +468,7 @@ function render() {
   if (homeOpen && !(st && st.item)) homeOpen = false;
   if (!st || !st.ready) {
     show('msg');
-    $('msgTxt').textContent = !st ? tr('unavailable') : (st.loggedIn ? tr('loadingPlayer') : tr('login'));
+    $('msgTxt').textContent = !st ? tr('unavailable') : st.broken ? tr('bridgeBroken') : (st.loggedIn ? tr('loadingPlayer') : tr('login'));
     return;
   }
   for (const b of document.querySelectorAll('.dev-btn')) b.classList.toggle('on', devOpen || !!(st.target && st.target.remote));
