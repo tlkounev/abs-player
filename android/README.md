@@ -1,7 +1,7 @@
 # ABS Player for Android
 
 An Audiobookshelf client for the phone, Android Auto and Android TV / Google TV – all in one APK.
-Version 1.6.9.
+Version 1.6.10.
 
 **[⬇ Download ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)
@@ -89,6 +89,9 @@ Version 1.6.9.
 ### Play on – TV and PC
 
 - The target can be a Google TV (this APK) or a PC with ABS Player for Windows 1.1.4+.
+- Under this device, *Audio output* chooses where the audiobook plays: the phone / TV speakers, Bluetooth,
+  headphones, HDMI (ARC)… *Automatic* = Android decides. Only this app's sound moves – but note that once the
+  phone connects to a Bluetooth speaker, Android itself sends every app there.
 - The device list looks like the Windows one: this device first (orange stripe, "this device"),
   paired devices with ×, each one can be renamed with the pencil. A new name for this device is seen by
   the others (on the next discovery / pairing); the name of a paired device applies only here.

@@ -66,7 +66,7 @@
     "fontSerif", "fontSans", "fontOriginal", "theme", "themeDark", "themeSepia", "themeLight", "lineHeight",
     "lhTight", "lhNormal", "lhLoose", "chShort", "pageShort", "ebookError", "ebookLoading", "peerUpdate",
     "identity", "bridgeBroken", "lastUsedT", "pairedOnT", "todayT", "yesterday", "daysAgo", "notUsedYet",
-    "removeX", "ctrlThisPc",
+    "removeX", "ctrlThisPc", "outputT", "outputDefault",
   ];
   const T = {
     cs: [
@@ -184,6 +184,8 @@
       "zatím nepoužito",
       "Odebrat {name}",
       "Ovládají toto PC ({n})",
+      "Výstup zvuku:",
+      "Výchozí ({name})",
     ],
     sk: [
       "Otvoriť Audiobookshelf",
@@ -300,6 +302,8 @@
       "zatiaľ nepoužité",
       "Odobrať {name}",
       "Ovládajú tento počítač ({n})",
+      "Výstup zvuku:",
+      "Predvolený ({name})",
     ],
     en: [
       "Open Audiobookshelf",
@@ -416,6 +420,8 @@
       "not used yet",
       "Remove {name}",
       "Controlling this PC ({n})",
+      "Audio output:",
+      "Default ({name})",
     ],
     de: [
       "Audiobookshelf öffnen",
@@ -532,6 +538,8 @@
       "noch nicht verwendet",
       "{name} entfernen",
       "Steuern diesen PC ({n})",
+      "Audioausgabe:",
+      "Standard ({name})",
     ],
     pl: [
       "Otwórz Audiobookshelf",
@@ -648,6 +656,8 @@
       "jeszcze nieużywane",
       "Usuń {name}",
       "Sterują tym komputerem ({n})",
+      "Wyjście audio:",
+      "Domyślne ({name})",
     ],
     fr: [
       "Ouvrir Audiobookshelf",
@@ -764,6 +774,8 @@
       "pas encore utilisé",
       "Retirer {name}",
       "Contrôlent ce PC ({n})",
+      "Sortie audio :",
+      "Par défaut ({name})",
     ],
     es: [
       "Abrir Audiobookshelf",
@@ -880,6 +892,8 @@
       "aún sin usar",
       "Quitar {name}",
       "Controlan este PC ({n})",
+      "Salida de audio:",
+      "Predeterminada ({name})",
     ],
     it: [
       "Apri Audiobookshelf",
@@ -996,6 +1010,8 @@
       "non ancora usato",
       "Rimuovi {name}",
       "Controllano questo PC ({n})",
+      "Uscita audio:",
+      "Predefinita ({name})",
     ],
     pt: [
       "Abrir o Audiobookshelf",
@@ -1112,6 +1128,8 @@
       "ainda não usado",
       "Remover {name}",
       "Controlam este PC ({n})",
+      "Saída de áudio:",
+      "Padrão ({name})",
     ],
     nl: [
       "Audiobookshelf openen",
@@ -1228,6 +1246,8 @@
       "nog niet gebruikt",
       "{name} verwijderen",
       "Bedienen deze pc ({n})",
+      "Audio-uitvoer:",
+      "Standaard ({name})",
     ],
     hu: [
       "Audiobookshelf megnyitása",
@@ -1344,6 +1364,8 @@
       "még nem használt",
       "{name} eltávolítása",
       "Ezt a gépet vezérlik ({n})",
+      "Hangkimenet:",
+      "Alapértelmezett ({name})",
     ],
     uk: [
       "Відкрити Audiobookshelf",
@@ -1460,6 +1482,8 @@
       "ще не використовувався",
       "Вилучити {name}",
       "Керують цим ПК ({n})",
+      "Аудіовихід:",
+      "Типовий ({name})",
     ],
     ru: [
       "Открыть Audiobookshelf",
@@ -1576,6 +1600,8 @@
       "ещё не использовался",
       "Удалить {name}",
       "Управляют этим ПК ({n})",
+      "Аудиовыход:",
+      "По умолчанию ({name})",
     ],
     zh: [
       "打开 Audiobookshelf",
@@ -1692,6 +1718,8 @@
       "尚未使用",
       "移除 {name}",
       "控制此电脑的设备（{n}）",
+      "音频输出：",
+      "默认（{name}）",
     ],
     ja: [
       "Audiobookshelf を開く",
@@ -1808,6 +1836,8 @@
       "未使用",
       "{name} を削除",
       "この PC を操作するデバイス（{n}）",
+      "音声出力：",
+      "既定（{name}）",
     ],
   };
   // @generated-end

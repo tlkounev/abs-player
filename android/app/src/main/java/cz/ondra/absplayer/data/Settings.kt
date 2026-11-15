@@ -53,6 +53,11 @@ class Settings(context: Context) {
     var serverUrl: String?
         get() = prefs.getString("server", null)
         set(v) = prefs.edit().putString("server", v).apply()
+
+    /** The audio output for the audiobook (AudioOutputs key), null = Android decides. */
+    var audioOutput: String?
+        get() = prefs.getString("audioOutput", null)
+        set(v) = prefs.edit().putString("audioOutput", v).apply()
     var username: String?
         get() = prefs.getString("username", null)
         set(v) = prefs.edit().putString("username", v).apply()

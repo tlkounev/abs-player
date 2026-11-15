@@ -1,7 +1,7 @@
 # ABS Player for Windows
 
 The Audiobookshelf web client as a desktop app with a mini player in the Windows notification area.
-Version 1.3.11.
+Version 1.3.12.
 
 **[⬇ Download ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)
@@ -51,6 +51,9 @@ On the first start enter the address of your Audiobookshelf server and sign in a
 - **Switching:** the current book is paused, its position saved to the server, and playback continues on
   the selected device from exactly there. The mini player then controls that device (bars, chapters, speed,
   volume) and shows its name under the author. Select this PC to switch back.
+- **Audio output:** under this PC, *Audio output* chooses where the audiobook plays (speakers, a Bluetooth
+  speaker or headphones paired in Windows…). Only the audiobook moves; the rest of Windows keeps its output.
+  The choice is remembered; when that device is not connected, Windows' default output plays.
 - **Pairing:** *+ Pair a device (TV or PC)* opens the form (× / Esc closes it). Devices on the network are
   found automatically (mDNS, network scan), or type the IP. Enter the 6-digit code shown by the other device.
   A TV that is not signed in to your account yet also asks for the Audiobookshelf password (it gets its own

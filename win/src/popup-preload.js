@@ -21,6 +21,8 @@ contextBridge.exposeInMainWorld('abs', {
   pair: (p) => ipcRenderer.invoke('devices:pair', p),
   unpair: (id) => ipcRenderer.invoke('devices:unpair', id),
   revoke: (clientId) => ipcRenderer.invoke('devices:revoke', clientId),
+  outputs: () => ipcRenderer.invoke('audio:outputs'),
+  setOutput: (o) => ipcRenderer.invoke('audio:set', o),
   renameDevice: (id, name) => ipcRenderer.invoke('devices:rename', id, name),
   openReader: (id, mode, audioTime) => ipcRenderer.invoke('reader:open', id, mode, audioTime)
 });

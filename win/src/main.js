@@ -330,6 +330,8 @@ async function pageExec(code) {
     let r = await run();
     if (r && r.missing) {
       await wc.executeJavaScript(BRIDGE, true);
+      // a new page: the audio output chosen for the audiobook
+      if (config.audioOutput) await wc.executeJavaScript(`window.__absPlayer.setOutput(${JSON.stringify(config.audioOutput)})`, true).catch(() => {});
       r = await run();
     }
     return r && !r.missing ? r.v : null;
@@ -841,6 +843,18 @@ ipcMain.handle('devices:rename', (_e, id, name) => {
   return true;
 });
 
+// audio output of this PC for the audiobook (speakers, Bluetooth…); the rest of Windows keeps its own
+ipcMain.handle('audio:outputs', async () => {
+  const r = await pageExec('window.__absPlayer.outputs()');
+  return r || { list: [], current: (config.audioOutput && config.audioOutput.id) || 'default' };
+});
+ipcMain.handle('audio:set', async (_e, o) => {
+  config.audioOutput = o && o.id && o.id !== 'default' ? { id: String(o.id), label: String(o.label || '') } : null;
+  saveConfig(config);
+  await pageExec(`window.__absPlayer.setOutput(${JSON.stringify(config.audioOutput)})`);
+  return true;
+});
+
 // a controller loses access to this PC (it has to pair again)
 ipcMain.handle('devices:revoke', (_e, clientId) => {
   config.receiverLinks = config.receiverLinks.filter((l) => l.clientId !== clientId);
@@ -1081,10 +1095,16 @@ function createNotifyIcon() {
 
 // ---------- start ----------
 app.whenReady().then(() => {
-  // the ABS page may show notifications, copy to the clipboard and go fullscreen; no microphone / camera
-  session.fromPartition('persist:abs').setPermissionRequestHandler((_wc, perm, cb) => {
-    cb(['notifications', 'clipboard-sanitized-write', 'fullscreen'].includes(perm));
+  // the ABS page may show notifications, copy to the clipboard, go fullscreen and choose the audio output
+  // (speaker-selection); no microphone / camera
+  const absSession = session.fromPartition('persist:abs');
+  absSession.setPermissionRequestHandler((_wc, perm, cb) => {
+    cb(['notifications', 'clipboard-sanitized-write', 'fullscreen', 'speaker-selection'].includes(perm));
   });
+  // the names of the audio outputs (enumerateDevices) need the 'media' check; it does not allow recording –
+  // that would be a request, refused above
+  absSession.setPermissionCheckHandler((_wc, perm, origin) =>
+    (perm === 'media' || perm === 'speaker-selection') ? isServerUrl(origin) : ['notifications', 'clipboard-sanitized-write', 'fullscreen'].includes(perm));
 
   createNotifyIcon();
   createPopup();

@@ -441,6 +441,48 @@
     }
   }
 
-  window.__absPlayer = { state, cmd };
+  // ---------- audio output (speakers, Bluetooth, headphones…) for the audiobook only ----------
+  let wantedSink = null; // { id, label } – null = the Windows default
+
+  function audioElements() {
+    const els = new Set(document.querySelectorAll('audio'));
+    const vm = findPlayer();
+    const inner = vm && vm.playerHandler && vm.playerHandler.player && vm.playerHandler.player.player;
+    if (inner instanceof HTMLMediaElement) els.add(inner);
+    return [...els].filter((a) => typeof a.setSinkId === 'function');
+  }
+
+  async function outputs() {
+    const devs = (await navigator.mediaDevices.enumerateDevices())
+      .filter((d) => d.kind === 'audiooutput' && d.deviceId !== 'communications');
+    return { list: devs.map((d) => ({ id: d.deviceId, label: d.label })), current: wantedSink ? wantedSink.id : 'default' };
+  }
+
+  /** The chosen output for every audio element of the player (also a new one, e.g. after another book). */
+  async function applySink() {
+    const els = audioElements();
+    if (!wantedSink) {
+      for (const a of els) if (a.sinkId && a.sinkId !== 'default') await a.setSinkId('').catch(() => {});
+      return;
+    }
+    if (els.every((a) => a.sinkId === wantedSink.id)) return;
+    // the id can change (the device was reconnected): find it by its name then
+    const devs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audiooutput');
+    const d = devs.find((x) => x.deviceId === wantedSink.id) || devs.find((x) => x.label && x.label === wantedSink.label);
+    if (!d) return; // not connected: Windows' default plays
+    wantedSink = { id: d.deviceId, label: d.label };
+    for (const a of els) if (a.sinkId !== d.deviceId) await a.setSinkId(d.deviceId).catch(() => {});
+  }
+
+  async function setOutput(o) {
+    wantedSink = o && o.id && o.id !== 'default' ? { id: o.id, label: o.label || '' } : null;
+    await applySink();
+    return true;
+  }
+
+  window.__absPlayer = {
+    state: async () => { applySink().catch(() => {}); return state(); },
+    cmd, outputs, setOutput
+  };
   return true;
 })();

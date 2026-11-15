@@ -207,6 +207,19 @@
   .pair-head { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 4px 6px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
   .pair-head .icon-btn { width: 26px; height: 24px; }
   .my-code { margin: 10px 6px 2px; color: var(--muted); font-size: 11px; }
+  /* audio output of this PC (under "this device") */
+  .out-btn { display: flex; align-items: center; gap: 8px; width: calc(100% - 28px); margin: 2px 0 2px 28px; height: 28px; padding: 0 8px; border: 0; border-radius: 4px; background: var(--hover); color: var(--fg); font: inherit; font-size: 12px; text-align: left; }
+  .out-btn .l { color: var(--muted); }
+  .out-btn .v { flex: 1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .out-btn svg { width: 12px; height: 12px; fill: var(--muted); transition: transform .15s; }
+  .out-btn.open svg { transform: rotate(180deg); }
+  .out-list { margin: 2px 0 4px 28px; display: flex; flex-direction: column; gap: 1px; }
+  .out-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) 14px; gap: 8px; align-items: center; min-height: 30px; padding: 2px 8px; border: 0; border-radius: 4px; background: transparent; color: var(--fg); font: inherit; font-size: 12px; text-align: left; }
+  .out-row:hover { background: var(--hover); }
+  .out-row span:nth-child(2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .out-row svg { width: 16px; height: 16px; fill: var(--muted); }
+  .out-row.cur { background: var(--accent-soft, rgba(227,165,77,.12)); color: var(--accent); font-weight: 600; }
+  .out-row.cur svg { fill: var(--accent); }
   /* phones / PCs that control this PC */
   .ctrl { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 6px; }
   .ctrl-head { display: flex; align-items: center; width: 100%; min-height: 28px; padding: 0 6px; border: 0; background: transparent; color: var(--fg); font: inherit; font-weight: 600; text-align: left; border-radius: 4px; }
@@ -988,8 +1001,10 @@ function fitDevPanel() {
 // the panel's content changes (pairing expanded, hint, error, devices) → the window adapts
 new MutationObserver(() => fitDevPanel()).observe(document.getElementById('devItems'), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class'] });
 
+let outData = null; // audio outputs of this PC: { list: [{ id, label }], current }
+let outOpen = false;
 async function loadDevices() {
-  devData = await window.abs.devices();
+  [devData, outData] = await Promise.all([window.abs.devices(), window.abs.outputs ? window.abs.outputs().catch(() => null) : null]);
   if (!renamingId) buildDevices(); // don't throw away the name being typed
 }
 
@@ -1050,11 +1065,54 @@ async function selectDevice(id) {
   setTimeout(poll, 1500);
 }
 
+const ICON_SPK = '<svg viewBox="0 0 16 16"><path d="M2 6h2.5L8 3v10L4.5 10H2zM10.2 5.2a4 4 0 0 1 0 5.6l-.9-.9a2.7 2.7 0 0 0 0-3.8zM12 3.4a6.5 6.5 0 0 1 0 9.2l-.9-.9a5.2 5.2 0 0 0 0-7.4z"/></svg>';
+const ICON_HP = '<svg viewBox="0 0 16 16"><path d="M8 2a6 6 0 0 0-6 6v4.5A1.5 1.5 0 0 0 3.5 14H5V9H3.3a4.7 4.7 0 0 1 9.4 0H11v5h1.5a1.5 1.5 0 0 0 1.5-1.5V8a6 6 0 0 0-6-6z"/></svg>';
+const ICON_CHEV = '<svg viewBox="0 0 16 16"><path d="M8 11.3 2.9 6.2 4 5.1l4 4 4-4 1.1 1.1z"/></svg>';
+
+/** "Default (Speakers – Realtek)": Chromium names the default entry "Default - <device>". */
+function outputName(o) {
+  if (!o) return tr('outputDefault', { name: '' }).replace(/\s*[(（]\s*[)）]/, '');
+  if (o.id === 'default') return tr('outputDefault', { name: (o.label || '').replace(/^[^-]{1,24}\s-\s/, '') }).replace(/\s*[(（]\s*[)）]/, '');
+  return o.label || '?';
+}
+
+// "Audio output: …" under this PC; the list opens below it. Only the audiobook moves to the chosen output.
+function outputPicker() {
+  const list = (outData && outData.list) || [];
+  const curId = (outData && outData.current) || 'default';
+  const cur = list.find((o) => o.id === curId) || list.find((o) => o.id === 'default');
+  const btn = document.createElement('button');
+  btn.className = 'out-btn' + (outOpen ? ' open' : '');
+  btn.id = 'outBtn';
+  btn.innerHTML = '<span class="l"></span><span class="v"></span>' + ICON_CHEV;
+  btn.children[0].textContent = tr('outputT');
+  btn.children[1].textContent = outputName(cur);
+  btn.onclick = () => { outOpen = !outOpen; buildDevices(); };
+  if (!outOpen || !list.length) return [btn];
+  const box = document.createElement('div');
+  box.className = 'out-list';
+  for (const o of list) {
+    const r = document.createElement('button');
+    r.className = 'out-row' + (o.id === (cur && cur.id) ? ' cur' : '');
+    r.innerHTML = (/headphone|headset|sluch|kopfh|écouteur|auricular|cuffie|fones|hoofdtel|fejhallg|навуш|науш|耳机|ヘッドホン|ヘッドセット/i.test(o.label) ? ICON_HP : ICON_SPK) + '<span></span><span></span>';
+    r.children[1].textContent = outputName(o);
+    if (o.id === (cur && cur.id)) r.children[2].outerHTML = ICON_OK;
+    r.onclick = async () => {
+      await window.abs.setOutput({ id: o.id, label: o.label });
+      if (outData) outData.current = o.id;
+      buildDevices();
+    };
+    box.append(r);
+  }
+  return [btn, box];
+}
+
 function buildDevices() {
   if (!devData) return;
   const rows = $('devRows');
   rows.textContent = '';
   rows.append(devRow(ICON_PC, devData.local.name, tr('thisDevice'), devData.current === 'local', false, () => selectDevice('local'), null, 'local'));
+  rows.append(...outputPicker());
   for (const d of devData.paired) {
     const sub = d.problem ? tr(d.problem) : !d.online ? tr('offline') + ' (' + d.host + ')' : d.title ? tr(d.isPlaying ? 'playingT' : 'pausedT', { t: d.title }) : tr('ready');
     rows.append(devRow(d.kind === 'pc' ? ICON_PC : ICON_TV, d.name, sub, devData.current === d.id, !d.online,

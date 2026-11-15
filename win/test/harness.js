@@ -81,6 +81,12 @@ app.whenReady().then(async () => {
     code: '123456', port: 8765
   }));
   ipcMain.handle('devices:revoke', (_e, id) => { devCalls.push('revoke:' + id); return true; });
+  let outCurrent = 'default';
+  ipcMain.handle('audio:outputs', () => ({ current: outCurrent, list: [
+    { id: 'default', label: 'Default - Speakers (Realtek(R) Audio)' },
+    { id: 'bt1', label: 'JBL Flip 6' },
+    { id: 'hp1', label: 'Headphones (WH-1000XM5)' }] }));
+  ipcMain.handle('audio:set', (_e, o) => { devCalls.push('output:' + o.id); outCurrent = o.id; return true; });
   ipcMain.handle('devices:info', (_e, host, port) => ({ ok: host === '10.0.0.7', name: 'Pracovna PC', kind: 'pc', needsPassword: false }));
   ipcMain.handle('devices:pair', (_e, p) => { devCalls.push('pair:' + p.host + ':' + p.port + ':' + p.code); return { ok: true, id: 'pc2' }; });
   ipcMain.handle('devices:select', (_e, id) => { devCalls.push('select:' + id); return true; });
@@ -239,6 +245,16 @@ app.whenReady().then(async () => {
   check('offline device dimmed', await jsP("document.querySelectorAll('#devRows .dev-row.off').length") === 1);
   check('playing subtitle', (await jsP("document.querySelectorAll('#devRows .dev-row')[1].querySelector('.sb').textContent")) === 'Hraje: Duna');
   check('own pairing code', (await jsP("document.getElementById('myCode').textContent")).includes('123 456'));
+  check('audio output under this PC', (await jsP("document.getElementById('outBtn').textContent")) === 'Výstup zvuku:Výchozí (Speakers (Realtek(R) Audio))');
+  await jsP("document.getElementById('outBtn').click()");
+  await wait(300);
+  check('audio outputs listed', await jsP("document.querySelectorAll('.out-row').length") === 3);
+  await shot(popup, 'p-output.png');
+  await jsP("document.querySelectorAll('.out-row')[1].click()");
+  await wait(300);
+  check('audio output chosen', devCalls.includes('output:bt1') && (await jsP("document.querySelector('.out-row.cur').textContent")).includes('JBL Flip 6'));
+  await jsP("document.getElementById('outBtn').click()");
+  await wait(300);
   check('controllers of this PC listed', await jsP("document.querySelectorAll('#ctrlRows .dev-row').length") === 1 &&
     (await jsP("document.getElementById('ctrlTitle').textContent")) === 'Ovládají toto PC (1)');
   check('controller: last used today, paired date', /^Naposledy dnes .* · spárováno /.test(await jsP("document.querySelector('#ctrlRows .sb').textContent")));
@@ -280,7 +296,7 @@ app.whenReady().then(async () => {
   await shot(popup, 'p-pair.png');
   await jsP("document.getElementById('pBtn').click()");
   await wait(900);
-  check('pair + select called', JSON.stringify(devCalls.filter((c) => !c.startsWith('rename:') && !c.startsWith('revoke:') && !c.startsWith('unpair:'))) === JSON.stringify(['pair:10.0.0.7:8765:123456', 'select:pc2']));
+  check('pair + select called', JSON.stringify(devCalls.filter((c) => !c.startsWith('rename:') && !c.startsWith('revoke:') && !c.startsWith('unpair:') && !c.startsWith('output:'))) === JSON.stringify(['pair:10.0.0.7:8765:123456', 'select:pc2']));
   check('panel closed after pairing', await jsP("document.getElementById('devPanel').classList.contains('hidden')") && popup.getBounds().height === 236);
   // switching from the devices panel to chapters keeps the window size
   await jsP("document.querySelector('#player [data-act=devices]').click()");

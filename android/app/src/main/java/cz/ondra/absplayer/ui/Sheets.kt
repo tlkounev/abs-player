@@ -65,6 +65,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.rotate
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -257,6 +259,7 @@ private fun DevicesSheet(vm: MainViewModel, pairInitially: Boolean = false) {
             vm.switchTarget(targets.local)
             vm.sheet = null
         }
+        OutputPicker(vm)
         paired.forEach { d ->
             val rt = targets.remote(d)
             val online by rt.online.collectAsStateWithLifecycle()
@@ -410,6 +413,71 @@ private fun DeviceRow(
                 IconButton(onClick = onRemove) { Icon(Ic.Close, removeLabel, tint = C.Muted, modifier = Modifier.size(20.dp)) }
             }
         }
+    }
+}
+
+/**
+ * The audio output of this device for the audiobook (speaker, Bluetooth, headphones, HDMI…), under "this
+ * device". Only this app's sound moves; "Automatic" = Android decides.
+ */
+@Composable
+private fun OutputPicker(vm: MainViewModel) {
+    val outs = vm.app.audioOutputs
+    LaunchedEffect(Unit) { outs.refresh() }
+    val list by outs.list.collectAsStateWithLifecycle()
+    val sel by outs.selected.collectAsStateWithLifecycle()
+    var open by remember { mutableStateOf(false) }
+    val current = list.find { it.key == sel }?.name ?: tr("outputAuto")
+    Row(
+        Modifier
+            .padding(start = 44.dp, top = 2.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(C.Press)
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = FocusRing(C.Accent, 8.dp)) { open = !open }
+            .heightIn(min = 40.dp)
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(tr("outputT"), color = C.Muted, fontSize = 14.sp)
+        Spacer(Modifier.width(8.dp))
+        Text(current, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        Icon(Ic.Down, null, tint = C.Muted, modifier = Modifier.size(20.dp).rotate(if (open) 180f else 0f))
+    }
+    if (open) {
+        Column(Modifier.padding(start = 44.dp, top = 4.dp, bottom = 6.dp)) {
+            OutputRow(Ic.Devices, tr("outputAuto"), sel == null) { outs.select(null) }
+            list.forEach { o ->
+                val icon = when (o.kind) {
+                    cz.ondra.absplayer.player.AudioOutputs.Kind.BLUETOOTH -> Ic.Bluetooth
+                    cz.ondra.absplayer.player.AudioOutputs.Kind.WIRED, cz.ondra.absplayer.player.AudioOutputs.Kind.USB -> Ic.Headphones
+                    cz.ondra.absplayer.player.AudioOutputs.Kind.HDMI -> Ic.Tv
+                    else -> Ic.VolumeUp
+                }
+                OutputRow(icon, o.name, sel == o.key) { outs.select(o.key) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OutputRow(icon: ImageVector, name: String, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 1.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (selected) C.AccentDark else Color.Transparent)
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = FocusRing(C.Accent, 8.dp), onClick = onClick)
+            .heightIn(min = 44.dp)
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, null, tint = if (selected) C.Accent else C.Muted, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(12.dp))
+        Text(name, fontSize = 14.sp, color = if (selected) C.Accent else C.Text, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        if (selected) Icon(Ic.Check, null, tint = C.Accent, modifier = Modifier.size(18.dp))
     }
 }
 

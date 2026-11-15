@@ -77,6 +77,7 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
     private var chapterInfosFor: LoadedBook? = null
 
     init {
+        app.audioOutputs.attach(exo)
         exo.playbackParameters = PlaybackParameters(app.settings.speed)
         exo.volume = volume
         exo.addListener(object : Player.Listener {
@@ -241,6 +242,7 @@ class PlayerEngine(context: Context, private val app: App) : ChapterPlayer.Host 
     }
 
     fun release() {
+        app.audioOutputs.detach(exo)
         sync.closeDetached()
         player.release()
         scope.cancel()
