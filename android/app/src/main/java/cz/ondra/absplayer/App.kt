@@ -26,10 +26,10 @@ class App : Application() {
     lateinit var socket: SocketManager
         private set
     lateinit var targets: TargetManager
+        private set
 
     /** Audio outputs of this device; the audiobook can play on another one ("Play on"). */
     val audioOutputs by lazy { cz.ondra.absplayer.player.AudioOutputs(this, settings, isTv) }
-        private set
 
     /** Long-lived background work that must outlive screens and services (final syncs etc.). */
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
