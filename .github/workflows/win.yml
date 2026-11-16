@@ -126,9 +126,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          TAG="win-v${VERSION}-build${{ github.run_number }}"
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            echo "::notice::No new release in this run (version ${VERSION} already released)"
+          # the release of this version (made by the Windows job, in this run or an earlier one)
+          TAG=$(gh release list --limit 300 --json tagName -q '.[].tagName' | grep "^win-v${VERSION}-build" | head -1 || true)
+          if [ -z "$TAG" ]; then
+            echo "::notice::Version ${VERSION} has no release – nothing to add"
+            exit 0
+          fi
+          if gh release view linux-latest --json assets -q '.assets[].name' 2>/dev/null | grep -qxF "ABS-Player-${VERSION}-x86_64.AppImage"; then
+            echo "::notice::Linux ${VERSION} is already published"
             exit 0
           fi
           gh release upload "$TAG" dist/*.AppImage dist/*.deb --clobber
@@ -139,7 +144,7 @@ jobs:
             --notes "Always the newest Linux build under fixed names: ABS-Player.AppImage, abs-player.deb. The AppImage also uses this release for its automatic updates."
           cp dist/ABS-Player-*.AppImage ABS-Player.AppImage
           cp dist/ABS-Player-*.deb abs-player.deb
-          FILES="$(ls dist/*.AppImage dist/*.deb dist/latest-linux.yml) $(ls dist/*.blockmap 2>/dev/null) ABS-Player.AppImage abs-player.deb"
+          FILES="$(ls dist/*.AppImage dist/*.deb dist/latest-linux.yml) $(ls dist/*.blockmap 2>/dev/null || true) ABS-Player.AppImage abs-player.deb"
           gh release upload linux-latest $FILES --clobber
           NEW=$(for f in $FILES; do basename "$f"; done)
           for a in $(gh release view linux-latest --json assets -q '.assets[].name'); do
