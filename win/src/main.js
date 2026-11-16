@@ -8,6 +8,9 @@ const remote = require('./remote.js');
 
 const APP_NAME = 'ABS Player';
 const ASSETS = path.join(__dirname, '..', 'assets');
+// the same app runs on Linux (tray via StatusNotifierItem, AppImage / .deb)
+const IS_LINUX = process.platform === 'linux';
+const APP_ICON = path.join(ASSETS, IS_LINUX ? 'icon.png' : 'app.ico');
 const BRIDGE = fs.readFileSync(path.join(__dirname, 'bridge.js'), 'utf8');
 const CLICK_DELAY = 280; // ms – tells a single click from a double click
 const popupSize = require('./popup-size');
@@ -92,6 +95,7 @@ function setLang(code) {
     if (w !== mainWin) w.webContents.send('i18n:changed', config.lang);
   }
   updateTooltip();
+  refreshTrayMenu();
 }
 
 ipcMain.on('i18n:get', (e) => { e.returnValue = lang(); });
@@ -114,7 +118,7 @@ function createMain(showOnReady) {
     minHeight: 500,
     show: false,
     title: APP_NAME,
-    icon: path.join(ASSETS, 'app.ico'),
+    icon: APP_ICON,
     backgroundColor: '#232323',
     autoHideMenuBar: true,
     webPreferences: {
@@ -231,8 +235,9 @@ function savedPopupPosValid() {
 }
 
 function iconPopupPos() {
-  const tb = notifyIcon.getBounds();
-  const pt = { x: Math.round(tb.x + tb.width / 2), y: Math.round(tb.y + tb.height / 2) };
+  // Linux does not tell where the tray icon is: the cursor is next to it after the click / menu
+  const tb = IS_LINUX ? null : notifyIcon.getBounds();
+  const pt = tb && tb.width ? { x: Math.round(tb.x + tb.width / 2), y: Math.round(tb.y + tb.height / 2) } : screen.getCursorScreenPoint();
   const disp = screen.getDisplayNearestPoint(pt);
   const wa = disp.workArea;
   const b = disp.bounds;
@@ -287,7 +292,7 @@ function showSetup() {
     resizable: false,
     maximizable: false,
     title: APP_NAME,
-    icon: path.join(ASSETS, 'app.ico'),
+    icon: APP_ICON,
     autoHideMenuBar: true,
     backgroundColor: '#232323',
     webPreferences: {
@@ -521,12 +526,13 @@ function sendWakeOnLan(d) {
   } catch (e) { /* no wake-up */ }
 }
 
-/** MAC address from the Windows ARP table – once per run for each device. */
+/** MAC address from the ARP table (Windows: arp -a, Linux: ip neigh) – once per run for each device. */
 const macTried = new Set();
 function learnMac(d) {
-  if (!d || process.platform !== 'win32' || macTried.has(d.deviceId)) return;
+  if (!d || !['win32', 'linux'].includes(process.platform) || macTried.has(d.deviceId)) return;
   macTried.add(d.deviceId);
-  require('child_process').execFile('arp', ['-a', d.host], { windowsHide: true }, (err, out) => {
+  const [cmd, args] = IS_LINUX ? ['ip', ['neigh', 'show', d.host]] : ['arp', ['-a', d.host]];
+  require('child_process').execFile(cmd, args, { windowsHide: true }, (err, out) => {
     if (err || !out) return;
     const m = String(out).match(/([0-9a-f]{2}[-:]){5}[0-9a-f]{2}/i);
     if (!m) return;
@@ -590,7 +596,7 @@ async function openReader(id, mode, audioTime) {
   const win = new BrowserWindow({
     width: b.width || 1000, height: b.height || 700, x: b.x, y: b.y,
     minWidth: 520, minHeight: 400, backgroundColor: '#1e1e1e', autoHideMenuBar: true, show: false,
-    icon: path.join(__dirname, '..', 'assets', 'icon.ico'),
+    icon: APP_ICON,
     webPreferences: { preload: path.join(__dirname, 'reader-preload.js'), contextIsolation: true, sandbox: true }
   });
   win.setMenu(null);
@@ -950,6 +956,8 @@ let manualCheck = false;
 
 function setupUpdater() {
   if (!app.isPackaged) return; // started from the development environment
+  // Linux: only the AppImage updates itself (a .deb is updated by installing the new one)
+  if (IS_LINUX && !process.env.APPIMAGE) return;
   try { ({ autoUpdater } = require('electron-updater')); } catch (e) { return; }
   autoUpdater.autoDownload = false; // download only after a click
   autoUpdater.autoInstallOnAppQuit = false;
@@ -989,7 +997,7 @@ function checkUpdates(manual) {
 const liveNotices = new Set();
 function notice(title, body, onClick) {
   if (!Notification.isSupported()) return;
-  const n = new Notification({ title, body, icon: path.join(ASSETS, 'app.ico') });
+  const n = new Notification({ title, body, icon: APP_ICON });
   liveNotices.add(n);
   const done = () => liveNotices.delete(n);
   n.on('close', done);
@@ -1039,11 +1047,27 @@ function updateMenuItems() {
   return items;
 }
 
+// start at sign-in: Windows' login items; on Linux an XDG autostart entry
+const autostartFile = () => path.join(app.getPath('home'), '.config', 'autostart', 'abs-player.desktop');
+function getAutostart() {
+  return IS_LINUX ? fs.existsSync(autostartFile()) : app.getLoginItemSettings({ args: ['--hidden'] }).openAtLogin;
+}
+function setAutostart(on) {
+  if (!IS_LINUX) return app.setLoginItemSettings({ openAtLogin: on, args: ['--hidden'] });
+  try {
+    if (!on) return fs.rmSync(autostartFile(), { force: true });
+    fs.mkdirSync(path.dirname(autostartFile()), { recursive: true });
+    const exec = process.env.APPIMAGE || process.execPath; // an AppImage runs from a temporary mount
+    fs.writeFileSync(autostartFile(), `[Desktop Entry]\nType=Application\nName=${APP_NAME}\nExec="${exec}" --hidden\nIcon=abs-player\nX-GNOME-Autostart-enabled=true\n`);
+  } catch (e) { /* no autostart */ }
+}
+
 function buildMenu() {
-  const login = app.getLoginItemSettings({ args: ['--hidden'] });
   const cur = lang();
   return Menu.buildFromTemplate([
     ...updateMenuItems(),
+    // Linux: the click on the tray icon depends on the desktop – the mini player is always in the menu too
+    ...(IS_LINUX ? [{ label: t('menuMiniPlayer'), click: () => togglePopup() }] : []),
     { label: t('menuOpen'), click: () => showMain() },
     { label: t('menuPlayPause'), click: () => routedCmd('playPause') },
     {
@@ -1068,18 +1092,36 @@ function buildMenu() {
     {
       label: t('menuAutostart'),
       type: 'checkbox',
-      checked: login.openAtLogin,
-      click: (mi) => app.setLoginItemSettings({ openAtLogin: mi.checked, args: ['--hidden'] })
+      checked: getAutostart(),
+      click: (mi) => { setAutostart(mi.checked); refreshTrayMenu(); }
     },
     { type: 'separator' },
     { label: t('menuQuit'), click: () => { app.isQuitting = true; app.quit(); } }
   ]);
 }
 
+/** Linux shows the tray menu itself (no right-click event): it has to be set again after a change – only
+ * then, a menu set while it is open may close it on some desktops. */
+let trayMenuKey = '';
+function refreshTrayMenu() {
+  if (!IS_LINUX || !notifyIcon || notifyIcon.isDestroyed()) return;
+  const key = JSON.stringify([upd.status, upd.version, lang(), currentTarget, pairingCode, getAutostart(),
+    config.paired.map((d) => d.deviceId + d.name), deviceName()]);
+  if (key === trayMenuKey) return;
+  trayMenuKey = key;
+  notifyIcon.setContextMenu(buildMenu());
+}
+
 function createNotifyIcon() {
-  const icon = nativeImage.createFromPath(path.join(ASSETS, 'notify-icon.ico'));
+  const icon = nativeImage.createFromPath(path.join(ASSETS, IS_LINUX ? 'tray.png' : 'notify-icon.ico'));
   notifyIcon = new Tray(icon);
   notifyIcon.setToolTip(APP_NAME);
+  if (IS_LINUX) {
+    notifyIcon.on('click', () => togglePopup());
+    refreshTrayMenu();
+    setInterval(refreshTrayMenu, 3000); // update state, Play on devices, language…
+    return;
+  }
 
   notifyIcon.on('click', () => {
     clearTimeout(clickTimer);

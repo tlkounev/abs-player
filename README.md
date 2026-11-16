@@ -2,7 +2,7 @@
 
 <p align="center">
   Audiobook clients for your own <a href="https://www.audiobookshelf.org/">Audiobookshelf</a> server:
-  Android phones, Android Auto, Google TV and Windows.<br>
+  Android phones, Android Auto, Google TV, Windows and Linux.<br>
   One position across all devices, and playback you can move from one device to another.
 </p>
 
@@ -10,6 +10,8 @@
   <a href="https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk"><b>⬇ Download for Android</b></a>
   &nbsp;·&nbsp;
   <a href="https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe"><b>⬇ Download for Windows</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/tlkounev/abs-player/releases/download/linux-latest/ABS-Player.AppImage"><b>⬇ Download for Linux</b></a>
   &nbsp;·&nbsp;
   <a href="https://github.com/tlkounev/abs-player/releases">All releases</a>
 </p>
@@ -48,7 +50,8 @@
 | | Platform | Version | Download |
 |---|---|---|---|
 | [**Android**](android/README.md) | Phone, Android Auto, Android TV / Google TV – one APK | 1.6.10 | [ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk) |
-| [**Windows**](win/README.md) | Windows 10 / 11, tray mini player + the full Audiobookshelf web app | 1.3.12 | [ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe) |
+| [**Windows**](win/README.md) | Windows 10 / 11, tray mini player + the full Audiobookshelf web app | 1.3.13 | [ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe) |
+| [**Linux**](win/README.md#linux) | The same app as Windows: x64 AppImage or .deb (Debian, Ubuntu, Mint…) | 1.3.13 | [ABS-Player.AppImage](https://github.com/tlkounev/abs-player/releases/download/linux-latest/ABS-Player.AppImage) · [abs-player.deb](https://github.com/tlkounev/abs-player/releases/download/linux-latest/abs-player.deb) |
 
 You need your own Audiobookshelf server; the apps sign in with your usual Audiobookshelf account.
 
@@ -118,6 +121,11 @@ sources: Android Auto settings → tap *Version* 10× → ⋮ → *Developer set
 and run it. The installer is not code-signed, so SmartScreen may ask: *More info* → *Run anyway*.
 On the first start enter the address of your Audiobookshelf server.
 
+**Linux** – download [ABS-Player.AppImage](https://github.com/tlkounev/abs-player/releases/download/linux-latest/ABS-Player.AppImage), make it executable (`chmod +x ABS-Player.AppImage`)
+and run it; or install [abs-player.deb](https://github.com/tlkounev/abs-player/releases/download/linux-latest/abs-player.deb) (`sudo apt install ./abs-player.deb`). The tray icon needs a
+desktop with a system tray (KDE, Cinnamon, XFCE…; on GNOME the *AppIndicator* extension, enabled by default on
+Ubuntu).
+
 ## Play on: how devices find each other
 
 - Each receiver (TV app, Windows app) shows a 6-digit pairing code and its address in *Play on*.
@@ -139,7 +147,7 @@ On the first start enter the address of your Audiobookshelf server.
 | Folder | Content |
 |---|---|
 | [`android/`](android/README.md) | Android app (Kotlin, Jetpack Compose, Media3 / ExoPlayer) |
-| [`win/`](win/README.md) | Windows app (Electron) |
+| [`win/`](win/README.md) | Windows and Linux app (Electron) |
 | [`reader/`](reader) | EPUB reader page (epub.js) shared by both apps |
 | [`tools/screenshots/`](tools/screenshots) | Demo library and scripts for the screenshots above |
 

@@ -66,7 +66,7 @@
     "fontSerif", "fontSans", "fontOriginal", "theme", "themeDark", "themeSepia", "themeLight", "lineHeight",
     "lhTight", "lhNormal", "lhLoose", "chShort", "pageShort", "ebookError", "ebookLoading", "peerUpdate",
     "identity", "bridgeBroken", "lastUsedT", "pairedOnT", "todayT", "yesterday", "daysAgo", "notUsedYet",
-    "removeX", "ctrlThisPc", "outputT", "outputDefault",
+    "removeX", "ctrlThisPc", "outputT", "outputDefault", "menuMiniPlayer",
   ];
   const T = {
     cs: [
@@ -186,6 +186,7 @@
       "Ovládají toto PC ({n})",
       "Výstup zvuku:",
       "Výchozí ({name})",
+      "Minipřehrávač",
     ],
     sk: [
       "Otvoriť Audiobookshelf",
@@ -304,6 +305,7 @@
       "Ovládajú tento počítač ({n})",
       "Výstup zvuku:",
       "Predvolený ({name})",
+      "Miniprehrávač",
     ],
     en: [
       "Open Audiobookshelf",
@@ -422,6 +424,7 @@
       "Controlling this PC ({n})",
       "Audio output:",
       "Default ({name})",
+      "Mini player",
     ],
     de: [
       "Audiobookshelf öffnen",
@@ -540,6 +543,7 @@
       "Steuern diesen PC ({n})",
       "Audioausgabe:",
       "Standard ({name})",
+      "Mini-Player",
     ],
     pl: [
       "Otwórz Audiobookshelf",
@@ -658,6 +662,7 @@
       "Sterują tym komputerem ({n})",
       "Wyjście audio:",
       "Domyślne ({name})",
+      "Miniodtwarzacz",
     ],
     fr: [
       "Ouvrir Audiobookshelf",
@@ -776,6 +781,7 @@
       "Contrôlent ce PC ({n})",
       "Sortie audio :",
       "Par défaut ({name})",
+      "Mini-lecteur",
     ],
     es: [
       "Abrir Audiobookshelf",
@@ -894,6 +900,7 @@
       "Controlan este PC ({n})",
       "Salida de audio:",
       "Predeterminada ({name})",
+      "Minirreproductor",
     ],
     it: [
       "Apri Audiobookshelf",
@@ -1012,6 +1019,7 @@
       "Controllano questo PC ({n})",
       "Uscita audio:",
       "Predefinita ({name})",
+      "Mini lettore",
     ],
     pt: [
       "Abrir o Audiobookshelf",
@@ -1130,6 +1138,7 @@
       "Controlam este PC ({n})",
       "Saída de áudio:",
       "Padrão ({name})",
+      "Mini leitor",
     ],
     nl: [
       "Audiobookshelf openen",
@@ -1248,6 +1257,7 @@
       "Bedienen deze pc ({n})",
       "Audio-uitvoer:",
       "Standaard ({name})",
+      "Minispeler",
     ],
     hu: [
       "Audiobookshelf megnyitása",
@@ -1366,6 +1376,7 @@
       "Ezt a gépet vezérlik ({n})",
       "Hangkimenet:",
       "Alapértelmezett ({name})",
+      "Minilejátszó",
     ],
     uk: [
       "Відкрити Audiobookshelf",
@@ -1484,6 +1495,7 @@
       "Керують цим ПК ({n})",
       "Аудіовихід:",
       "Типовий ({name})",
+      "Мініплеєр",
     ],
     ru: [
       "Открыть Audiobookshelf",
@@ -1602,6 +1614,7 @@
       "Управляют этим ПК ({n})",
       "Аудиовыход:",
       "По умолчанию ({name})",
+      "Мини-плеер",
     ],
     zh: [
       "打开 Audiobookshelf",
@@ -1720,6 +1733,7 @@
       "控制此电脑的设备（{n}）",
       "音频输出：",
       "默认（{name}）",
+      "迷你播放器",
     ],
     ja: [
       "Audiobookshelf を開く",
@@ -1838,6 +1852,7 @@
       "この PC を操作するデバイス（{n}）",
       "音声出力：",
       "既定（{name}）",
+      "ミニプレーヤー",
     ],
   };
   // @generated-end

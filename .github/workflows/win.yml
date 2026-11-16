@@ -73,7 +73,7 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           TAG="win-v${VERSION}-build${{ github.run_number }}"
-          gh release create "$TAG" dist/*.exe dist/*.zip --title "ABS Player for Windows ${VERSION} (build ${{ github.run_number }})" --notes "Commit ${{ github.sha }}" --latest
+          gh release create "$TAG" dist/*.exe dist/*.zip --title "ABS Player for Windows and Linux ${VERSION} (build ${{ github.run_number }})" --notes "Commit ${{ github.sha }}" --latest
           # keep the newest 10 releases of this app (the updater needs only the newest); older ones go with their tags
           gh release list --limit 300 --json tagName,createdAt -q 'sort_by(.createdAt) | reverse | .[].tagName' |
             grep "^win-v" | tail -n +11 | while read -r old; do gh release delete "$old" --cleanup-tag -y; done
@@ -97,4 +97,51 @@ jobs:
           gh release upload win-latest dist/*.exe dist/*.exe.blockmap dist/latest.yml ABS-Player-Setup.exe --clobber
           for a in $(gh release view win-latest --json assets -q '.assets[].name'); do
             echo "$NEW" | grep -qxF "$a" || gh release delete-asset win-latest "$a" -y
+          done
+
+  # The same app for Linux: AppImage (updates itself) and .deb. Added to this run's release (made by the
+  # Windows job when the version is new) and to "linux-latest" (update feed + fixed download names).
+  linux:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: win/package-lock.json
+      - run: npm ci
+      - name: Build AppImage + deb
+        run: npm run dist:linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: abs-player-linux
+          path: |
+            win/dist/*.AppImage
+            win/dist/*.deb
+          if-no-files-found: error
+      - name: Add to the release + linux-latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="win-v${VERSION}-build${{ github.run_number }}"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::No new release in this run (version ${VERSION} already released)"
+            exit 0
+          fi
+          gh release upload "$TAG" dist/*.AppImage dist/*.deb --clobber
+          gh release view linux-latest >/dev/null 2>&1 || \
+            gh release create linux-latest --title "ABS Player for Linux – latest" --latest=false \
+              --notes "Always the newest Linux build under fixed names: ABS-Player.AppImage, abs-player.deb. The AppImage also uses this release for its automatic updates."
+          gh release edit linux-latest --title "ABS Player for Linux – latest (${VERSION})" \
+            --notes "Always the newest Linux build under fixed names: ABS-Player.AppImage, abs-player.deb. The AppImage also uses this release for its automatic updates."
+          cp dist/ABS-Player-*.AppImage ABS-Player.AppImage
+          cp dist/ABS-Player-*.deb abs-player.deb
+          FILES="$(ls dist/*.AppImage dist/*.deb dist/latest-linux.yml) $(ls dist/*.blockmap 2>/dev/null) ABS-Player.AppImage abs-player.deb"
+          gh release upload linux-latest $FILES --clobber
+          NEW=$(for f in $FILES; do basename "$f"; done)
+          for a in $(gh release view linux-latest --json assets -q '.assets[].name'); do
+            echo "$NEW" | grep -qxF "$a" || gh release delete-asset linux-latest "$a" -y
           done

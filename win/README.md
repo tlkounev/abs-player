@@ -1,9 +1,10 @@
-# ABS Player for Windows
+# ABS Player for Windows and Linux
 
-The Audiobookshelf web client as a desktop app with a mini player in the Windows notification area.
-Version 1.3.12.
+The Audiobookshelf web client as a desktop app with a mini player in the notification area (tray).
+Version 1.3.13.
 
-**[⬇ Download ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe)**
+**[⬇ Windows: ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe)**
+· **[⬇ Linux: ABS-Player.AppImage](https://github.com/tlkounev/abs-player/releases/download/linux-latest/ABS-Player.AppImage)** · [abs-player.deb](https://github.com/tlkounev/abs-player/releases/download/linux-latest/abs-player.deb)
 · [all releases](https://github.com/tlkounev/abs-player/releases)
 
 <p>
@@ -16,6 +17,23 @@ Version 1.3.12.
 
 The installer is not code-signed, so SmartScreen may ask: *More info* → *Run anyway*.
 On the first start enter the address of your Audiobookshelf server and sign in as usual.
+
+## Linux
+
+The same app, built for x64 Linux as an AppImage and a .deb package. Everything below applies, with these
+differences:
+
+- **Install:** AppImage – `chmod +x ABS-Player.AppImage` and run it (no installation). .deb – `sudo apt install ./abs-player.deb`,
+  then *ABS Player* is in the applications menu.
+- **Tray:** the desktop needs a system tray (StatusNotifierItem): KDE, Cinnamon, XFCE, MATE… work; GNOME needs the
+  *AppIndicator and KStatusNotifierItem Support* extension (enabled by default on Ubuntu). Whether a click on the
+  icon opens the mini player depends on the desktop – the menu always has *Mini player* and *Open* at the top.
+  There is no double-click.
+- **Mini player:** its rounded corners and shadow need a compositor (standard on current desktops).
+- **Start at sign-in** writes `~/.config/autostart/abs-player.desktop`.
+- **Updates:** the AppImage updates itself like the Windows app (feed: the `linux-latest` release). A .deb is updated
+  by installing the new one.
+- Settings: `~/.config/ABS Player/config.json`.
 
 ## Tray icon
 
