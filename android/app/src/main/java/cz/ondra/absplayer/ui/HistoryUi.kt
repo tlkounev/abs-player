@@ -17,6 +17,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -209,12 +215,12 @@ fun BookHistory(
     positionSec: Double?,
     onPick: (HistoryEntry) -> Unit,
 ) {
-    var rows by androidx.compose.runtime.remember(itemId) { androidx.compose.runtime.mutableStateOf<List<HistoryEntry>?>(null) }
-    var open by androidx.compose.runtime.remember(itemId) { androidx.compose.runtime.mutableStateOf(false) }
-    var all by androidx.compose.runtime.remember(itemId) { androidx.compose.runtime.mutableStateOf(false) }
-    val pos by androidx.compose.runtime.rememberUpdatedState(positionSec)
-    val chs by androidx.compose.runtime.rememberUpdatedState(chapters)
-    androidx.compose.runtime.LaunchedEffect(itemId, chapters.size) {
+    var rows by remember(itemId) { mutableStateOf<List<HistoryEntry>?>(null) }
+    var open by remember(itemId) { mutableStateOf(false) }
+    var all by remember(itemId) { mutableStateOf(false) }
+    val pos by rememberUpdatedState(positionSec)
+    val chs by rememberUpdatedState(chapters)
+    LaunchedEffect(itemId, chapters.size) {
         rows = vm.loadHistory(itemId, chs, pos)
     }
     val list = rows ?: return
