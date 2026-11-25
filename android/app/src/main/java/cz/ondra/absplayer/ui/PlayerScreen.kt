@@ -246,9 +246,11 @@ fun PlayerScreen(vm: MainViewModel) {
                             tint = if (target.isRemote) C.Accent else C.Text,
                             background = if (target.isRemote) C.Press else Color.Transparent,
                         ) { vm.sheet = Sheet.Devices }
-                        if (s.chapters.size > 1) {
-                            IconBtn(Ic.WChapters, tr("chapters"), width = 44.dp, size = 40.dp, iconSize = 20.dp) { vm.sheet = Sheet.Chapters }
-                        }
+                        // Chapters | History (a book without chapters still has its listening history)
+                        IconBtn(
+                            if (s.chapters.size > 1) Ic.WChapters else Ic.History,
+                            tr(if (s.chapters.size > 1) "chapters" else "history"), width = 44.dp, size = 40.dp, iconSize = 20.dp,
+                        ) { vm.sheet = Sheet.Chapters }
                     }
                 }
             }

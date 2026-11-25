@@ -1,7 +1,7 @@
 # ABS Player for Android
 
 An Audiobookshelf client for the phone, Android Auto and Android TV / Google TV – all in one APK.
-Version 1.6.11.
+Version 1.6.12.
 
 **[⬇ Download ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)
@@ -35,6 +35,12 @@ Version 1.6.11.
   - controls: volume | ⏮ | ↺10 | ▶ | ↻10 | ⏭ | speed.
 - Volume: tap = mute, hold = vertical slider. Speed: tap = next step 0.75–2×, hold = − / + by 0.05.
 - Chapter list with search by name (accent-insensitive) or number; sleep timer in minutes or to the end of the chapter.
+- **Listening history:** the chapter list has a second tab, *History* – every listening session of the book on the
+  server, from all devices, newest first and grouped by day: where it ended (chapter and time), the device, from–to
+  and the chapter it started in. *now* marks the current position, *furthest* the furthest place any session
+  reached. A tap continues from there. The book detail has the same under a folding *Listening history* row.
+  Devices are named as in *Play on* (this device, paired TVs / PCs, phones paired with this TV); others by what
+  the server knows (e.g. "Google Pixel 8", "Windows 10 Chrome").
 - Swipe the player down (anywhere) or use the arrow to close it. A mini player stays at the bottom (↺10, ▶).
 - When nothing is playing, the player offers the latest books in progress.
 - Controls in the notification, on headphones and over Bluetooth.
@@ -61,6 +67,7 @@ Version 1.6.11.
 - The same screens as on the phone, driven by the remote:
   - the focused item has an orange frame, the Play button turns white and grows;
   - book detail starts on *Continue*, the player on Play;
+  - the chapter list and *History* open as a panel on the right; OK on a history row continues from there;
   - in the player ↑ / ↓ move between rows; ← / → seek 10 s on the chapter bar and 1 minute on the book bar
     (the knob of the selected bar pulses);
   - moving across the tabs switches the content right away; ↓ from the tabs or search goes to the first visible item;

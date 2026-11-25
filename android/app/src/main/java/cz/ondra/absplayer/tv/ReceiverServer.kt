@@ -210,7 +210,8 @@ class ReceiverServer(
             // another account: the controllers of the previous one lose access
             st.updateReceiverLinks { l ->
                 (if (sameAccount) l else emptyList()) +
-                    ReceiverLink(clientId, LinkCrypto.b64(keys.link), pay.name, System.currentTimeMillis(), kind = pay.kind)
+                    ReceiverLink(clientId, LinkCrypto.b64(keys.link), pay.name, System.currentTimeMillis(), kind = pay.kind,
+                        deviceId = pay.deviceId)
             }
             app.onCredentialsChanged()
         }

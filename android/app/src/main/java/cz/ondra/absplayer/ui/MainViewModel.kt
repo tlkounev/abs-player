@@ -394,6 +394,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         target.value.playItem(itemId, startSec)
     }
 
+    // ------------------------------------------------------------------ listening history
+
+    /** Names this app knows for ABS device ids: this device, paired TVs / PCs, phones / PCs that control this one. */
+    private fun knownDevices(): Map<String, cz.ondra.absplayer.player.KnownDevice> {
+        fun kind(k: String, def: cz.ondra.absplayer.player.DeviceKind) = when (k) {
+            "phone" -> cz.ondra.absplayer.player.DeviceKind.PHONE
+            "tv" -> cz.ondra.absplayer.player.DeviceKind.TV
+            "pc" -> cz.ondra.absplayer.player.DeviceKind.PC
+            else -> def
+        }
+        val m = HashMap<String, cz.ondra.absplayer.player.KnownDevice>()
+        for (l in app.settings.receiverLinks) if (l.deviceId.isNotEmpty()) {
+            m[l.deviceId] = cz.ondra.absplayer.player.KnownDevice(l.name.ifBlank { "?" }, kind(l.kind, cz.ondra.absplayer.player.DeviceKind.PHONE))
+        }
+        for (d in app.settings.pairedDevices) {
+            m[d.deviceId] = cz.ondra.absplayer.player.KnownDevice(d.name, kind(d.kind, cz.ondra.absplayer.player.DeviceKind.TV))
+        }
+        m[app.settings.deviceId] = cz.ondra.absplayer.player.KnownDevice(
+            app.targets.local.name, if (app.isTv) cz.ondra.absplayer.player.DeviceKind.TV else cz.ondra.absplayer.player.DeviceKind.PHONE,
+        )
+        return m
+    }
+
+    /** History rows of a book, newest first; null = the server could not be asked. */
+    suspend fun loadHistory(
+        itemId: String,
+        chapters: List<cz.ondra.absplayer.player.ChapterInfo>,
+        positionSec: Double?,
+    ): List<cz.ondra.absplayer.player.HistoryEntry>? =
+        runCatching { app.api.listeningSessions(itemId) }.getOrNull()
+            ?.let { cz.ondra.absplayer.player.History.build(it, chapters, knownDevices(), positionSec) }
+
     // ------------------------------------------------------------------ e-book
 
     /** The book's EPUB in the cache (downloaded once). */

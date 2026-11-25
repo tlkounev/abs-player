@@ -28,6 +28,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
@@ -102,6 +104,20 @@ fun Sheets(vm: MainViewModel) {
         }
         return
     }
+    if (vm.app.isTv && sheet == Sheet.Chapters) {
+        // TV: Chapters | History as a panel on the right over the player, driven by the remote
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { vm.sheet = null },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
+                androidx.compose.material3.Surface(color = C.Surface, modifier = Modifier.width(440.dp).fillMaxHeight()) {
+                    Column(Modifier.padding(top = 22.dp)) { ChaptersSheet(vm, tv = true) }
+                }
+            }
+        }
+        return
+    }
     // always fully open: on the TV a half-open sheet cut off the bottom (pairing code)
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
@@ -129,9 +145,27 @@ private fun SheetTitle(text: String) {
 private fun norm(x: String): String =
     java.text.Normalizer.normalize(x.lowercase(), java.text.Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
 
-/** As in the Windows app: search by title (ignoring diacritics) or number, current chapter highlighted with progress. */
+/**
+ * Chapters | History. Chapters as in the Windows app: search by title (ignoring diacritics) or number, current chapter
+ * highlighted with progress. History: the book's listening sessions from every device; a tap continues there.
+ */
 @Composable
-private fun ChaptersSheet(vm: MainViewModel) {
+private fun ChaptersSheet(vm: MainViewModel, tv: Boolean = false) {
+    val s by vm.playing.collectAsStateWithLifecycle()
+    val hasCh = s.chapters.size > 1
+    var history by remember { mutableStateOf(!hasCh) }
+    val tabFocus = remember { FocusRequester() }
+    if (tv) LaunchedEffect(Unit) { delay(100); runCatching { tabFocus.requestFocus() } }
+    ListTabs(
+        history = history || !hasCh, showChapters = hasCh, onChange = { history = it },
+        focus = if (tv) tabFocus else null,
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp).fillMaxWidth(),
+    )
+    if (history || !hasCh) HistoryTab(vm, tv) else ChaptersTab(vm, tv)
+}
+
+@Composable
+private fun ChaptersTab(vm: MainViewModel, tv: Boolean) {
     val s by vm.playing.collectAsStateWithLifecycle()
     val target by vm.target.collectAsStateWithLifecycle()
     val current = s.chapterIndex
@@ -142,18 +176,17 @@ private fun ChaptersSheet(vm: MainViewModel) {
     LaunchedEffect(q) { if (q.isNotEmpty()) list.scrollToItem(0) }
 
     Row(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(tr("chapters"), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text("  ${s.chapters.size}", color = C.Muted, fontSize = 14.sp)
+        Text("${s.chapters.size}", color = C.Muted, fontSize = 14.sp)
         Spacer(Modifier.weight(1f))
         AbsTextField(
             value = query, onValueChange = { query = it },
             placeholder = { Text(tr("search")) },
             leadingIcon = { Icon(Ic.Search, null, modifier = Modifier.size(18.dp)) },
             singleLine = true,
-            modifier = Modifier.width(190.dp),
+            modifier = Modifier.width(220.dp),
         )
     }
-    LazyColumn(state = list, modifier = Modifier.heightIn(max = 560.dp)) {
+    LazyColumn(state = list, modifier = if (tv) Modifier.fillMaxHeight() else Modifier.heightIn(max = 560.dp)) {
         if (shown.isEmpty()) item { Text("—", color = C.Muted, modifier = Modifier.fillMaxWidth().padding(24.dp)) }
         items(shown.size) { k ->
             val (i, c) = shown[k]
@@ -188,6 +221,46 @@ private fun ChaptersSheet(vm: MainViewModel) {
                 Text(formatClock(c.endSec - c.startSec), color = if (isCur) C.Accent else C.Muted, fontSize = 13.sp, modifier = Modifier.padding(start = 8.dp))
                 if (done) Icon(Ic.Check, tr("done"), tint = C.Ok, modifier = Modifier.padding(start = 8.dp).size(18.dp))
                 if (isCur) Icon(Ic.VolumeDown, tr("playingNow"), tint = C.Accent, modifier = Modifier.padding(start = 8.dp).size(18.dp))
+            }
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+}
+
+@Composable
+private fun HistoryTab(vm: MainViewModel, tv: Boolean) {
+    val s by vm.playing.collectAsStateWithLifecycle()
+    val target by vm.target.collectAsStateWithLifecycle()
+    val itemId = s.itemId ?: return
+    val latest by androidx.compose.runtime.rememberUpdatedState(s)
+    var rows by remember(itemId) { mutableStateOf<List<cz.ondra.absplayer.player.HistoryEntry>?>(null) }
+    var loading by remember(itemId) { mutableStateOf(true) }
+    LaunchedEffect(itemId) {
+        rows = vm.loadHistory(itemId, latest.chapters, latest.positionSec)
+        loading = false
+    }
+    val list = rows
+    LazyColumn(
+        modifier = (if (tv) Modifier.fillMaxHeight() else Modifier.heightIn(max = 600.dp)).padding(horizontal = 12.dp),
+    ) {
+        if (list.isNullOrEmpty()) item { HistoryMessage(list, loading) }
+        else {
+            var day = ""
+            list.forEach { e ->
+                val d = historyDay(e.updatedAt)
+                if (d != day) {
+                    day = d
+                    item(key = "d" + e.id) { HistoryDayHeader(d) }
+                }
+                item(key = e.id) {
+                    HistoryRow(
+                        e, tv = tv,
+                        onPick = if (e.now) null else ({
+                            target.playItem(itemId, e.endSec)
+                            vm.sheet = null
+                        }),
+                    )
+                }
             }
         }
     }

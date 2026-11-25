@@ -107,7 +107,7 @@ function popupCmdToRemote(name, arg) {
 /**
  * HTTP server through which a paired phone (or another PC) controls playback in this app.
  * opts: { deviceId, name, info(), state() -> NowPlaying, command(cmd) -> NowPlaying,
- *         getLinks() -> [{ clientId, key }], addLink({ clientId, key, name, kind }), removeLink(clientId),
+ *         getLinks() -> [{ clientId, key }], addLink({ clientId, key, name, kind, deviceId }), removeLink(clientId),
  *         seen(clientId) (a verified request came), code() }
  */
 function createReceiver(opts) {
@@ -166,7 +166,7 @@ function createReceiver(opts) {
     failed = 0;
     const payload = JSON.parse(L.open(keys.enc, 'client', body.box));
     const clientId = L.randomHex(8);
-    opts.addLink({ clientId, key: L.b64(keys.link), name: String(payload.name || ''), kind: String(payload.kind || '') });
+    opts.addLink({ clientId, key: L.b64(keys.link), name: String(payload.name || ''), kind: String(payload.kind || ''), deviceId: String(payload.deviceId || '') });
     return send(res, 200, {
       proof: L.proof(keys, 'receiver', opts.code()),
       box: L.seal(keys.enc, 'receiver', JSON.stringify({ clientId, deviceId: opts.deviceId, name: nameNow() }))
@@ -407,7 +407,7 @@ function needsPassword(info, serverUrl, username) {
  * Pairs a remote device. A TV that is not signed in to this account gets its own pair of tokens:
  * we sign in again with the password (refresh tokens rotate, devices must not share one).
  */
-async function pair({ host, port, code, password, serverUrl, username, userId, myName }) {
+async function pair({ host, port, code, password, serverUrl, username, userId, myName, myDeviceId }) {
   // the given / found port can be stale: take the one the receiver really answers on
   const hit = await locate(host, port);
   if (!hit) { const e = new Error('noResponse'); e.code = 'noResponse'; throw e; }
@@ -415,7 +415,7 @@ async function pair({ host, port, code, password, serverUrl, username, userId, m
   const info = hit.info;
   if (!(info.version >= 3)) throw codedError('peerUpdate', 'updateNeeded');
   if (Number.isFinite(info.time)) clockOffset.set(info.deviceId, info.time - Date.now());
-  const req = { server: serverUrl, username, userId: userId || null, name: myName, kind: 'pc' };
+  const req = { server: serverUrl, username, userId: userId || null, name: myName, kind: 'pc', deviceId: myDeviceId || '' };
   if (needsPassword(info, serverUrl, username)) {
     if (!password) {
       const e = new Error('needPassword');

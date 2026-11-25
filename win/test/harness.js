@@ -94,7 +94,17 @@ app.whenReady().then(async () => {
   ipcMain.handle('reader:open', (_e, id) => { readerOpened.push(id); return true; });
   ipcMain.handle('devices:rename', (_e, id, name) => { devCalls.push('rename:' + id + ':' + name); return true; });
   ipcMain.handle('devices:playHere', () => { devCalls.push('playHere'); return true; });
-  ipcMain.handle('abs:cmd', (_e, n, a) => exec(`window.__absPlayer.cmd(${JSON.stringify(n)}, ${JSON.stringify(a ?? null)})`));
+  const HISTORY = require(path.join(SRC, 'history.js'));
+  ipcMain.handle('abs:cmd', async (_e, n, a) => {
+    if (n === 'history') {
+      // as historyRows() in main.js: the sessions from the page, names of the paired devices
+      const page = await exec(`window.__absPlayer.cmd('history', ${JSON.stringify(a.id)})`);
+      if (!page) return null;
+      const chs = await exec("window.__absPlayer.cmd('chapters')");
+      return HISTORY.build(HISTORY.parseSessions(page), chs, { 'dev-tv': { name: 'Obývák TV', kind: 'tv' } }, a.position);
+    }
+    return exec(`window.__absPlayer.cmd(${JSON.stringify(n)}, ${JSON.stringify(a ?? null)})`);
+  });
   ipcMain.on('popup:open-main', () => {});
   ipcMain.on('popup:hide', () => results.push('hide clicked'));
   let fakeCursor = { x: -100, y: -100 };
@@ -234,6 +244,41 @@ app.whenReady().then(async () => {
   await jsP("document.getElementById('chClose').click()");
   await wait(500);
   global.__dir = 'up';
+
+  // --- listening history (Kapitoly | Historie) ---
+  await exec(`(() => { const orig = window.$nuxt.$axios.$get; const now = Date.now(); window.__histUrl = null;
+    window.$nuxt.$axios.$get = async (url, o) => { if (!url.includes('listening-sessions')) return orig(url, o); window.__histUrl = url; return { total: 4, sessions: [
+      { id: 'a', startTime: 1900, currentTime: 2048, startedAt: now - 300000, updatedAt: now - 60000, deviceInfo: { deviceId: 'dev-tv', clientName: 'ABS Player', deviceName: 'Philips TV' } },
+      { id: 'b', startTime: 8000, currentTime: 10852, startedAt: now - 2700000, updatedAt: now - 120000, deviceInfo: { deviceId: 'x1', clientName: 'ABS Player', deviceName: 'Google Pixel 8', model: 'Pixel 8', sdkVersion: '34' } },
+      { id: 'c', startTime: 0, currentTime: 1000, startedAt: now - 2 * 86400000 - 600000, updatedAt: now - 2 * 86400000, deviceInfo: { deviceId: 'w1', clientName: 'Abs Web', deviceName: 'Windows 10 Chrome', browserName: 'Chrome' } },
+      { id: 'd', startTime: 500, currentTime: 500, startedAt: now - 1000, updatedAt: now - 1000, deviceInfo: {} } ] }; }; })()`);
+  await jsP("document.getElementById('chBtn').click()");
+  await wait(900);
+  check('list opens on Kapitoly', await jsP("document.getElementById('tabCh').classList.contains('on') && !document.getElementById('chItems').classList.contains('hidden') && document.getElementById('hiItems').classList.contains('hidden')"));
+  check('tab labels', (await jsP("document.getElementById('tabCh').textContent + '|' + document.getElementById('tabHi').textContent")) === 'Kapitoly|Historie');
+  await jsP("document.getElementById('tabHi').click()");
+  await wait(700);
+  check('history request', (await exec('window.__histUrl')) === '/api/me/item/listening-sessions/li1?itemsPerPage=60&page=0');
+  check('history rows (empty session left out)', await jsP("document.querySelectorAll('#hiItems .hi-row').length") === 3);
+  check('history search hidden', await jsP("document.getElementById('chSearchBox').classList.contains('hidden') && document.getElementById('chItems').classList.contains('hidden')"));
+  check('history day headers', (await jsP("[...document.querySelectorAll('#hiItems .hi-day')].map((e) => e.textContent).join('|')")).startsWith('Dnes|'));
+  const hrow = (i) => jsP(`(() => { const r = document.querySelectorAll('#hiItems .hi-row')[${i}]; return r.className + '#' + r.querySelector('.t1').textContent + '#' + r.querySelector('.t2').textContent; })()`);
+  const h0 = await hrow(0), h1 = await hrow(1), h2 = await hrow(2);
+  check('history now row: ' + h0, /hi-row now/.test(h0) && h0.includes('#Kapitola 5 · 0:00teď#Obývák TV · ') && h0.endsWith(' · od kapitoly 4'));
+  check('history furthest row: ' + h1, /hi-row far/.test(h1) && h1.includes('#Kapitola 22 · 1:40nejdál#Google Pixel 8 · ') && h1.endsWith(' · od kapitoly 16'));
+  check('history web row: ' + h2, h2.includes('#Kapitola 2 · 8:08#Windows 10 Chrome · ') && h2.endsWith(' · od kapitoly 1'));
+  await shot(popup, 'p-history.png');
+  await exec('window.__log.length = 0');
+  await jsP("document.querySelectorAll('#hiItems .hi-row')[1].click()");
+  await wait(700);
+  check('history click continues there', (await exec('window.__log')).includes('seek:10852') && Math.round((await exec('window.__absPlayer.state()')).currentTime) === 10852);
+  await jsP("document.querySelectorAll('#hiItems .hi-row')[0].click()");
+  await wait(300);
+  check('history now row does nothing', !(await exec('window.__log')).includes('seek:2048'));
+  await jsP("document.getElementById('chClose').click()");
+  await wait(500);
+  check('history collapsed', popup.getBounds().height === 236);
+
   await exec(`(() => { const p = ${P}; p.currentTime = 1234; })()`);
 
   // --- play on ---

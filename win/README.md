@@ -1,7 +1,7 @@
 # ABS Player for Windows and Linux
 
 The Audiobookshelf web client as a desktop app with a mini player in the notification area (tray).
-Version 1.3.13.
+Version 1.3.14.
 
 **[⬇ Windows: ABS-Player-Setup.exe](https://github.com/tlkounev/abs-player/releases/download/win-latest/ABS-Player-Setup.exe)**
 · **[⬇ Linux: ABS-Player.AppImage](https://github.com/tlkounev/abs-player/releases/download/linux-latest/ABS-Player.AppImage)** · [abs-player.deb](https://github.com/tlkounev/abs-player/releases/download/linux-latest/abs-player.deb)
@@ -58,6 +58,11 @@ differences:
   (down when it sits at the top of the screen), the list scrolls to the current chapter, finished chapters
   have a tick, a click jumps to the chapter, *Search* filters by name (accent-insensitive) or number.
   Esc clears the search / closes the list.
+- **Listening history:** the second tab of the chapter list (*Chapters | History*) – the book's listening sessions
+  from every device: where each ended, the device, from–to and the chapter it started in, grouped by day.
+  *now* = the current position, *furthest* = the furthest place reached; a click continues from there.
+  Books without chapters open the list straight on *History*. Sessions of this PC carry its *Play on* name, so
+  phones and TVs show them as e.g. "Pracovna PC".
 - **Continue:** when nothing plays, the mini player shows the latest books in progress. While playing, the
   curved back arrow at the top right opens the same list: the playing book is first and highlighted
   (click it or Esc = back to the player), a click on another book plays it from its position.

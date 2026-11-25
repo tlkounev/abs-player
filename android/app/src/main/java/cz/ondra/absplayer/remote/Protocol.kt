@@ -65,6 +65,8 @@ data class PairPayload(
     val name: String = "",
     /** "phone" | "tv" | "pc" – the icon in the receiver's list of controllers. */
     val kind: String = "",
+    /** The client's ABS device id (its listening sessions carry it): names them in the receiver's history. */
+    val deviceId: String = "",
 )
 
 /** Inside the receiver's box. */

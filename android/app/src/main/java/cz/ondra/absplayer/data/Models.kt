@@ -235,3 +235,45 @@ data class AuthorsResponse(val authors: List<Author> = emptyList())
 
 /** The two shelves of the Audiobookshelf home that the app shows under "Added". */
 data class Recent(val books: List<LibraryItem> = emptyList(), val series: List<Series> = emptyList())
+
+/** One listening session of the user on one book (`GET /api/me/item/listening-sessions/:id`). */
+data class ListeningSession(
+    val id: String,
+    /** Book time where the session started / ended (s). */
+    val startSec: Double,
+    val endSec: Double,
+    val startedAt: Long,
+    val updatedAt: Long,
+    val deviceId: String?,
+    val clientName: String?,
+    /** As the server names it: "Google Pixel 8", "Windows 10 Chrome"… */
+    val deviceName: String?,
+    val model: String?,
+    val browserName: String?,
+) {
+    companion object {
+        private fun num(e: JsonElement?): Double? = (e as? JsonPrimitive)?.contentOrNull?.toDoubleOrNull()
+        private fun text(o: JsonObject?, k: String) = (o?.get(k) as? JsonPrimitive)?.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
+
+        /** Tolerant parse: numbers may come as strings from older servers; broken entries are left out. */
+        fun listFrom(page: JsonElement): List<ListeningSession> {
+            val arr = ((page as? JsonObject)?.get("sessions") as? JsonArray) ?: return emptyList()
+            return arr.mapNotNull { el ->
+                val o = el as? JsonObject ?: return@mapNotNull null
+                val d = o["deviceInfo"] as? JsonObject
+                ListeningSession(
+                    id = text(o, "id") ?: return@mapNotNull null,
+                    startSec = num(o["startTime"]) ?: 0.0,
+                    endSec = num(o["currentTime"]) ?: return@mapNotNull null,
+                    startedAt = num(o["startedAt"])?.toLong() ?: 0L,
+                    updatedAt = num(o["updatedAt"])?.toLong() ?: num(o["startedAt"])?.toLong() ?: 0L,
+                    deviceId = text(d, "deviceId"),
+                    clientName = text(d, "clientName"),
+                    deviceName = text(d, "deviceName"),
+                    model = text(d, "model"),
+                    browserName = text(d, "browserName"),
+                )
+            }
+        }
+    }
+}

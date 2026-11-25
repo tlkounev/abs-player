@@ -147,6 +147,26 @@
   .card.down .ch-panel { order: 2; padding: 10px 0 0; margin: 10px 0 0; border-bottom: 0; border-top: 1px solid var(--line); }
   .ch-head { display: flex; align-items: center; gap: 8px; margin: -4px -6px 6px 0; }
   .ch-head h1 { font-size: 14px; font-weight: 600; }
+  .tabs { display: flex; gap: 3px; padding: 3px; border-radius: 15px; background: var(--hover); -webkit-app-region: no-drag; }
+  .tab { height: 22px; padding: 0 12px; border: 0; border-radius: 11px; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .tab.on { background: var(--accent); color: #1b1b1b; }
+  .ch-search.hidden + #chClose { margin-left: auto; }
+  .hi-day { font-size: 11px; font-weight: 600; color: var(--muted); padding: 8px 6px 2px; }
+  .hi-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 40px; padding: 3px 6px; border-radius: 4px; cursor: pointer; }
+  .hi-row:hover { background: var(--hover); }
+  .hi-row svg.k { width: 16px; height: 16px; fill: var(--muted); }
+  .hi-row svg.k.web { fill: none; stroke: var(--muted); stroke-width: 1.4; }
+  .hi-row .t1 { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .hi-row .t1 .x, .hi-row .t2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hi-row .t2 { font-size: 11px; color: var(--muted); }
+  .hi-row .go { width: 14px; height: 14px; fill: var(--accent); visibility: hidden; }
+  .hi-row:hover .go, .hi-row.far .go { visibility: visible; }
+  .hi-row.now { background: var(--press); box-shadow: inset 2px 0 0 var(--accent); border-radius: 0 4px 4px 0; cursor: default; }
+  .hi-row.now .t1, .hi-row.now svg.k { color: var(--accent); fill: var(--accent); }
+  .hi-row.now .go { display: none; }
+  .pill { flex: none; font-size: 10px; font-weight: 600; height: 16px; padding: 0 6px; border-radius: 8px; display: inline-flex; align-items: center; color: var(--accent); }
+  .pill.now { background: var(--press); }
+  .pill.far { box-shadow: inset 0 0 0 1px var(--accent); }
   .ch-count { color: var(--muted); font-size: 12px; }
   .ch-search { margin-left: auto; display: flex; align-items: center; gap: 5px; width: 150px; height: 26px; padding: 0 8px; border-radius: 4px; background: var(--hover); border: 1px solid transparent; -webkit-app-region: no-drag; }
   .ch-search:focus-within { border-color: var(--accent); }
@@ -299,14 +319,16 @@
   <!-- chapter list -->
   <div id="chPanel" class="ch-panel hidden">
     <div class="ch-head">
-      <h1 data-txt="chapters"></h1><span class="ch-count" id="chCount"></span>
-      <label class="ch-search">
+      <div class="tabs"><button class="tab on" id="tabCh" data-txt="chapters"></button><button class="tab" id="tabHi" data-txt="history"></button></div>
+      <span class="ch-count" id="chCount"></span>
+      <label class="ch-search" id="chSearchBox">
         <svg viewBox="0 0 16 16"><path d="M6.8 1.5a5.3 5.3 0 0 1 4.2 8.5l3.6 3.6-1.1 1.1-3.6-3.6A5.3 5.3 0 1 1 6.8 1.5Zm0 1.5a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"/></svg>
         <input id="chSearch" spellcheck="false" data-ph="search">
       </label>
       <button class="icon-btn" id="chClose" data-tip="closeList"><svg viewBox="0 0 16 16" id="chCloseIcon"><path d="M8 11.3 2.9 6.2 4 5.1l4 4 4-4 1.1 1.1z"/></svg></button>
     </div>
     <div class="ch-list" id="chItems"></div>
+    <div class="ch-list hidden" id="hiItems"></div>
   </div>
 
   <!-- playing -->
@@ -523,7 +545,7 @@ for (const g of document.querySelectorAll('.grip')) {
 
 function render() {
   $('playHere').classList.add('hidden');
-  if (listOpen && !(st && st.item && st.hasChapters)) setListOpen(false);
+  if (listOpen && !(st && st.item)) setListOpen(false);
   if (homeOpen && !(st && st.item)) homeOpen = false;
   if (!st || !st.ready) {
     show('msg');
@@ -600,12 +622,14 @@ function render() {
   $('chBlock').classList.toggle('hidden', !hasCh);
   $('bookBar').classList.toggle('thin', hasCh);
 
-  $('chBtn').classList.toggle('hidden', !st.hasChapters);
   $('chLabel').title = tr('chapters');
 
   renderVolume();
   if (!dragging) setProgress(pendingSeek != null ? pendingSeek : st.currentTime);
-  if (listOpen) updateChapterList();
+  if (listOpen) {
+    if (listTab === 'ch') updateChapterList();
+    else if (st.item.id !== histFor) loadHistory(true);
+  }
 }
 
 /** Rows of in-progress books; [curId] = the one playing now (highlighted, click = back to the player). */
@@ -901,9 +925,106 @@ function scrollToCurrent(center) {
   if (row) row.scrollIntoView({ block: center ? 'center' : 'nearest' });
 }
 
+// --- listening history (sessions of this book on the server, from every device) ---
+let listTab = 'ch';
+let histRows = null;
+let histFor = '';
+let histAt = 0;
+let histGen = 0;
+const ICON_WEB = '<svg class="k web" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c2.2 2.2 2.2 9.8 0 12M8 2c-2.2 2.2-2.2 9.8 0 12"/></svg>';
+const ICON_GO = '<svg class="go" viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.4-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5Z"/></svg>';
+
+function setListTab(t) {
+  if (t === 'ch' && !(st && st.hasChapters)) t = 'hi';
+  listTab = t;
+  $('tabCh').classList.toggle('on', t === 'ch');
+  $('tabHi').classList.toggle('on', t === 'hi');
+  $('tabCh').classList.toggle('hidden', !(st && st.hasChapters));
+  $('chItems').classList.toggle('hidden', t !== 'ch');
+  $('hiItems').classList.toggle('hidden', t !== 'hi');
+  $('chSearchBox').classList.toggle('hidden', t !== 'ch');
+  $('chCount').classList.toggle('hidden', t !== 'ch');
+  if (t === 'hi') loadHistory(false);
+  else updateChapterList();
+}
+
+async function loadHistory(force) {
+  if (!st || !st.item) return;
+  const id = st.item.id;
+  if (!force && id === histFor && histRows && Date.now() - histAt < 30000) { buildHistoryRows(); return; }
+  const gen = ++histGen;
+  if (id !== histFor) { histRows = undefined; buildHistoryRows(); }
+  histFor = id;
+  histAt = Date.now();
+  const rows = await window.abs.cmd('history', { id, position: pendingSeek != null ? pendingSeek : st.currentTime });
+  if (gen !== histGen) return;
+  histRows = Array.isArray(rows) ? rows : null;
+  buildHistoryRows();
+}
+
+const capFirst = (x) => (x ? x.charAt(0).toUpperCase() + x.slice(1) : x);
+function dayKey(ms) { const d = new Date(ms); return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); }
+function dayLabel(ms) {
+  const now = new Date();
+  const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  if (dayKey(ms) === dayKey(now.getTime())) return tr('todayH');
+  if (dayKey(ms) === dayKey(y.getTime())) return capFirst(tr('yesterday'));
+  const opts = { weekday: 'short', day: 'numeric', month: 'numeric' };
+  if (new Date(ms).getFullYear() !== now.getFullYear()) opts.year = 'numeric';
+  try { return capFirst(new Intl.DateTimeFormat(lang, opts).format(new Date(ms))); } catch (e) { return new Date(ms).toLocaleDateString(); }
+}
+function clockOf(ms) {
+  try { return new Intl.DateTimeFormat(lang, { hour: 'numeric', minute: '2-digit' }).format(new Date(ms)); } catch (e) { return new Date(ms).toLocaleTimeString(); }
+}
+
+function buildHistoryRows() {
+  const box = $('hiItems');
+  box.textContent = '';
+  const msg = (t) => { const e = document.createElement('div'); e.className = 'ch-empty'; e.textContent = t; box.append(e); };
+  if (histRows === undefined) return msg('…');
+  if (histRows === null) return msg(tr('histError'));
+  if (!histRows.length) return msg(tr('histEmpty'));
+  let day = '';
+  for (const r of histRows) {
+    const d = dayLabel(r.updatedAt);
+    if (d !== day) {
+      day = d;
+      const h = document.createElement('div');
+      h.className = 'hi-day';
+      h.textContent = d;
+      box.append(h);
+    }
+    const row = document.createElement('div');
+    row.className = 'hi-row' + (r.now ? ' now' : '') + (r.furthest ? ' far' : '');
+    const icon = r.kind === 'web' ? ICON_WEB : r.kind === 'tv' ? ICON_TV : r.kind === 'pc' ? ICON_PC : ICON_PHONE;
+    row.innerHTML = icon.replace('<svg ', '<svg class="k" ').replace('class="k" class=', 'class=') +
+      '<div style="min-width:0"><div class="t1"><span class="x"></span></div><div class="t2"></div></div>' + ICON_GO;
+    row.querySelector('.t1 .x').textContent = r.endChapter != null
+      ? tr('histChapterAt', { n: r.endChapter + 1, t: fmt(r.endInChapter) }) : fmt(r.end);
+    if (r.now || r.furthest) {
+      const p = document.createElement('span');
+      p.className = 'pill ' + (r.now ? 'now' : 'far');
+      p.textContent = tr(r.now ? 'histNow' : 'histFurthest');
+      row.querySelector('.t1').append(p);
+    }
+    const a = clockOf(r.startedAt), b = clockOf(r.updatedAt);
+    row.querySelector('.t2').textContent = r.startChapter != null
+      ? tr('histLine', { d: r.device, a, b, n: r.startChapter + 1 }) : tr('histLineNoCh', { d: r.device, a, b });
+    if (!r.now) {
+      row.title = tr('histContinue');
+      row.onclick = () => {
+        pendingSeek = r.end;
+        cmd('playItem', { id: histFor, startTime: r.end });
+        setTimeout(() => { if (listOpen && listTab === 'hi') loadHistory(true); }, 1500);
+      };
+    }
+    box.append(row);
+  }
+}
+
 async function setListOpen(open) {
   if (open === listOpen) return;
-  if (open && !(st && st.hasChapters)) return;
+  if (open && !(st && st.item)) return;
   listOpen = open;
   $('chBtn').classList.toggle('on', open);
   if (open) {
@@ -915,7 +1036,8 @@ async function setListOpen(open) {
     $('chPanel').classList.remove('hidden');
     $('chSearch').value = '';
     lastCurN = 0;
-    await loadChapters();
+    setListTab('ch');
+    if (listTab === 'ch') await loadChapters();
   } else {
     $('chPanel').classList.add('hidden');
     if (devOpen) return;
@@ -1251,6 +1373,8 @@ for (const el of document.querySelectorAll('[data-act="devices"]')) el.onclick =
 $('devClose').onclick = () => setDevOpen(false);
 
 $('chBtn').onclick = () => setListOpen(!listOpen);
+$('tabCh').onclick = () => setListTab('ch');
+$('tabHi').onclick = () => setListTab('hi');
 $('homeBtn').onclick = () => setHomeOpen(true);
 $('playHere').onclick = async () => { await window.abs.playHere(); poll(); };
 $('chClose').onclick = () => setListOpen(false);

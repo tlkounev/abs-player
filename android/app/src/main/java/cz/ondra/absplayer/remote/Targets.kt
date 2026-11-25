@@ -445,7 +445,8 @@ class TargetManager(private val app: App) {
         @Suppress("NAME_SHADOWING") val host = host.trim()
         if (info.version < PROTOCOL_VERSION) throw IOException(tr("peerUpdate"))
         RemoteHttp.learnClock(info.deviceId, info.time)
-        var pay = PairPayload(server, user, app.settings.userId, name = local.name, kind = if (app.isTv) "tv" else "phone")
+        var pay = PairPayload(server, user, app.settings.userId, name = local.name, kind = if (app.isTv) "tv" else "phone",
+            deviceId = app.settings.deviceId)
         if (needsPassword(info)) {
             if (password.isNullOrEmpty()) throw IOException(tr("needPassword"))
             val login = app.api.login(server, user, password)

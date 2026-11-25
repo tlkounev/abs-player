@@ -419,6 +419,10 @@
           .then(() => true, () => false);
       case 'chapters':
         return (vm.chapters || []).map((c, i) => ({ n: i + 1, title: c.title, start: c.start, end: c.end }));
+      case 'history':
+        // listening sessions of a book on the server (all devices of this account), newest first
+        return axios().$get('/api/me/item/listening-sessions/' + encodeURIComponent(arg) + '?itemsPerPage=60&page=0', { progress: false })
+          .then((r) => r, () => null);
       case 'playItem': {
         if (!arg || !arg.id) return false;
         // the same book is already loaded (paused): ABS would not start it again – seek and play

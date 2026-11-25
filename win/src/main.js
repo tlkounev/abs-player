@@ -11,6 +11,7 @@ const ASSETS = path.join(__dirname, '..', 'assets');
 // the same app runs on Linux (tray via StatusNotifierItem, AppImage / .deb)
 const IS_LINUX = process.platform === 'linux';
 const APP_ICON = path.join(ASSETS, IS_LINUX ? 'icon.png' : 'app.ico');
+const history = require('./history');
 const BRIDGE = fs.readFileSync(path.join(__dirname, 'bridge.js'), 'utf8');
 const CLICK_DELAY = 280; // ms – tells a single click from a double click
 const popupSize = require('./popup-size');
@@ -134,7 +135,7 @@ function createMain(showOnReady) {
 
   mainWin.loadURL(config.serverUrl);
 
-  const inject = () => mainWin.webContents.executeJavaScript(BRIDGE, true).catch(() => {});
+  const inject = () => mainWin.webContents.executeJavaScript(bridgeCode(), true).catch(() => {});
   mainWin.webContents.on('did-finish-load', inject);
   mainWin.webContents.on('did-navigate-in-page', inject);
 
@@ -325,6 +326,10 @@ ipcMain.handle('setup:save', (_e, url) => {
 });
 
 // ---------- popup ↔ ABS page communication ----------
+// The web player names its listening sessions with localStorage.absDeviceId: use the id this PC has in Play on,
+// so the phone / TV show the sessions of this PC under its name in the listening history.
+const bridgeCode = () => `try { localStorage.setItem('absDeviceId', ${JSON.stringify(String(config.deviceId))}); } catch (e) {}\n` + BRIDGE;
+
 async function pageExec(code) {
   if (!mainWin || mainWin.isDestroyed()) return null;
   const wc = mainWin.webContents;
@@ -334,7 +339,7 @@ async function pageExec(code) {
   try {
     let r = await run();
     if (r && r.missing) {
-      await wc.executeJavaScript(BRIDGE, true);
+      await wc.executeJavaScript(bridgeCode(), true);
       // a new page: the audio output chosen for the audiobook
       if (config.audioOutput) await wc.executeJavaScript(`window.__absPlayer.setOutput(${JSON.stringify(config.audioOutput)})`, true).catch(() => {});
       r = await run();
@@ -409,8 +414,23 @@ async function getState() {
   return st;
 }
 
+/** Listening history of the playing book ({ id, position }) with the names this app knows for the devices. */
+async function historyRows(arg) {
+  if (!arg || !arg.id) return null;
+  const page = await localCmd('history', arg.id);
+  if (!page) return null;
+  const chapters = await routedCmd('chapters');
+  const known = {};
+  for (const l of config.receiverLinks) if (l.deviceId) known[l.deviceId] = { name: l.name || '?', kind: l.kind || 'phone' };
+  for (const d of config.paired) if (d.deviceId) known[d.deviceId] = { name: d.name, kind: d.kind || 'tv' };
+  known[config.deviceId] = { name: deviceName(), kind: 'pc' };
+  return history.build(history.parseSessions(page), Array.isArray(chapters) ? chapters : [], known,
+    typeof arg.position === 'number' ? arg.position : null);
+}
+
 async function routedCmd(name, arg) {
   if (name === 'recent') return localCmd('recent'); // the "Continue" list always comes from the ABS account
+  if (name === 'history') return historyRows(arg); // the sessions come from the ABS account too
   const target = targetInfo();
   if (!target.remote) return localCmd(name, arg);
   const d = pairedDevice(target.id);
@@ -718,7 +738,7 @@ const receiver = remote.createReceiver({
   code: () => pairingCode,
   getLinks: () => config.receiverLinks,
   addLink: (l) => {
-    config.receiverLinks.push({ clientId: l.clientId, key: l.key, name: l.name || '', kind: l.kind || '', at: Date.now() });
+    config.receiverLinks.push({ clientId: l.clientId, key: l.key, name: l.name || '', kind: l.kind || '', deviceId: l.deviceId || '', at: Date.now() });
     saveConfig(config);
   },
   // "last used" in the list of controllers; saved at most every 10 minutes per controller
@@ -825,7 +845,7 @@ ipcMain.handle('devices:pair', async (_e, p) => {
     if (!u) return { ok: false, error: 'login' };
     const d = await remote.pair({
       host: p.host, port: Number(p.port) || remote.DEFAULT_PORT, code: p.code, password: p.password,
-      serverUrl: config.serverUrl, username: u.username, userId: u.userId, myName: deviceName()
+      serverUrl: config.serverUrl, username: u.username, userId: u.userId, myName: deviceName(), myDeviceId: config.deviceId
     });
     config.paired = config.paired.filter((x) => x.deviceId !== d.deviceId).concat(d);
     saveConfig(config);

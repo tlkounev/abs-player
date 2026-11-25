@@ -42,6 +42,8 @@ data class ReceiverLink(
     val kind: String = "",
     /** Last verified request (ms, saved at most every 10 minutes). */
     val lastSeen: Long = 0,
+    /** Its ABS device id ("" = paired by an older version) – names its listening sessions. */
+    val deviceId: String = "",
 )
 
 data class LocalProgress(val positionSec: Double, val updatedAt: Long, val synced: Boolean)

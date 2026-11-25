@@ -288,6 +288,19 @@ fun BookScreen(vm: MainViewModel, screen: Screen.Book) {
                     }
                 }
             }
+            if (b != null && b.media?.hasAudio != false) {
+                item(key = "history") {
+                    BookHistory(
+                        vm, screen.id,
+                        chapters = chapters.map { cz.ondra.absplayer.player.ChapterInfo(it.title, it.start, it.end) },
+                        positionSec = if (isCurrent) playing.positionSec else p?.currentTime,
+                        onPick = { e ->
+                            vm.play(screen.id, e.endSec)
+                            vm.push(Screen.Player)
+                        },
+                    )
+                }
+            }
             if (b == null) item { Empty(tr("loading")) }
         }
     }

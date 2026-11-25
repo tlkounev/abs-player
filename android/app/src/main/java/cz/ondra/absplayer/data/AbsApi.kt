@@ -283,6 +283,10 @@ class AbsApi(private val settings: Settings) {
         if (e.code == 404) null else throw e
     }
 
+    /** The user's listening sessions of a book, newest first (the server keeps them per session). */
+    suspend fun listeningSessions(itemId: String, max: Int = 60): List<ListeningSession> =
+        ListeningSession.listFrom(json.parseToJsonElement(get("/api/me/item/listening-sessions/$itemId?itemsPerPage=$max&page=0")))
+
     suspend fun setFinished(itemId: String, finished: Boolean) {
         patch("/api/me/progress/$itemId", buildJsonObject {
             put("isFinished", finished)
