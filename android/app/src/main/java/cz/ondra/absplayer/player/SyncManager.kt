@@ -22,12 +22,14 @@ import java.io.IOException
  * official app can therefore resume from an old position after another device moved on, and then
  * overwrite the newer one. Rules used here:
  *
- *  1. Before playback (re)starts, read the server's position. If it differs from what we last
- *     wrote, another device moved it; take it over (unless we have unsynced local listening).
+ *  1. Before playback (re)starts and when the app comes back to the front, read the server's position.
+ *     If another device moved it after our last own change, take it over – also when our last sync
+ *     failed (a TV going to standby loses the network while it saves the pause).
  *  2. While paused, follow `user_item_progress_updated` events from other sessions immediately.
  *  3. Sync every 10 s while playing and right away on pause, seek, stop and book end.
- *  4. When a sync fails (no signal), keep the position locally and retry; it wins when the book
- *     is opened again if it is newer than the server's.
+ *  4. When a sync fails (no signal), keep the position locally and retry. Before the retry writes it,
+ *     the server is read again (rule 1), so a newer position from another device is never overwritten.
+ *     When the server cannot be read before play, the first sync while playing does that check.
  */
 class SyncManager(
     private val app: App,
@@ -46,6 +48,12 @@ class SyncManager(
     private var serverPosSec: Double? = null
     /** We have a position the server doesn't have yet. */
     private var pendingLocal = false
+    /** Wall-clock ms of our last own position change (listening, seek, adoption). */
+    private var ownAt = System.currentTimeMillis()
+    /** Read the server before the next write: its updates after this time (ms) beat ours (rule 4). */
+    private var verifyAfter: Long? = null
+    /** Positions we sent without seeing the answer since the last good sync (they may be on the server). */
+    private val attempted = ArrayList<Double>()
     private var listenedMs = 0L
     private var lastTickAt = SystemClock.elapsedRealtime()
     private var lastSyncAt = 0L
@@ -72,6 +80,9 @@ class SyncManager(
         itemId = id
         serverPosSec = serverTime
         pendingLocal = SyncRules.pendingAfterOpen(start, serverTime)
+        ownAt = if (pendingLocal && local != null) local.updatedAt else System.currentTimeMillis()
+        verifyAfter = null
+        attempted.clear()
         listenedMs = 0
         lastSyncAt = SystemClock.elapsedRealtime()
         settings.lastItemId = id
@@ -80,12 +91,44 @@ class SyncManager(
 
     /** Rule 1: called just before playback starts or resumes. */
     suspend fun beforePlay() {
-        val id = itemId ?: return
-        if (pendingLocal) return
-        val p = withTimeoutOrNull(2_500) { runCatching { api.progress(id) }.getOrNull() } ?: return
-        if (SyncRules.adoptBeforePlay(p.currentTime, serverPosSec, posSec(), pendingLocal)) {
-            adopt(p.currentTime, lastOtherDevice)
+        checkServer(2_500)
+    }
+
+    /** Rule 1: the app came back to the front (TV woken up, phone unlocked) – nothing plays, look at the server. */
+    fun refreshOnResume() {
+        if (itemId == null || player.isPlaying || player.isLoadingBook) return
+        scope.launch { mutex.withLock { if (!player.isPlaying) checkServer(8_000) } }
+    }
+
+    private val pendingSince: Long? get() = if (pendingLocal) verifyAfter ?: ownAt else null
+
+    /**
+     * Reads the server and takes its position over when another device moved it. False = the server could not
+     * be read; then the next write checks first (verifyAfter).
+     */
+    private suspend fun checkServer(timeoutMs: Long): Boolean {
+        val id = itemId ?: return true
+        val result = withTimeoutOrNull(timeoutMs) { runCatching { api.progress(id) } }
+        if (result == null || result.isFailure) {
+            if (verifyAfter == null) verifyAfter = ownAt
+            return false
         }
+        val p = result.getOrNull() ?: run { verifyAfter = null; return true } // no progress on the server yet
+        if (id != itemId) return true
+        when (SyncRules.checkServer(p.currentTime, p.lastUpdate, serverPosSec, posSec(), pendingSince, attempted)) {
+            SyncRules.Check.ADOPT -> adopt(p.currentTime, lastOtherDevice)
+            SyncRules.Check.SAME -> {
+                serverPosSec = p.currentTime
+                verifyAfter = null
+                attempted.clear()
+                if (!player.isPlaying && pendingLocal) {
+                    pendingLocal = false
+                    settings.saveLocalProgress(id, posSec(), synced = true, at = ownAt)
+                }
+            }
+            SyncRules.Check.KEEP -> verifyAfter = null
+        }
+        return true
     }
 
     /** Rule 2. */
@@ -94,7 +137,7 @@ class SyncManager(
         if (ev.sessionId != null && ev.sessionId == sessionId) return
         lastOtherDevice = ev.deviceDescription
         when (SyncRules.onRemote(ev.libraryItemId, ev.sessionId, ev.currentTime, itemId, sessionId, posSec(),
-            player.isPlaying || player.isLoadingBook, pendingLocal)) {
+            player.isPlaying || player.isLoadingBook, SyncRules.pendingIsNewer(pendingSince, ev.lastUpdate))) {
             SyncRules.Remote.ADOPT -> adopt(ev.currentTime, ev.deviceDescription)
             SyncRules.Remote.NOTE -> serverPosSec = ev.currentTime
             SyncRules.Remote.IGNORE -> {}
@@ -109,6 +152,10 @@ class SyncManager(
             adoptingRemote = false
         }
         serverPosSec = sec
+        pendingLocal = false
+        verifyAfter = null
+        attempted.clear()
+        ownAt = System.currentTimeMillis()
         itemId?.let { settings.saveLocalProgress(it, sec, synced = true) }
         onInfo(tr("positionFrom", "t" to (device ?: tr("otherDevice"))))
     }
@@ -116,6 +163,7 @@ class SyncManager(
     fun onUserSeek() {
         if (adoptingRemote || itemId == null || player.isLoadingBook) return
         pendingLocal = true
+        ownAt = System.currentTimeMillis()
         seekSyncJob?.cancel()
         seekSyncJob = scope.launch {
             delay(1_500)
@@ -136,9 +184,10 @@ class SyncManager(
         val id = itemId ?: return
         if (player.isPlaying) {
             pendingLocal = true
+            ownAt = System.currentTimeMillis()
             if (now - lastLocalSaveAt > 5_000) {
                 lastLocalSaveAt = now
-                settings.saveLocalProgress(id, posSec(), synced = false)
+                settings.saveLocalProgress(id, posSec(), synced = false, at = ownAt)
             }
         }
         val interval = SyncRules.syncInterval(player.isPlaying, pendingLocal) ?: return
@@ -154,9 +203,21 @@ class SyncManager(
         var sid = sessionId ?: return@withLock false
         if (player.isLoadingBook && !force) return@withLock false
         lastSyncAt = SystemClock.elapsedRealtime()
+        // Rule 4: after a failed sync (or an unreadable server before play) look before writing.
+        if (verifyAfter != null && !checkServer(10_000)) {
+            pendingLocal = true
+            settings.saveLocalProgress(id, posSec(), synced = false, at = ownAt)
+            return@withLock false
+        }
+        if (id != itemId) return@withLock false
+        if (!pendingLocal && !player.isPlaying && serverPosSec?.let { kotlin.math.abs(it - posSec()) < 0.5 } == true) {
+            return@withLock true // just adopted / already there: nothing to write
+        }
         val pos = posSec()
         val dur = durSec()
         val listened = listenedMs
+        attempted.add(pos)
+        if (attempted.size > 20) attempted.removeAt(0)
         try {
             try {
                 api.syncSession(sid, pos, listened / 1000.0, dur)
@@ -169,19 +230,24 @@ class SyncManager(
             }
             listenedMs = (listenedMs - listened).coerceAtLeast(0)
             serverPosSec = pos
+            attempted.clear()
+            verifyAfter = null
             if (!player.isPlaying) pendingLocal = false
-            settings.saveLocalProgress(id, pos, synced = true)
+            settings.saveLocalProgress(id, pos, synced = true, at = ownAt)
             true
         } catch (e: IOException) {
-            pendingLocal = true
-            settings.saveLocalProgress(id, pos, synced = false)
-            false
+            failed(id, pos)
         } catch (e: ApiException) {
             Log.w(TAG, "Sync failed: ${e.code} ${e.message}")
-            pendingLocal = true
-            settings.saveLocalProgress(id, pos, synced = false)
-            false
+            failed(id, pos)
         }
+    }
+
+    private fun failed(id: String, pos: Double): Boolean {
+        pendingLocal = true
+        if (verifyAfter == null) verifyAfter = ownAt
+        settings.saveLocalProgress(id, pos, synced = false, at = ownAt)
+        return false
     }
 
     fun onBookEnded() {
@@ -213,10 +279,20 @@ class SyncManager(
         val id = itemId
         sessionId = null
         itemId = null
-        id?.let { settings.saveLocalProgress(it, pos, synced = false) }
+        val at = ownAt
+        val check = verifyAfter != null
+        id?.let { settings.saveLocalProgress(it, pos, synced = false, at = at) }
         app.appScope.launch {
+            if (check && id != null) {
+                // Unsynced: write only when no other device moved the book since (rule 4).
+                val p = runCatching { api.progress(id) }.getOrElse { null }
+                if (p != null && p.lastUpdate > at && kotlin.math.abs(p.currentTime - pos) > SyncRules.SAME_POS_BEFORE_PLAY) {
+                    runCatching { api.closeSession(sid) }
+                    return@launch
+                }
+            }
             val ok = runCatching { api.syncSession(sid, pos, listened, dur) }.isSuccess
-            if (ok && id != null) settings.saveLocalProgress(id, pos, synced = true)
+            if (ok && id != null) settings.saveLocalProgress(id, pos, synced = true, at = at)
             runCatching { api.closeSession(sid) }
         }
     }

@@ -102,6 +102,8 @@ class MainActivity : ComponentActivity() {
         if (vm.error != null) vm.refreshAll()
         vm.autoCheckUpdates()
         (application as App).targets.current.value.activate()
+        // Back in front (TV woken up, app switched back): another device may have moved the book meanwhile.
+        PlaybackHub.engine?.sync?.refreshOnResume()
     }
 
     override fun onStop() {

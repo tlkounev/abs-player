@@ -136,9 +136,10 @@ class Settings(context: Context) {
         return LocalProgress(p[0].toDoubleOrNull() ?: return null, p[1].toLongOrNull() ?: 0, p[2] == "1")
     }
 
-    fun saveLocalProgress(itemId: String, positionSec: Double, synced: Boolean) {
+    /** [at] = when the position was reached (wall clock, ms); a failed retry must not make old listening look new. */
+    fun saveLocalProgress(itemId: String, positionSec: Double, synced: Boolean, at: Long = System.currentTimeMillis()) {
         prefs.edit()
-            .putString("lp_$itemId", "$positionSec|${System.currentTimeMillis()}|${if (synced) 1 else 0}")
+            .putString("lp_$itemId", "$positionSec|$at|${if (synced) 1 else 0}")
             .apply()
     }
 

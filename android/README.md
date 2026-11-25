@@ -1,7 +1,7 @@
 # ABS Player for Android
 
 An Audiobookshelf client for the phone, Android Auto and Android TV / Google TV – all in one APK.
-Version 1.6.10.
+Version 1.6.11.
 
 **[⬇ Download ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)
@@ -116,12 +116,14 @@ Version 1.6.10.
 
 The Audiobookshelf server stores whatever position it receives last, without comparing times. So the app:
 
-1. Reads the server position before every start / resume. When it differs from what the app wrote last,
-   another client moved it → the app takes it over ("Position taken over from: …").
+1. Reads the server position before every start / resume and whenever the app comes back to the front
+   (TV woken up, app switched back). When another client moved it after this device's last listening,
+   the app takes it over ("Position taken over from: …").
 2. While paused, it follows the server's live events (socket) and takes positions over immediately.
 3. While playing, it sends the position every 10 s and right away on pause, seek, stop and end of book.
-4. When sync fails (no signal), it keeps the position locally and retries; on the next open of the book
-   it wins if it is newer than the server's.
+4. When sync fails (no signal, a TV going to standby), it keeps the position locally and retries – but reads
+   the server first, so a position another device saved later is taken over instead of overwritten.
+   Unsynced listening wins only when it is newer than the server's last update.
 5. A dropped stream (tunnel) is reconnected up to 5×; up to 15 minutes are buffered ahead.
 
 Note: another app (the official app, the web) can still write an old position if it resumes from it.

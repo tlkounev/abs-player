@@ -2,6 +2,7 @@ package cz.ondra.absplayer.player
 
 import cz.ondra.absplayer.data.LocalProgress
 import cz.ondra.absplayer.data.MediaProgress
+import cz.ondra.absplayer.player.SyncRules.Check
 import cz.ondra.absplayer.player.SyncRules.Remote
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -64,30 +65,56 @@ class SyncRulesTest {
         assertFalse(SyncRules.pendingAfterOpen(500.5, 500.0))
     }
 
-    // ---------------------------------------------------------------- before play
+    // ---------------------------------------------------------------- before play / on resume / before a retry
+
+    private fun check(serverSec: Double, known: Double?, current: Double, pendingSince: Long? = null,
+                      serverUpdate: Long = 10_000, attempted: List<Double> = emptyList()) =
+        SyncRules.checkServer(serverSec, serverUpdate, known, current, pendingSince, attempted)
 
     @Test
     fun anotherDeviceMovedThePosition() {
         // we wrote 500 and stand at 500; the server says 1200 → someone listened elsewhere
-        assertTrue(SyncRules.adoptBeforePlay(1200.0, knownSec = 500.0, currentSec = 500.0, pendingLocal = false))
+        assertEquals(Check.ADOPT, check(1200.0, known = 500.0, current = 500.0))
     }
 
     @Test
     fun ownPositionIsNotAdopted() {
-        assertFalse(SyncRules.adoptBeforePlay(501.0, knownSec = 500.0, currentSec = 500.0, pendingLocal = false))
+        assertEquals(Check.KEEP, check(504.0, known = 503.0, current = 400.0))
         // the server already has where we stand (our seek was synced)
-        assertFalse(SyncRules.adoptBeforePlay(800.0, knownSec = 500.0, currentSec = 800.0, pendingLocal = false))
-    }
-
-    @Test
-    fun unsyncedLocalListeningIsNeverOverwritten() {
-        assertFalse(SyncRules.adoptBeforePlay(1200.0, knownSec = 500.0, currentSec = 500.0, pendingLocal = true))
+        assertEquals(Check.SAME, check(800.0, known = 500.0, current = 800.0))
     }
 
     @Test
     fun unknownServerPositionComparesWithTheCurrentOne() {
-        assertTrue(SyncRules.adoptBeforePlay(1200.0, knownSec = null, currentSec = 500.0, pendingLocal = false))
-        assertFalse(SyncRules.adoptBeforePlay(502.0, knownSec = null, currentSec = 500.0, pendingLocal = false))
+        assertEquals(Check.ADOPT, check(1200.0, known = null, current = 500.0))
+        assertEquals(Check.SAME, check(502.0, known = null, current = 500.0))
+    }
+
+    @Test
+    fun newerUnsyncedLocalListeningWins() {
+        // listened offline until t=20 000; the server's last update is older
+        assertEquals(Check.KEEP, check(1200.0, known = 500.0, current = 900.0, pendingSince = 20_000, serverUpdate = 10_000))
+    }
+
+    @Test
+    fun tvWhosePauseSyncFailedTakesThePhonesNewerPosition() {
+        // the TV paused at 500 (t=10 000) but the save failed (standby); the phone listened to 1200 later (t=50 000)
+        assertEquals(Check.ADOPT, check(1200.0, known = 300.0, current = 500.0, pendingSince = 10_000, serverUpdate = 50_000))
+    }
+
+    @Test
+    fun ourOwnWriteWhoseAnswerGotLostIsNotAdopted() {
+        assertEquals(Check.KEEP, check(480.0, known = 300.0, current = 520.0, pendingSince = 10_000,
+            serverUpdate = 50_000, attempted = listOf(470.0, 480.0)))
+    }
+
+    @Test
+    fun remoteEventBeatsOlderUnsyncedListening() {
+        assertFalse(SyncRules.pendingIsNewer(pendingSince = 10_000, eventUpdate = 50_000))
+        assertTrue(SyncRules.pendingIsNewer(pendingSince = 60_000, eventUpdate = 50_000))
+        assertFalse(SyncRules.pendingIsNewer(pendingSince = null, eventUpdate = 50_000))
+        // an event without a time cannot beat unsynced listening
+        assertTrue(SyncRules.pendingIsNewer(pendingSince = 10_000, eventUpdate = 0))
     }
 
     // ---------------------------------------------------------------- events from other devices
