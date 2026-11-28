@@ -27,6 +27,13 @@ import androidx.compose.ui.platform.LocalConfiguration
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -346,7 +353,7 @@ fun PlayerScreen(vm: MainViewModel) {
                     horizontalArrangement = Arrangement.spacedBy(36.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    coverBox(Modifier.size(side))
+                    SeekTapArea(!vm.app.isTv, { target.skip(it) }, Modifier.size(side)) { coverBox(Modifier.fillMaxSize()) }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
                         infoRow()
                         bars()
@@ -355,17 +362,113 @@ fun PlayerScreen(vm: MainViewModel) {
                 }
             }
         } else {
-            // --- cover (takes the space that is left) ---
-            Box(
-                Modifier.weight(1f).fillMaxWidth().padding(horizontal = 40.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center,
-            ) { coverBox(Modifier.widthIn(max = 360.dp)) }
+            // --- cover (takes the space that is left); double tap left / right = back / forward ---
+            SeekTapArea(!vm.app.isTv, { target.skip(it) }, Modifier.weight(1f).fillMaxWidth()) {
+                Box(
+                    Modifier.fillMaxSize().padding(horizontal = 40.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center,
+                ) { coverBox(Modifier.widthIn(max = 360.dp)) }
+            }
             infoRow()
             bars()
             controls()
         }
     }
 }
+
+/**
+ * Double tap on the left / right half = back / forward by the step of the ↺ / ↻ buttons (as YouTube does); every
+ * further quick tap on the same side adds one more step. Drags pass through (swipe down closes the player).
+ */
+@Composable
+private fun SeekTapArea(enabled: Boolean, onSkip: (Double) -> Unit, modifier: Modifier, content: @Composable () -> Unit) {
+    var side by remember { mutableIntStateOf(0) } // -1 left, 1 right
+    var count by remember { mutableIntStateOf(0) }
+    var tapAt by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    var lastTap by remember { mutableLongStateOf(0L) }
+    val skip by rememberUpdatedState(onSkip)
+    LaunchedEffect(lastTap) {
+        if (count > 0) {
+            delay(SEEK_TAP_WINDOW_MS)
+            count = 0
+        }
+    }
+    val alpha by animateFloatAsState(if (count > 0) 1f else 0f, tween(if (count > 0) 80 else 350), label = "seekTap")
+    Box(
+        modifier.pointerInput(enabled) {
+            if (!enabled) return@pointerInput
+            var prevAt = 0L
+            var prevSide = 0
+            var prevPos = androidx.compose.ui.geometry.Offset.Zero
+            val near = 100.dp.toPx()
+            awaitEachGesture {
+                awaitFirstDown(requireUnconsumed = false)
+                val up = waitForUpOrCancellation() ?: return@awaitEachGesture
+                val t = up.uptimeMillis
+                val sd = if (up.position.x < size.width / 2f) -1 else 1
+                when {
+                    count > 0 && sd == side && t - lastTap <= SEEK_TAP_WINDOW_MS -> {
+                        count += 1
+                        tapAt = up.position
+                        lastTap = t
+                        skip(sd * SKIP)
+                    }
+                    t - prevAt <= viewConfiguration.doubleTapTimeoutMillis && sd == prevSide && (up.position - prevPos).getDistance() < near -> {
+                        side = sd
+                        count = 1
+                        tapAt = up.position
+                        lastTap = t
+                        prevAt = 0L
+                        skip(sd * SKIP)
+                    }
+                    else -> {
+                        prevAt = t
+                        prevSide = sd
+                        prevPos = up.position
+                    }
+                }
+            }
+        },
+    ) {
+        content()
+        if (alpha > 0f && side != 0) {
+            BoxWithConstraints(
+                Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(0.5f)
+                    .align(if (side < 0) Alignment.CenterStart else Alignment.CenterEnd)
+                    .graphicsLayer { this.alpha = alpha }
+                    .clip(androidx.compose.foundation.shape.GenericShape { sz, _ ->
+                        // half an ellipse bulging towards the middle of the screen
+                        val left = if (side < 0) -sz.width else 0f
+                        addOval(androidx.compose.ui.geometry.Rect(left, -sz.height * 0.25f, left + sz.width * 2, sz.height * 1.25f))
+                    })
+                    .background(Color.White.copy(alpha = 0.13f)),
+            ) {
+                val r = 75.dp
+                val x0 = if (side < 0) 0f else with(LocalDensity.current) { maxWidth.toPx() }
+                Box(
+                    Modifier
+                        .offset { IntOffset((tapAt.x - x0 - r.toPx()).toInt(), (tapAt.y - r.toPx()).toInt()) }
+                        .size(r * 2)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.12f)),
+                )
+                Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(if (side < 0) Ic.WSkipBack else Ic.WSkipFwd, null, tint = Color.White, modifier = Modifier.size(width = 34.dp, height = 22.dp))
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        tr("secShort", "n" to (count.coerceAtLeast(1) * SKIP).toInt()), color = Color.White,
+                        fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                        style = androidx.compose.ui.text.TextStyle(shadow = androidx.compose.ui.graphics.Shadow(Color(0x80000000), blurRadius = 6f)),
+                    )
+                }
+            }
+        }
+    }
+}
+
+private const val SEEK_TAP_WINDOW_MS = 800L
 
 /** Tap = mute / unmute, hold = vertical slider above the button (like the Windows volume popup). */
 @OptIn(ExperimentalFoundationApi::class)
