@@ -25,5 +25,4 @@ function ico(sizes) {
 fs.writeFileSync(path.join(A, 'app.ico'), ico([16, 20, 24, 32, 40, 48, 64, 128, 256]));
 fs.writeFileSync(path.join(A, 'notify-icon.ico'), ico([16, 20, 24, 32, 40, 48, 64]));
 fs.writeFileSync(path.join(A, 'icon.png'), png(256));
-fs.writeFileSync(path.join(A, 'tray.png'), png(64)); // Linux tray (StatusNotifierItem scales it)
 console.log('icons ok');
