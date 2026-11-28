@@ -104,7 +104,6 @@ SHARED = {
 
 # --- Android only (phone, TV, Android Auto) ---
 ANDROID = {
-    "secShort": ["{n} s", "{n} s", "{n} s", "{n} s", "{n} s", "{n} s", "{n} s", "{n} s", "{n} s", "{n} s", "{n} s", "{n} s", "{n} s", "{n} 秒", "{n} 秒"],
     "close": ["Zavřít", "Zavrieť", "Close", "Schließen", "Zamknij", "Fermer", "Cerrar", "Chiudi", "Fechar", "Sluiten", "Bezárás", "Закрити", "Закрыть", "关闭", "閉じる"],
     "pause": ["Pozastavit", "Pozastaviť", "Pause", "Pause", "Wstrzymaj", "Pause", "Pausa", "Pausa", "Pausar", "Pauzeren", "Szünet", "Пауза", "Пауза", "暂停", "一時停止"],
     "volumeHint": ["Hlasitost (klepnutí = ztlumit, podržení = posuvník)", "Hlasitosť (ťuknutie = stlmiť, podržanie = posuvník)", "Volume (tap = mute, hold = slider)", "Lautstärke (Tippen = stumm, Halten = Regler)", "Głośność (dotknij = wycisz, przytrzymaj = suwak)", "Volume (toucher = muet, maintenir = curseur)", "Volumen (tocar = silenciar, mantener = control)", "Volume (tocco = muto, tieni premuto = cursore)", "Volume (toque = silenciar, manter = controlo)", "Volume (tikken = dempen, vasthouden = schuif)", "Hangerő (koppintás = némítás, nyomva tartás = csúszka)", "Гучність (дотик = вимкнути звук, утримання = повзунок)", "Громкость (касание = без звука, удержание = ползунок)", "音量（点按 = 静音，长按 = 滑块）", "音量（タップ = ミュート、長押し = スライダー）"],

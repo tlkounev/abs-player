@@ -1,7 +1,7 @@
 # ABS Player for Android
 
 An Audiobookshelf client for the phone, Android Auto and Android TV / Google TV – all in one APK.
-Version 1.6.13.
+Version 1.6.14.
 
 **[⬇ Download ABS-Player-Android.apk](https://github.com/tlkounev/abs-player/releases/download/android-latest/ABS-Player-Android.apk)**
 · [all releases](https://github.com/tlkounev/abs-player/releases)
@@ -33,7 +33,7 @@ Version 1.6.13.
   - a chapter bar and a thin bar for the whole book. Both can be dragged, and the labels follow while dragging.
     Times show elapsed and remaining, adjusted to the playback speed;
   - controls: volume | ⏮ | ↺10 | ▶ | ↻10 | ⏭ | speed.
-- **Double tap** on the left / right half of the cover area = back / forward by the step of the ↺ / ↻ buttons (as on
+- **Double tap** on the left / right half of the cover area = back / forward right away by the step of the ↺ / ↻ buttons (as on
   YouTube); every further quick tap on the same side adds one more step. The top bar (close, drag handle) is not part of it.
 - Volume: tap = mute, hold = vertical slider. Speed: tap = next step 0.75–2×, hold = − / + by 0.05.
 - Chapter list with search by name (accent-insensitive) or number; sleep timer in minutes or to the end of the chapter.
